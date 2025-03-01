@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="externalBusBackground">#FF5722</color>
+    <color name="externalBusForeground">#FFFFFF</color>
+    <color name="crossHarbourBusBackground">#FF0100</color>
+    <color name="crossHarbourBusForeground">#FFFFFF</color>
+    <color name="foreground">@android:color/system_text_primary_inverse_dark</color>
+    <color name="systemSurface">@android:color/system_surface_container_light</color>
+    <color name="systemOnSurface">@android:color/system_on_surface_light</color>
+</resources>

@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <Preference
+        android:key="pref_main_language"
+        android:title="Language"
+        android:layout_marginStart="10dp"
+        android:layout_marginEnd="10dp"
+        android:layout="@layout/components_preference_view"
+        app:iconSpaceReserved="false"/>
+
+    <Preference
+        android:key="pref_main_theme"
+        android:title="Theme"
+        android:iconSpaceReserved="false"
+        android:layout_marginStart="16dp"
+        android:layout_marginEnd="16dp"
+        android:layout="@layout/components_preference_view"
+        app:iconSpaceReserved="false"/>
+
+    <Preference
+        android:key="pref_main_accessibility"
+        android:title="Accessibility"
+        android:iconSpaceReserved="false"
+        android:layout_marginStart="16dp"
+        android:layout_marginEnd="16dp"
+        android:layout="@layout/components_preference_view"
+        app:iconSpaceReserved="false"/>
+
+    <Preference
+        android:key="pref_main_about"
+        android:title="About"
+        android:iconSpaceReserved="false"
+        android:layout_marginStart="16dp"
+        android:layout_marginEnd="16dp"
+        android:layout="@layout/components_preference_view"
+        app:iconSpaceReserved="false"/>
+
+    <Preference
+        android:key="pref_main_features"
+        android:title="Features"
+        android:iconSpaceReserved="false"
+        android:layout_marginStart="16dp"
+        android:layout_marginEnd="16dp"
+        android:layout="@layout/components_preference_view"
+        app:iconSpaceReserved="false"/>
+
+</PreferenceScreen>

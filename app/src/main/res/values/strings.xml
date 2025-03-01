@@ -1,0 +1,9 @@
+<resources>
+    <string name="app_name">9 Rush To Bus</string>
+    <string name="hello_blank_fragment">Hello blank fragment</string>
+
+    <string-array name="options_application_theme">
+        <item name="light_theme">Light</item>
+        <item name="dark_theme">Dark</item>
+    </string-array>
+</resources>
