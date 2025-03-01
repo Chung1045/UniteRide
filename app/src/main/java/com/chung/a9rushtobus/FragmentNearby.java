@@ -18,7 +18,6 @@ import com.google.android.gms.location.LocationServices;
 
 public class FragmentNearby extends Fragment {
 
-    private static final int LOCATION_PERMISSION_REQUEST_CODE = 1;
     private FusedLocationProviderClient fusedLocationClient;
     private TextView locationText;
 

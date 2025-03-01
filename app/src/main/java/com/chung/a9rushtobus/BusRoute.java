@@ -11,6 +11,7 @@ public class BusRoute {
     private String destTc;
     private String destSc;
 
+
     public BusRoute(String route, String bound, String serviceType,
                     String origEn, String origTc, String origSc,
                     String destEn, String destTc, String destSc) {
