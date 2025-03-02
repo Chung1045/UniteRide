@@ -2,6 +2,7 @@ import java.util.Properties
 
 plugins {
     alias(libs.plugins.android.application)
+    id("com.google.android.libraries.mapsplatform.secrets-gradle-plugin")
 }
 
 android {
@@ -19,16 +20,6 @@ android {
         versionCode = 1
         versionName = "1.0"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
-        val localProperties = Properties()
-        val localPropertiesFile = rootProject.file("local.properties")
-        if (localPropertiesFile.exists()) {
-            localPropertiesFile.inputStream().use { localProperties.load(it) }
-        }
-
-        val apiKey = localProperties.getProperty("MAPS_API_KEY", "YOUR_DEFAULT_API_KEY")
-        manifestPlaceholders["GOOGLE_MAPS_API_KEY"] = apiKey
-        // Correct buildConfigField syntax
-        buildConfigField("String", "GOOGLE_MAPS_API_KEY", "\"$apiKey\"")
         buildConfigField("int", "REFRESH_INTERVAL", "60") // refresh interval in seconds
     }
 
@@ -47,8 +38,19 @@ android {
     }
 }
 
-dependencies {
+secrets {
+    // To add your Maps API key to this project:
+    // 1. If the secrets.properties file does not exist, create it in the same folder as the local.properties file.
+    // 2. Add this line, where YOUR_API_KEY is your API key:
+    //        MAPS_API_KEY=YOUR_API_KEY
+    propertiesFileName = "secrets.properties"
 
+    // A properties file containing default secret values. This file can be
+    // checked in version control.
+    defaultPropertiesFileName = "local.defaults.properties"
+}
+
+dependencies {
     implementation(libs.appcompat)
     implementation(libs.material)
     implementation(libs.activity)
