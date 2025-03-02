@@ -22,15 +22,16 @@
 
     <com.chung.a9rushtobus.CustomRadioButtonPreference
         android:iconSpaceReserved="false"
-        android:key="pref_key_light_theme"
+        android:key="pref_theme_light_theme"
         android:layout="@layout/components_radio_option"
-        android:title="Light Theme" />
+        android:title="Light Theme"
+        android:defaultValue="false"/>
 
     <com.chung.a9rushtobus.CustomRadioButtonPreference
         android:iconSpaceReserved="false"
-        android:key="pref_key_dark_theme"
+        android:key="pref_theme_dark_theme"
         android:layout="@layout/components_radio_option"
-        android:title="Dark Theme" />
-
+        android:title="Dark Theme"
+        android:defaultValue="true"/>
 
 </PreferenceScreen>

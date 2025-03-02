@@ -2,30 +2,37 @@ package com.chung.a9rushtobus;
 
 import android.content.Context;
 import android.util.AttributeSet;
+import android.widget.RadioButton;
 
 import androidx.preference.CheckBoxPreference;
+import androidx.preference.PreferenceViewHolder;
 
 public class CustomRadioButtonPreference extends CheckBoxPreference {
 
-    public CustomRadioButtonPreference(Context context, AttributeSet attrs, int defStyle) {
-        super(context, attrs, defStyle);
-        setWidgetLayoutResource(R.layout.preference_widget_radiobutton);
-    }
+    private RadioButton radioButton;
 
     public CustomRadioButtonPreference(Context context, AttributeSet attrs) {
         super(context, attrs);
-        setWidgetLayoutResource(R.layout.preference_widget_radiobutton);
-    }
-
-    public CustomRadioButtonPreference(Context context) {
-        this(context, null);
+        setWidgetLayoutResource(R.layout.components_radio_option);
     }
 
     @Override
-    public void onClick() {
-        if (this.isChecked()) {
-            return;
+    public void onBindViewHolder(PreferenceViewHolder holder) {
+        super.onBindViewHolder(holder);
+
+        radioButton = (RadioButton) holder.findViewById(R.id.radio_widget);
+
+        if (radioButton != null) {
+            boolean isChecked = getPersistedBoolean(false);
+            radioButton.setChecked(isChecked);
         }
-        super.onClick();
+    }
+
+    @Override
+    public void setChecked(boolean checked) {
+        super.setChecked(checked);
+        if (radioButton != null) {
+            radioButton.setChecked(checked);
+        }
     }
 }

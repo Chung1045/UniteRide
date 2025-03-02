@@ -3,6 +3,7 @@ package com.chung.a9rushtobus;
 import android.content.Context;
 import android.util.AttributeSet;
 import android.widget.LinearLayout;
+import android.widget.Toast;
 
 import androidx.preference.PreferenceViewHolder;
 import androidx.preference.SwitchPreferenceCompat;
@@ -59,10 +60,16 @@ public class CustomMainSwitchPreference extends SwitchPreferenceCompat {
             // Listen for changes and update the preference when toggled
             materialSwitch.setOnCheckedChangeListener((buttonView, isChecked) -> {
                 if (isUserInitiated) {
-                    // Update the preference value
+                    // Update the preference value and notify listeners
                     isUserInitiated = false; // Prevent recursive calls
-                    setChecked(isChecked);
-                    updateBackground(isChecked);
+                    boolean result = callChangeListener(isChecked); // Notify preference change listeners
+                    if (result) {
+                        setChecked(isChecked);
+                        updateBackground(isChecked);
+                    } else {
+                        // If the change was rejected, revert the switch
+                        materialSwitch.setChecked(!isChecked);
+                    }
                     isUserInitiated = true; // Re-enable for next user interaction
                 }
             });
@@ -73,10 +80,13 @@ public class CustomMainSwitchPreference extends SwitchPreferenceCompat {
         if (materialSwitch != null) {
             boolean newState = !materialSwitch.isChecked();
             isUserInitiated = false; // Prevent recursive calls
-            materialSwitch.setChecked(newState);
-            setChecked(newState);
-            updateBackground(newState);
-            isUserInitiated = true; // Re-enable for next user interaction
+            boolean result = callChangeListener(newState); // Notify preference change listeners
+            if (result) {
+                materialSwitch.setChecked(newState);
+                setChecked(newState);
+                updateBackground(newState);
+            }
+            isUserInitiated = true;
         }
     }
 
