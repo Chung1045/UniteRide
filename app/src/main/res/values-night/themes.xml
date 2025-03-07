@@ -3,5 +3,12 @@
     <style name="Base.Theme._9RushToBus" parent="Theme.Material3.DayNight.NoActionBar">
         <!-- Customize your dark theme here. -->
         <!-- <item name="colorPrimary">@color/my_dark_primary</item> -->
+        <item name="fontFamily">@font/font_general_sans</item>
     </style>
+
+    <style name="Widget.MyApp.ProgressIndicator" parent="Widget.Material3.LinearProgressIndicator">
+        <item name="indicatorColor">@color/brand_colorPrimary</item>
+        <item name="trackColor">@color/brand_colorSurfaceSecondary</item>
+    </style>
+
 </resources>

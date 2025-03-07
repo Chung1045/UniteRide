@@ -7,8 +7,7 @@
         android:title="Language"
         android:layout_marginStart="10dp"
         android:layout_marginEnd="10dp"
-        android:layout="@layout/components_preference_view"
-        app:iconSpaceReserved="false"/>
+        android:layout="@layout/components_preference_view" />
 
     <Preference
         android:key="pref_main_theme"
@@ -16,8 +15,7 @@
         android:iconSpaceReserved="false"
         android:layout_marginStart="16dp"
         android:layout_marginEnd="16dp"
-        android:layout="@layout/components_preference_view"
-        app:iconSpaceReserved="false"/>
+        android:layout="@layout/components_preference_view" />
 
     <Preference
         android:key="pref_main_accessibility"
@@ -25,8 +23,7 @@
         android:iconSpaceReserved="false"
         android:layout_marginStart="16dp"
         android:layout_marginEnd="16dp"
-        android:layout="@layout/components_preference_view"
-        app:iconSpaceReserved="false"/>
+        android:layout="@layout/components_preference_view" />
 
     <Preference
         android:key="pref_main_about"
@@ -34,8 +31,7 @@
         android:iconSpaceReserved="false"
         android:layout_marginStart="16dp"
         android:layout_marginEnd="16dp"
-        android:layout="@layout/components_preference_view"
-        app:iconSpaceReserved="false"/>
+        android:layout="@layout/components_preference_view" />
 
     <Preference
         android:key="pref_main_features"
@@ -43,7 +39,17 @@
         android:iconSpaceReserved="false"
         android:layout_marginStart="16dp"
         android:layout_marginEnd="16dp"
-        android:layout="@layout/components_preference_view"
-        app:iconSpaceReserved="false"/>
+        android:layout="@layout/components_preference_view" />
+
+    <PreferenceCategory
+        android:title="Dev options"/>
+
+    <Preference
+        android:key="pref_dev_onboard"
+        android:title="Onboard"
+        android:layout_marginStart="16dp"
+        android:layout_marginEnd="16dp"
+        android:iconSpaceReserved="false"
+        android:layout="@layout/components_preference_view"/>
 
 </PreferenceScreen>

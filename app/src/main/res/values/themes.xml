@@ -2,8 +2,21 @@
     <!-- Base application theme. -->
     <style name="Base.Theme._9RushToBus" parent="Theme.Material3.DayNight.NoActionBar">
         <!-- Customize your dark theme here. -->
+        <item name="fontFamily">@font/font_general_sans</item>
     </style>
 
     <style name="Theme._9RushToBus" parent="Base.Theme._9RushToBus" />
+
+    <style name="Widget.9RushToBus.ProgressIndicator" parent="Widget.Material3.LinearProgressIndicator">
+        <item name="indicatorColor">@color/brand_colorPrimary</item>
+        <item name="trackColor">@color/brand_colorOnSurface</item>
+    </style>
+
+    <style name="Widget.9RushToBus.BottomNavigationView.ActiveIndicator" parent="Widget.Material3.BottomNavigationView.ActiveIndicator">
+        <item name="android:color">@color/white</item>
+    </style>
+
+
+
 
 </resources>

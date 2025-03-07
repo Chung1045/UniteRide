@@ -4,7 +4,11 @@
     <color name="externalBusForeground">#FFFFFF</color>
     <color name="crossHarbourBusBackground">#FF0100</color>
     <color name="crossHarbourBusForeground">#FFFFFF</color>
-    <color name="foreground">@android:color/system_text_primary_inverse_dark</color>
-    <color name="systemSurface">@android:color/system_surface_container_light</color>
-    <color name="systemOnSurface">@android:color/system_on_surface_light</color>
+    <color name="brand_colorPrimary">#2C6073</color>
+    <color name="brand_colorSecondary">#4AC1E1</color>
+    <color name="brand_colorTertiary">#E6F46A</color>
+    <color name="brand_colorSurface">#FFFFFF</color>
+    <color name="brand_colorSurfaceSecondary">#E7F5F7</color>
+    <color name="brand_colorOnSurface">#ECF5F8</color>
+    <color name="brand_colorOnSurfaceSecondary">#E1E9EB</color>
 </resources>

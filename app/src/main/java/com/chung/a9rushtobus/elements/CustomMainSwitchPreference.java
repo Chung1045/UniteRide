@@ -1,13 +1,13 @@
-package com.chung.a9rushtobus;
+package com.chung.a9rushtobus.elements;
 
 import android.content.Context;
 import android.util.AttributeSet;
 import android.widget.LinearLayout;
-import android.widget.Toast;
 
 import androidx.preference.PreferenceViewHolder;
 import androidx.preference.SwitchPreferenceCompat;
 
+import com.chung.a9rushtobus.R;
 import com.google.android.material.materialswitch.MaterialSwitch;
 
 public class CustomMainSwitchPreference extends SwitchPreferenceCompat {

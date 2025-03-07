@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.preference.PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <SwitchPreferenceCompat
+        android:iconSpaceReserved="false"
+        android:key="pref_accessibility_bold_text"
+        android:summary=""
+        android:title="Bold Text" />
+
+</androidx.preference.PreferenceScreen>

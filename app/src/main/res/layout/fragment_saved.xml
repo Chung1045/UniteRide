@@ -4,7 +4,7 @@
     android:id="@+id/coordinatorLayout4"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="?attr/colorSurface">
+    android:background="@color/brand_colorSurface">
 
     <androidx.coordinatorlayout.widget.CoordinatorLayout
         android:id="@+id/coordinator_layout_fragment_saved"
@@ -18,14 +18,15 @@
         <com.google.android.material.appbar.AppBarLayout
             android:id="@+id/appBar_savedFragment"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content">
+            android:layout_height="wrap_content"
+            android:background="@color/brand_colorSurface">
 
             <com.google.android.material.appbar.CollapsingToolbarLayout
                 style="?attr/collapsingToolbarLayoutLargeStyle"
                 android:layout_width="match_parent"
                 android:layout_height="?attr/collapsingToolbarLayoutLargeSize"
                 app:expandedTitleTextAppearance="?attr/collapsingToolbarLayoutLargeStyle"
-                app:contentScrim="?attr/colorSurfaceVariant"
+                app:contentScrim="@color/brand_colorSurfaceSecondary"
                 app:layout_scrollFlags="scroll|exitUntilCollapsed|enterAlwaysCollapsed">
 
                 <View

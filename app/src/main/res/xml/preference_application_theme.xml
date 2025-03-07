@@ -1,33 +1,21 @@
 <?xml version="1.0" encoding="utf-8"?>
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
 
-    <com.chung.a9rushtobus.CustomMainSwitchPreference
+    <com.chung.a9rushtobus.elements.CustomMainSwitchPreference
         android:iconSpaceReserved="false"
         android:key="pref_theme_follow_system"
         android:widgetLayout="@layout/components_main_switch"
         android:summary="Enable dark mode"
         android:title="Follow System Settings" />
 
-    <!--    <CheckBoxPreference-->
-    <!--        android:key="pref_key_light_theme"-->
-    <!--        android:title="Light Theme"-->
-    <!--        android:iconSpaceReserved="false"-->
-    <!--        android:layout="@layout/components_radio_option"/>-->
-
-    <!--    <CheckBoxPreference-->
-    <!--        android:key="pref_key_dark_theme"-->
-    <!--        android:title="Dark Theme"-->
-    <!--        android:iconSpaceReserved="false"-->
-    <!--        android:layout="@layout/components_radio_option"/>-->
-
-    <com.chung.a9rushtobus.CustomRadioButtonPreference
+    <com.chung.a9rushtobus.elements.CustomRadioButtonPreference
         android:iconSpaceReserved="false"
         android:key="pref_theme_light_theme"
         android:layout="@layout/components_radio_option"
         android:title="Light Theme"
         android:defaultValue="false"/>
 
-    <com.chung.a9rushtobus.CustomRadioButtonPreference
+    <com.chung.a9rushtobus.elements.CustomRadioButtonPreference
         android:iconSpaceReserved="false"
         android:key="pref_theme_dark_theme"
         android:layout="@layout/components_radio_option"

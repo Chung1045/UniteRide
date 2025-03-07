@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.preference.PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <com.chung.a9rushtobus.elements.CustomMainSwitchPreference
+        android:iconSpaceReserved="false"
+        android:key="pref_language_follow_system"
+        android:widgetLayout="@layout/components_main_switch"
+        android:summary="Enable dark mode"
+        android:title="Follow System Settings" />
+
+    <com.chung.a9rushtobus.elements.CustomRadioButtonPreference
+        android:iconSpaceReserved="false"
+        android:key="pref_language_trad_chinese"
+        android:layout="@layout/components_radio_option"
+        android:title="中文（繁體）"
+        android:summary="Traditional Chinese"
+        android:defaultValue="false"/>
+
+    <com.chung.a9rushtobus.elements.CustomRadioButtonPreference
+        android:iconSpaceReserved="false"
+        android:key="pref_language_simp_chinese"
+        android:layout="@layout/components_radio_option"
+        android:title="中文（簡体）"
+        android:summary="Simplified Chinese"
+        android:defaultValue="false"/>
+
+    <com.chung.a9rushtobus.elements.CustomRadioButtonPreference
+        android:iconSpaceReserved="false"
+        android:key="pref_language_english"
+        android:layout="@layout/components_radio_option"
+        android:title="English"
+        android:summary="English"
+        android:defaultValue="false"/>
+
+</androidx.preference.PreferenceScreen>

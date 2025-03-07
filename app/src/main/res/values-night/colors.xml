@@ -1,6 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="foreground">@android:color/system_text_primary_inverse_light</color>
-    <color name="systemSurface">@android:color/system_surface_container_dark</color>
-    <color name="systemOnSurface">@android:color/system_on_surface_dark</color>
+    <color name="brand_colorPrimary">#F1F4F6</color>
+    <color name="brand_colorSecondary">#4AC1E1</color>
+    <color name="brand_colorTertiary">#E6F46A</color>
+    <color name="brand_colorSurface">#132F38</color>
+    <color name="brand_colorSurfaceSecondary">#204F5F</color>
+    <color name="brand_colorOnSurface">#2D4953</color>
+    <color name="brand_colorOnSurfaceSecondary">#E1E9EB</color>
 </resources>
