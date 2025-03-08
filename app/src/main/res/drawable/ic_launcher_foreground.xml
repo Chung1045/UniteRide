@@ -9,83 +9,23 @@
       android:translateY="57.6">
     <group>
       <clip-path
-          android:pathData="M0,0h192v192h-192z"/>
+          android:pathData="M25,27h138v138h-138z"/>
       <path
-          android:pathData="M0,0h192v192h-192z"
-          android:fillColor="#132F38"/>
-      <path
-          android:pathData="M0,0h27v192h-27z"
-          android:fillColor="#DFDFDF"
-          android:fillAlpha="0.2"/>
-      <path
-          android:pathData="M165,0h27v192h-27z"
-          android:fillColor="#DFDFDF"
-          android:fillAlpha="0.2"/>
-      <path
-          android:pathData="M-2,192l0,-27l192,-0l0,27z"
-          android:fillColor="#DFDFDF"
-          android:fillAlpha="0.2"/>
-      <path
-          android:pathData="M0,27l0,-27l192,-0l0,27z"
-          android:fillColor="#DFDFDF"
-          android:fillAlpha="0.2"/>
-      <path
-          android:pathData="M165,156.51V63.5C165,43.34 148.66,27 128.5,27C108.34,27 92,43.34 92,63.5V83.51L100,91.51V63.5C100,47.76 112.76,35 128.5,35C144.24,35 157,47.76 157,63.5V148.51L165,156.51ZM100,108.49V128.5C100,148.66 83.66,165 63.5,165C43.34,165 27,148.66 27,128.5V35.49L35,43.49V128.5C35,144.24 47.76,157 63.5,157C79.24,157 92,144.24 92,128.5V100.49L100,108.49Z"
+          android:pathData="M102,65.79V75.71L86.41,60.13C89.15,41.55 105.16,27.29 124.5,27.29C145.76,27.29 163,44.53 163,65.79V110L147,94V65.79C147,53.37 136.93,43.29 124.5,43.29C112.07,43.29 102,53.37 102,65.79ZM147,110.5V120.71L163,136.71V126.5L147,110.5ZM86,116.29L101.59,131.88C98.86,150.46 82.85,164.74 63.5,164.74C42.24,164.74 25,147.5 25,126.24V55.29L41,71.29V126.24C41,138.66 51.07,148.74 63.5,148.74C75.93,148.74 86,138.66 86,126.24V116.29Z"
           android:fillColor="#ffffff"
           android:fillType="evenOdd"/>
       <path
-          android:pathData="M27,27L165,165"
-          android:strokeWidth="8"
-          android:fillColor="#00000000"
-          android:strokeColor="#ffffff"/>
+          android:pathData="M25,38.31V27H36.31L163,153.69V165H151.69L25,38.31Z"
+          android:fillColor="#ffffff"
+          android:fillType="evenOdd"/>
       <path
-          android:pathData="M123,157h42v8h-42z"
-          android:fillColor="#ffffff"/>
+          android:pathData="M163,165V126L147,110V165H163Z"
+          android:fillColor="#ffffff"
+          android:fillType="evenOdd"/>
       <path
-          android:pathData="M157,165l0,-42l8,-0l0,42z"
-          android:fillColor="#ffffff"/>
-      <path
-          android:pathData="M131,82L181,132"
-          android:strokeWidth="10"
-          android:fillColor="#00000000"
-          android:strokeColor="#132F38"/>
-      <path
-          android:pathData="M134,93L184,143"
-          android:strokeWidth="10"
-          android:fillColor="#00000000"
-          android:strokeColor="#132F38"/>
-      <path
-          android:pathData="M151,192L101,142"
-          android:strokeWidth="10"
-          android:fillColor="#00000000"
-          android:strokeColor="#132F38"/>
-      <path
-          android:pathData="M121,135L71,85"
-          android:strokeWidth="10"
-          android:fillColor="#00000000"
-          android:strokeColor="#132F38"/>
-      <path
-          android:pathData="M60,73L10,23"
-          android:strokeWidth="10"
-          android:fillColor="#00000000"
-          android:strokeColor="#132F38"/>
-      <path
-          android:pathData="M128,114L78,64"
-          android:strokeWidth="10"
-          android:fillColor="#00000000"
-          android:strokeColor="#132F38"/>
-      <path
-          android:pathData="M0,0h27v192h-27z"
-          android:fillColor="#132F38"/>
-      <path
-          android:pathData="M165,0h27v192h-27z"
-          android:fillColor="#132F38"/>
-      <path
-          android:pathData="M-2,192l0,-27l192,-0l0,27z"
-          android:fillColor="#132F38"/>
-      <path
-          android:pathData="M0,27l0,-27l192,-0l0,27z"
-          android:fillColor="#132F38"/>
+          android:pathData="M163,149H108L124,165H163V149Z"
+          android:fillColor="#ffffff"
+          android:fillType="evenOdd"/>
     </group>
   </group>
 </vector>
