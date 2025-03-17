@@ -1,7 +1,11 @@
 package com.chung.a9rushtobus;
 
 import android.os.Bundle;
+import android.text.method.LinkMovementMethod;
+import android.util.Log;
 import android.widget.ImageView;
+import android.widget.Scroller;
+import android.widget.TextView;
 
 import androidx.activity.EdgeToEdge;
 import androidx.annotation.NonNull;
@@ -31,6 +35,7 @@ public class BusRouteDetailViewActivity extends AppCompatActivity implements OnM
     private BusRouteStopItemAdapter adapter;
     private RecyclerView busRouteStopRecyclerView;
     private List<BusRouteStopItem> busRouteStopItems;
+    private String routeNumber, routeDestination, routeBound, routeServiceType;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -43,10 +48,12 @@ public class BusRouteDetailViewActivity extends AppCompatActivity implements OnM
             return insets;
         });
 
-        SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
-                .findFragmentById(R.id.map);
-        mapFragment.getMapAsync(this);
-        busRouteStopRecyclerView = findViewById(R.id.recyclerView2);
+        routeNumber = getIntent().getStringExtra("route");
+        routeDestination = getIntent().getStringExtra("destination");
+        routeBound = getIntent().getStringExtra("bound");
+        routeServiceType = getIntent().getStringExtra("serviceType");
+        
+        initView();
         initBusRouteStopRecyclerView();
         initListener();
     }
@@ -70,6 +77,25 @@ public class BusRouteDetailViewActivity extends AppCompatActivity implements OnM
         mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(point1, 16f));
     }
 
+    public void initView(){
+        SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
+                .findFragmentById(R.id.map);
+        mapFragment.getMapAsync(this);
+        busRouteStopRecyclerView = findViewById(R.id.recyclerView2);
+
+        TextView busRouteNumber = findViewById(R.id.bus_detail_activity_route_number);
+        TextView busRouteDestination = findViewById(R.id.bus_detail_activity_route_dest);
+        busRouteDestination.setSingleLine(true);
+        busRouteDestination.setMarqueeRepeatLimit(-1);
+        busRouteDestination.setScroller(new Scroller(this));
+        busRouteDestination.setMovementMethod(LinkMovementMethod.getInstance());
+        busRouteDestination.setSelected(true);
+
+        busRouteNumber.setText(routeNumber);
+        busRouteDestination.setText(routeDestination);
+        Log.d("LogBusRouteDetailView", "Route: " + routeNumber + " Destination: " + routeDestination + " Bound: " + routeBound + " Service Type: " + routeServiceType);
+    }
+
     public void initListener(){
         ImageView backBtn = findViewById(R.id.bus_detail_activity_back_button);
         backBtn.setOnClickListener(v -> finish());
@@ -77,8 +103,8 @@ public class BusRouteDetailViewActivity extends AppCompatActivity implements OnM
 
     public void initBusRouteStopRecyclerView(){
         busRouteStopItems = new java.util.ArrayList<>();
-        busRouteStopItems.add(new BusRouteStopItem("10", "Outbound", "Express", "Canton Road", "沙田站", "沙田站", "S123456789"));
-        busRouteStopItems.add(new BusRouteStopItem("10", "Inbound", "Regular", "Shek Kip Mei", "深水埗站", "深水埗站", "D123456789"));
+        busRouteStopItems.add(new BusRouteStopItem("10", "Outbound", "Express", "Wong Tai Sin Bus Terminus", "沙田站", "沙田站", "S123456789"));
+        busRouteStopItems.add(new BusRouteStopItem("10", "Inbound", "Regular", "Lai Tak Estate", "深水埗站", "深水埗站", "D123456789"));
         adapter = new BusRouteStopItemAdapter(this, busRouteStopItems);
         busRouteStopRecyclerView.setLayoutManager(new androidx.recyclerview.widget.LinearLayoutManager(this));
         busRouteStopRecyclerView.setAdapter(adapter);

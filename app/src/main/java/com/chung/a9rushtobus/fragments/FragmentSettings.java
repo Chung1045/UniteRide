@@ -58,7 +58,7 @@ public class FragmentSettings extends Fragment {
     private void updateNavigationIcon(MaterialToolbar toolbar) {
         int backStackCount = getChildFragmentManager().getBackStackEntryCount();
         if (backStackCount > 0) {
-            toolbar.setNavigationIcon(R.drawable.baseline_arrow_back_24);
+            toolbar.setNavigationIcon(R.drawable.back);
         } else {
             toolbar.setNavigationIcon(null);
         }

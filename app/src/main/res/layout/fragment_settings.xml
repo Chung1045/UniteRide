@@ -4,7 +4,7 @@
     android:id="@+id/coordinatorLayout4"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="?attr/colorSurface">
+    android:background="@color/brand_colorSurface">
 
     <androidx.coordinatorlayout.widget.CoordinatorLayout
         android:id="@+id/coordinator_layout_fragment_settings"
@@ -40,7 +40,7 @@
                     android:id="@+id/settingsToolBar"
                     android:layout_width="match_parent"
                     android:layout_height="?attr/actionBarSize"
-                    app:navigationIcon="@drawable/baseline_arrow_back_24"
+                    app:navigationIcon="@drawable/back"
                     android:elevation="0dp"
                     app:layout_collapseMode="pin"
                     app:title="Settings" />

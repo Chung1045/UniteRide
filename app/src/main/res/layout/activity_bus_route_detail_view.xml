@@ -61,6 +61,7 @@
         app:layout_constraintTop_toTopOf="@+id/recyclerGuideline">
 
         <TextView
+            android:id="@+id/bus_detail_activity_route_number"
             android:layout_width="60dp"
             android:layout_height="wrap_content"
             android:gravity="center_horizontal"
@@ -69,6 +70,7 @@
             android:textStyle="bold" />
 
         <TextView
+            android:id="@+id/bus_detail_activity_route_dest"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="To Wong Tai Sin"

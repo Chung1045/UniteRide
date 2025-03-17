@@ -30,6 +30,7 @@ import okhttp3.Request;
 import okhttp3.Response;
 
 public class DataFetcher {
+    private static final String KMB_BASE_URL = "https://data.etabus.gov.hk/v1/transport/kmb/";
     private static final String BUS_ROUTES_URL = "https://data.etabus.gov.hk/v1/transport/kmb/route/";
     private static final String TRAFFIC_NEWS_URL = "https://programme.rthk.hk/channel/radio/trafficnews/index.php";
     private final ExecutorService executorService;
@@ -64,6 +65,68 @@ public class DataFetcher {
                     mainHandler.post(() -> onSuccess.accept(routes));
                 } catch (JSONException e) {
                     mainHandler.post(() -> onError.accept("Error parsing JSON: " + e.getMessage()));
+                }
+            }
+        });
+    }
+
+    public void fetchStopEtaInfo(){
+        Log.d("DataFetchKMB", "Fetching stop ETA information");
+        Request request = new Request.Builder()
+                .url(KMB_BASE_URL + "eta/A60AE774B09A5E44/40/1")
+                .build();
+
+        client.newCall(request).enqueue(new Callback() {
+            @Override
+            public void onFailure(Call call, IOException e) {
+                Log.e("DataFetchKMB", "Failed to fetch data: " + e.getMessage());
+            }
+
+            @Override
+            public void onResponse(Call call, Response response) throws IOException {
+                if (!response.isSuccessful()) {
+                    Log.e("DataFetchKMB", "Error: " + response.code());
+                    return;
+                }
+
+                try {
+                    String jsonData = response.body().string();
+                    Log.d("DataFetchKMB", jsonData);
+
+                } catch (Exception e) {
+                    Log.e("DataFetchKMB", "Error parsing JSON: " + e.getMessage());
+                }
+            }
+        });
+    }
+
+    public void fetchRouteStopInfo() {
+        Log.d("DataFetchKMB", "Fetching route stop information");
+        Request request = new Request.Builder()
+                .url(KMB_BASE_URL + "route-stop/1A/outbound/1")
+                .build();
+
+        client.newCall(request).enqueue(new Callback() {
+            @Override
+            public void onFailure(Call call, IOException e) {
+                Log.e("DataFetchKMB", "Failed to fetch data: " + e.getMessage());
+            }
+
+            @Override
+            public void onResponse(Call call, Response response) throws IOException {
+                if (!response.isSuccessful()) {
+                    Log.e("DataFetchKMB", "Error: " + response.code());
+                    return;
+                }
+
+                try {
+                    String jsonData = response.body().string();
+
+                    // Log all the route stop information to console
+                    Log.d("DataFetchKMB", jsonData);
+
+                } catch (Exception e) {
+                    Log.e("DataFetchKMB", "Error parsing JSON: " + e.getMessage());
                 }
             }
         });
