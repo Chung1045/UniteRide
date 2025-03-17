@@ -1,4 +1,4 @@
-package com.chung.a9rushtobus;
+package com.chung.a9rushtobus.elements;
 
 import android.view.LayoutInflater;
 import android.view.View;
@@ -8,7 +8,8 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
-import java.util.ArrayList;
+import com.chung.a9rushtobus.R;
+
 import java.util.List;
 
 public class RTHKTrafficAdapter extends RecyclerView.Adapter<RTHKTrafficAdapter.ViewHolder> {

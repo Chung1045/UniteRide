@@ -1,4 +1,4 @@
-package com.chung.a9rushtobus;
+package com.chung.a9rushtobus.fragments;
 
 import android.content.pm.PackageManager;
 import android.os.Bundle;
@@ -13,6 +13,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 
+import com.chung.a9rushtobus.R;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationServices;
 

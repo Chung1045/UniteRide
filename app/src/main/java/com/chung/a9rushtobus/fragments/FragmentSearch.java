@@ -1,4 +1,4 @@
-package com.chung.a9rushtobus;
+package com.chung.a9rushtobus.fragments;
 
 import android.content.Context;
 import android.graphics.Rect;
@@ -17,6 +17,11 @@ import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
 import android.widget.ProgressBar;
 import android.widget.Toast;
+
+import com.chung.a9rushtobus.DataFetcher;
+import com.chung.a9rushtobus.R;
+import com.chung.a9rushtobus.elements.BusRoute;
+import com.chung.a9rushtobus.elements.BusRouteAdapter;
 
 import java.util.ArrayList;
 import java.util.List;

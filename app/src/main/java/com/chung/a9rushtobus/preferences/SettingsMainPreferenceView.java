@@ -1,15 +1,16 @@
-package com.chung.a9rushtobus;
+package com.chung.a9rushtobus.preferences;
 
 import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
-import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.preference.Preference;
 import androidx.preference.PreferenceFragmentCompat;
 
+import com.chung.a9rushtobus.OnboardingActivity;
+import com.chung.a9rushtobus.R;
 import com.google.android.material.appbar.CollapsingToolbarLayout;
 import com.google.android.material.appbar.MaterialToolbar;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
@@ -97,6 +98,10 @@ public class SettingsMainPreferenceView extends PreferenceFragmentCompat {
 
         accessibilityPreference.setOnPreferenceClickListener(view -> {
             updateToolbarTitle("Accessibility");
+            getParentFragmentManager().beginTransaction()
+                    .replace(R.id.fragmentContainerView, new SettingsAccessibilityPreferenceView())
+                    .addToBackStack(null)
+                    .commit();
             return false;
         });
 

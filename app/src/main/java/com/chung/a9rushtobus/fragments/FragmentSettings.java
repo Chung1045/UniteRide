@@ -1,4 +1,4 @@
-package com.chung.a9rushtobus;
+package com.chung.a9rushtobus.fragments;
 
 import android.os.Bundle;
 
@@ -8,6 +8,8 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
+import com.chung.a9rushtobus.R;
+import com.chung.a9rushtobus.preferences.SettingsMainPreferenceView;
 import com.google.android.material.appbar.MaterialToolbar;
 
 public class FragmentSettings extends Fragment {

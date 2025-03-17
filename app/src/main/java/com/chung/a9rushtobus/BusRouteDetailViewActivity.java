@@ -1,6 +1,7 @@
 package com.chung.a9rushtobus;
 
 import android.os.Bundle;
+import android.widget.ImageView;
 
 import androidx.activity.EdgeToEdge;
 import androidx.annotation.NonNull;
@@ -8,7 +9,11 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
+import androidx.recyclerview.widget.RecyclerView;
 
+import com.chung.a9rushtobus.elements.BusRouteAdapter;
+import com.chung.a9rushtobus.elements.BusRouteStopItem;
+import com.chung.a9rushtobus.elements.BusRouteStopItemAdapter;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
@@ -16,10 +21,16 @@ import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
+import com.google.android.material.appbar.MaterialToolbar;
+
+import java.util.List;
 
 public class BusRouteDetailViewActivity extends AppCompatActivity implements OnMapReadyCallback {
 
     private GoogleMap mMap;
+    private BusRouteStopItemAdapter adapter;
+    private RecyclerView busRouteStopRecyclerView;
+    private List<BusRouteStopItem> busRouteStopItems;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -35,6 +46,9 @@ public class BusRouteDetailViewActivity extends AppCompatActivity implements OnM
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
+        busRouteStopRecyclerView = findViewById(R.id.recyclerView2);
+        initBusRouteStopRecyclerView();
+        initListener();
     }
 
     @Override
@@ -54,5 +68,19 @@ public class BusRouteDetailViewActivity extends AppCompatActivity implements OnM
         mMap.addMarker(new MarkerOptions().position(point2).title("天虹小學"));
 
         mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(point1, 16f));
+    }
+
+    public void initListener(){
+        ImageView backBtn = findViewById(R.id.bus_detail_activity_back_button);
+        backBtn.setOnClickListener(v -> finish());
+    }
+
+    public void initBusRouteStopRecyclerView(){
+        busRouteStopItems = new java.util.ArrayList<>();
+        busRouteStopItems.add(new BusRouteStopItem("10", "Outbound", "Express", "Canton Road", "沙田站", "沙田站", "S123456789"));
+        busRouteStopItems.add(new BusRouteStopItem("10", "Inbound", "Regular", "Shek Kip Mei", "深水埗站", "深水埗站", "D123456789"));
+        adapter = new BusRouteStopItemAdapter(this, busRouteStopItems);
+        busRouteStopRecyclerView.setLayoutManager(new androidx.recyclerview.widget.LinearLayoutManager(this));
+        busRouteStopRecyclerView.setAdapter(adapter);
     }
 }

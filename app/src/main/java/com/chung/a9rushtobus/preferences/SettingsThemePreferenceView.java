@@ -1,4 +1,4 @@
-package com.chung.a9rushtobus;
+package com.chung.a9rushtobus.preferences;
 
 import android.os.Bundle;
 import android.view.View;
@@ -9,6 +9,8 @@ import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatDelegate;
 import androidx.preference.PreferenceFragmentCompat;
 
+import com.chung.a9rushtobus.R;
+import com.chung.a9rushtobus.UserPreferences;
 import com.chung.a9rushtobus.elements.CustomMainSwitchPreference;
 import com.chung.a9rushtobus.elements.CustomRadioButtonPreference;
 import com.google.android.material.appbar.CollapsingToolbarLayout;

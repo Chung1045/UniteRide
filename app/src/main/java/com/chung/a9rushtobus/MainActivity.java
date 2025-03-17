@@ -6,10 +6,16 @@ import android.os.Bundle;
 import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.app.AppCompatDelegate;
+import androidx.core.content.ContextCompat;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
+import com.chung.a9rushtobus.fragments.FragmentNearby;
+import com.chung.a9rushtobus.fragments.FragmentSaved;
+import com.chung.a9rushtobus.fragments.FragmentSearch;
+import com.chung.a9rushtobus.fragments.FragmentSettings;
+import com.chung.a9rushtobus.fragments.FragmentTrafficNews;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.android.material.color.DynamicColors;
 
@@ -40,6 +46,9 @@ public class MainActivity extends AppCompatActivity {
 
         bottomNav.setOnItemSelectedListener(item -> {
             int menuItemId = item.getItemId();
+            bottomNav.setItemActiveIndicatorColor(
+                    ContextCompat.getColorStateList(this, R.color.brand_colorPrimary)
+            );
             if (menuItemId == R.id.menu_item_main_saved) {
                 getSupportFragmentManager().beginTransaction().replace(R.id.fragmentView_main, new FragmentSaved()).commit();
                 return true;

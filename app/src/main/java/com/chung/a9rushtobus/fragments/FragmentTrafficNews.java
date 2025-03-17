@@ -1,4 +1,4 @@
-package com.chung.a9rushtobus;
+package com.chung.a9rushtobus.fragments;
 
 import android.os.Bundle;
 import android.os.Handler;
@@ -14,6 +14,11 @@ import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
+
+import com.chung.a9rushtobus.DataFetcher;
+import com.chung.a9rushtobus.R;
+import com.chung.a9rushtobus.elements.RTHKTrafficAdapter;
+import com.chung.a9rushtobus.elements.RTHKTrafficEntry;
 
 import java.util.ArrayList;
 import java.util.List;

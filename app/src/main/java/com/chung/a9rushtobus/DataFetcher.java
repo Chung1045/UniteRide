@@ -4,6 +4,9 @@ import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
 
+import com.chung.a9rushtobus.elements.BusRoute;
+import com.chung.a9rushtobus.elements.RTHKTrafficEntry;
+
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;

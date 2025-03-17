@@ -1,4 +1,4 @@
-package com.chung.a9rushtobus;
+package com.chung.a9rushtobus.elements;
 
 public class RTHKTrafficEntry {
     private String news;

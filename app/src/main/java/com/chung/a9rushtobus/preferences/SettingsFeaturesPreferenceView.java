@@ -1,4 +1,4 @@
-package com.chung.a9rushtobus;
+package com.chung.a9rushtobus.preferences;
 
 import android.os.Bundle;
 import android.view.View;
@@ -9,6 +9,7 @@ import androidx.annotation.Nullable;
 import androidx.preference.PreferenceFragmentCompat;
 import androidx.preference.SwitchPreferenceCompat;
 
+import com.chung.a9rushtobus.R;
 import com.google.android.material.appbar.MaterialToolbar;
 
 public class SettingsFeaturesPreferenceView extends PreferenceFragmentCompat {

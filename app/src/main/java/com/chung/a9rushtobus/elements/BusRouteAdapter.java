@@ -1,4 +1,4 @@
-package com.chung.a9rushtobus;
+package com.chung.a9rushtobus.elements;
 
 import static androidx.core.content.ContextCompat.startActivity;
 import android.content.Context;
@@ -12,6 +12,10 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
+
+import com.chung.a9rushtobus.BusRouteDetailViewActivity;
+import com.chung.a9rushtobus.R;
+
 import java.util.List;
 
 public class BusRouteAdapter extends RecyclerView.Adapter<BusRouteAdapter.ViewHolder> {

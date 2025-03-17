@@ -3,23 +3,39 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:minHeight="?android:attr/listPreferredItemHeightSmall"
-    android:padding="10dp"
+    android:padding="16dp"
     android:gravity="center_vertical"
     android:clickable="true"
     android:focusable="true">
 
-    <TextView
-        android:id="@android:id/title"
+    <LinearLayout
         android:layout_marginStart="20dp"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_weight="1"
-        android:textSize="20sp"
-        android:text="Sample option" />
+        android:orientation="vertical">
+
+        <TextView
+            android:id="@android:id/title"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textSize="20sp"
+            android:text="Sample option" />
+
+        <TextView
+            android:id="@android:id/summary"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textSize="16sp"
+            android:text="Sample summary" />
+
+    </LinearLayout>
+
 
     <com.google.android.material.radiobutton.MaterialRadioButton
+        android:layout_marginEnd="20dp"
         android:id="@+id/radio_widget"
-        android:layout_width="wrap_content"
+        android:layout_width="30dp"
         android:layout_height="wrap_content"
         android:clickable="false"/>
 </LinearLayout>

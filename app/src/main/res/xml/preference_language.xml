@@ -29,7 +29,8 @@
         android:key="pref_language_english"
         android:layout="@layout/components_radio_option"
         android:title="English"
-        android:summary="English"
         android:defaultValue="false"/>
+
+
 
 </androidx.preference.PreferenceScreen>

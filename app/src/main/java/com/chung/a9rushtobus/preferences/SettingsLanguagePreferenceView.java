@@ -1,8 +1,10 @@
-package com.chung.a9rushtobus;
+package com.chung.a9rushtobus.preferences;
 
 import android.os.Bundle;
 
 import androidx.preference.PreferenceFragmentCompat;
+
+import com.chung.a9rushtobus.R;
 
 public class SettingsLanguagePreferenceView extends PreferenceFragmentCompat {
 
