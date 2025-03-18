@@ -5,6 +5,7 @@ import android.os.Looper;
 import android.util.Log;
 
 import com.chung.a9rushtobus.elements.BusRoute;
+import com.chung.a9rushtobus.elements.BusRouteStopItem;
 import com.chung.a9rushtobus.elements.RTHKTrafficEntry;
 
 import org.json.JSONArray;
@@ -17,6 +18,7 @@ import org.jsoup.select.Elements;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -38,7 +40,7 @@ public class DataFetcher {
     private final OkHttpClient client = new OkHttpClient();
 
     public DataFetcher(){
-        this.executorService = Executors.newSingleThreadExecutor();
+        this.executorService = Executors.newCachedThreadPool();
     }
 
     public void fetchAllBusRoutes(Consumer<List<BusRoute>> onSuccess, Consumer<String> onError) {
@@ -100,36 +102,107 @@ public class DataFetcher {
         });
     }
 
-    public void fetchRouteStopInfo() {
+    public void fetchRouteStopInfo(String route, String company, String bound, String serviceType,
+                                   Consumer<JSONArray> onSuccess, Consumer<String> onError) {
         Log.d("DataFetchKMB", "Fetching route stop information");
         Request request = new Request.Builder()
-                .url(KMB_BASE_URL + "route-stop/1A/outbound/1")
+                .url(KMB_BASE_URL + "route-stop/" + route + "/" + bound + "/" + serviceType)
                 .build();
 
         client.newCall(request).enqueue(new Callback() {
             @Override
             public void onFailure(Call call, IOException e) {
-                Log.e("DataFetchKMB", "Failed to fetch data: " + e.getMessage());
+                mainHandler.post(() -> onError.accept("Failed to fetch data: " + e.getMessage()));
             }
 
             @Override
             public void onResponse(Call call, Response response) throws IOException {
                 if (!response.isSuccessful()) {
-                    Log.e("DataFetchKMB", "Error: " + response.code());
+                    mainHandler.post(() -> onError.accept("Error: " + response.code()));
                     return;
                 }
 
-                try {
-                    String jsonData = response.body().string();
-
-                    // Log all the route stop information to console
-                    Log.d("DataFetchKMB", jsonData);
-
-                } catch (Exception e) {
-                    Log.e("DataFetchKMB", "Error parsing JSON: " + e.getMessage());
-                }
+                executorService.execute(() -> {
+                    try {
+                        String jsonData = response.body().string();
+                        JSONArray stopInfoArray = processRouteStopInfo(jsonData);
+                        mainHandler.post(() -> onSuccess.accept(stopInfoArray));
+                    } catch (Exception e) {
+                        mainHandler.post(() -> onError.accept("Error processing data: " + e.getMessage()));
+                    }
+                });
             }
         });
+    }
+
+    private JSONArray processRouteStopInfo(String jsonData) {
+        JSONArray returnArray = new JSONArray();
+        try {
+            JSONObject jsonObject = new JSONObject(jsonData);
+            JSONArray stopIDsArray = jsonObject.getJSONArray("data");
+
+            for (int i = 0; i < stopIDsArray.length(); i++) {
+                JSONObject stopObject = stopIDsArray.getJSONObject(i);
+                String stopID = stopObject.getString("stop");
+                JSONObject stopName = fetchStopName(stopID);
+
+                // Create a new object with all information
+                JSONObject stopInfo = new JSONObject();
+                stopInfo.put("seq", i + 1);
+                stopInfo.put("stop_id", stopID);
+
+                // Add data from original stop object
+                for (Iterator<String> it = stopObject.keys(); it.hasNext();) {
+                    String key = it.next();
+                    if (!key.equals("stop")) { // Already added as stop_id
+                        stopInfo.put(key, stopObject.get(key));
+                    }
+                }
+
+                // Add name and location data
+                if (stopName != null) {
+                    stopInfo.put("name_en", stopName.getString("name_en"));
+                    stopInfo.put("name_tc", stopName.getString("name_tc"));
+                    stopInfo.put("name_sc", stopName.getString("name_sc"));
+                    stopInfo.put("stopID", stopName.getString("stop"));
+                    stopInfo.put("lat", stopName.getString("lat"));
+                    stopInfo.put("long", stopName.getString("long"));
+                }
+
+                // Add to return array
+                returnArray.put(stopInfo);
+
+                // Log for debugging
+                Log.d("DataFetchKMB", "Added stop: " + stopID);
+            }
+
+        } catch (Exception e) {
+            Log.e("DataFetchKMB", "Error: " + e.getMessage());
+        }
+
+        return returnArray;
+    }
+
+    private JSONObject fetchStopName(String stopID) {
+        Request request = new Request.Builder()
+                .url(KMB_BASE_URL + "stop/" + stopID)
+                .build();
+
+        try {
+            Response response = client.newCall(request).execute();
+            if (!response.isSuccessful()) {
+                Log.e("DataFetchKMB", "Error: " + response.code());
+                return null;
+            }
+
+            String jsonData = response.body().string();
+            JSONObject jsonObject = new JSONObject(jsonData);
+            return jsonObject.getJSONObject("data");
+
+        } catch (Exception e) {
+            Log.e("DataFetchKMB", "Error fetching stop name: " + e.getMessage());
+            return null;
+        }
     }
 
     private List<BusRoute> parseBusRouteJsonData(String jsonData) throws JSONException {
@@ -164,7 +237,6 @@ public class DataFetcher {
             try {
                 Document doc = Jsoup.connect(TRAFFIC_NEWS_URL).get();
                 Log.d("DataFetchRTHK", "Document fetched successfully");
-                Log.d("DataFetchRTHK", "Document content: " + doc);
                 return parseDocument(doc);
             } catch (IOException e) {
                 e.printStackTrace();
@@ -199,5 +271,4 @@ public class DataFetcher {
     public void shutdown() {
         executorService.shutdown();
     }
-
 }
