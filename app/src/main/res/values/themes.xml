@@ -24,5 +24,4 @@
         <item name="colorSurface">@color/brand_colorSurfaceSecondary</item>
         <item name="colorOnSurfaceVariant">@color/brand_colorPrimary</item>
     </style>
-
 </resources>
