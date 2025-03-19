@@ -47,7 +47,7 @@ public class BusRouteDetailViewActivity extends AppCompatActivity implements OnM
     private RecyclerView busRouteStopRecyclerView;
     private List<BusRouteStopItem> busRouteStopItems;
     private String routeNumber, routeDestination, routeBound, routeServiceType;
-    private ProgressBar loadingProgressBar;
+    private Utils utils;
     private DataFetcher dataFetcher;
 
     @Override
@@ -55,11 +55,15 @@ public class BusRouteDetailViewActivity extends AppCompatActivity implements OnM
         super.onCreate(savedInstanceState);
         EdgeToEdge.enable(this);
         setContentView(R.layout.activity_bus_route_detail_view);
-        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
+        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.activity_bus_detail_constraint_layout), (v, insets) -> {
             Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
             return insets;
         });
+
+        View v = findViewById(R.id.activity_bus_detail_constraint_layout);
+
+        utils = new Utils(this, v, this);
 
         routeNumber = getIntent().getStringExtra("route");
         routeDestination = getIntent().getStringExtra("destination");
@@ -121,7 +125,7 @@ public class BusRouteDetailViewActivity extends AppCompatActivity implements OnM
 
         // Initialize the RecyclerView immediately with an empty list
         busRouteStopItems = new ArrayList<>();
-        adapter = new BusRouteStopItemAdapter(this, busRouteStopItems);
+        adapter = new BusRouteStopItemAdapter(this, busRouteStopItems, utils);
         busRouteStopRecyclerView.setLayoutManager(new androidx.recyclerview.widget.LinearLayoutManager(this));
         busRouteStopRecyclerView.setAdapter(adapter);
 

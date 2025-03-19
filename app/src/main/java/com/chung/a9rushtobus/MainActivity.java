@@ -1,6 +1,7 @@
 package com.chung.a9rushtobus;
 
 import android.app.UiModeManager;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 
 import androidx.activity.EdgeToEdge;
@@ -22,6 +23,7 @@ import com.google.android.material.color.DynamicColors;
 public class MainActivity extends AppCompatActivity {
     private BottomNavigationView bottomNav;
     private UserPreferences userPreferences;
+    private SharedPreferences.OnSharedPreferenceChangeListener preferenceChangeListener;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -40,6 +42,29 @@ public class MainActivity extends AppCompatActivity {
         bottomNav = findViewById(R.id.bottomNav_main);
         initListener();
 
+        preferenceChangeListener = (sharedPreferences, key) -> {
+            if (UserPreferences.SETTINGS_FEATURE_SHOW_RTHK_NEWS.equals(key)) {
+                updateBottomNavVisibility();
+            }
+        };
+
+        UserPreferences.sharedPref.registerOnSharedPreferenceChangeListener(preferenceChangeListener);
+
+    }
+
+    private void updateBottomNavVisibility() {
+        BottomNavigationView bottomNav = findViewById(R.id.bottomNav_main);
+        boolean isVisible = UserPreferences.sharedPref.getBoolean(UserPreferences.SETTINGS_FEATURE_SHOW_RTHK_NEWS, false);
+        bottomNav.getMenu().findItem(R.id.menu_item_main_news).setVisible(isVisible);
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        // Unregister the listener to avoid memory leaks
+        if (preferenceChangeListener != null) {
+            UserPreferences.sharedPref.unregisterOnSharedPreferenceChangeListener(preferenceChangeListener);
+        }
     }
 
     private void initListener() {
@@ -68,6 +93,13 @@ public class MainActivity extends AppCompatActivity {
                 return false;
             }
         });
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        BottomNavigationView bottomNav = findViewById(R.id.bottomNav_main);
+        bottomNav.getMenu().findItem(R.id.menu_item_main_news).setVisible(UserPreferences.sharedPref.getBoolean(UserPreferences.SETTINGS_FEATURE_SHOW_RTHK_NEWS, false));
     }
 
     private void initTheme() {

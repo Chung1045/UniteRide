@@ -58,7 +58,6 @@ public class DataFetcher {
             public void onResponse(Call call, Response response) throws IOException {
                 if (!response.isSuccessful()) {
                     mainHandler.post(() -> onError.accept("Error: " + response.code()));
-                    return;
                 }
 
                 try {
@@ -88,7 +87,6 @@ public class DataFetcher {
             public void onResponse(Call call, Response response) throws IOException {
                 if (!response.isSuccessful()) {
                     Log.e("DataFetchKMB", "Error: " + response.code());
-                    return;
                 }
 
                 try {
@@ -119,7 +117,6 @@ public class DataFetcher {
             public void onResponse(Call call, Response response) throws IOException {
                 if (!response.isSuccessful()) {
                     mainHandler.post(() -> onError.accept("Error: " + response.code()));
-                    return;
                 }
 
                 executorService.execute(() -> {
@@ -203,6 +200,72 @@ public class DataFetcher {
             Log.e("DataFetchKMB", "Error fetching stop name: " + e.getMessage());
             return null;
         }
+    }
+
+    public void fetchStopETA(String stopID, String route, String serviceType, String company,
+                           Consumer<JSONArray> onSuccess, Consumer<String> onError) {
+        Log.d("DataFetchKMB", "Fetching stop ETA information");
+        if (company.equals("kmb")) {
+            String url = KMB_BASE_URL + "eta/" + stopID + "/" + route + "/" + serviceType;
+            Request request = new Request.Builder()
+                    .url(url)
+                    .build();
+            
+            Log.d("fetchStopETA", "Request URL: " + url);
+            
+            // Use enqueue for asynchronous network call instead of execute
+            client.newCall(request).enqueue(new Callback() {
+                @Override
+                public void onFailure(Call call, IOException e) {
+                    Log.d("DataFetchKMB", "In catch block");
+                    Log.e("DataFetchKMB", "Error: " + e.getMessage());
+                    mainHandler.post(() -> onError.accept("Network error: " + e.getMessage()));
+                }
+
+                @Override
+                public void onResponse(Call call, Response response) throws IOException {
+                    try {
+                        if (!response.isSuccessful()) {
+                            Log.d("DataFetchKMB", "Fetch unsuccessful");
+                            Log.e("DataFetchKMB", "Error: " + response.code());
+                            mainHandler.post(() -> onError.accept("API error: " + response.code()));
+                            return;
+                        }
+
+                        if (response.body() != null) {
+                            String jsonData = response.body().string();
+                            Log.d("DataFetchKMBETA_" + route, "DATA for stopID " + stopID + "\n" + jsonData);
+
+                            try {
+                                JSONObject jsonObject = new JSONObject(jsonData);
+                                JSONArray dataArray = jsonObject.getJSONArray("data");
+                                mainHandler.post(() -> onSuccess.accept(dataArray));
+                            } catch (JSONException e) {
+                                Log.e("DataFetchKMB", "JSON parsing error: " + e.getMessage());
+                                mainHandler.post(() -> onError.accept("JSON parsing error: " + e.getMessage()));
+                            }
+                        } else {
+                            Log.e("DataFetchKMB", "Response body is null");
+                            mainHandler.post(() -> onError.accept("Empty response"));
+                        }
+                    } catch (Exception e) {
+                        Log.d("DataFetchKMB", "In catch block");
+                        Log.e("DataFetchKMB", "Error processing response: " + e.getMessage());
+                        mainHandler.post(() -> onError.accept("Error processing response: " + e.getMessage()));
+                    }
+                }
+            });
+        } else {
+            Log.e("DataFetchKMB", "Error: " + "ETA for other bus company is coming soon");
+            mainHandler.post(() -> onError.accept("ETA for other bus company is coming soon"));
+        }
+    }
+    
+    // For backward compatibility
+    public void fetchStopETA(String stopID, String route, String serviceType, String company) {
+        fetchStopETA(stopID, route, serviceType, company, 
+            data -> Log.d("DataFetchKMB", "ETA data received but no handler provided: " + data.length() + " items"), 
+            error -> Log.e("DataFetchKMB", "ETA error: " + error));
     }
 
     private List<BusRoute> parseBusRouteJsonData(String jsonData) throws JSONException {
