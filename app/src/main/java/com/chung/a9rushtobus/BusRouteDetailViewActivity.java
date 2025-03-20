@@ -2,11 +2,11 @@ package com.chung.a9rushtobus;
 
 import android.graphics.Color;
 import android.os.Bundle;
+import android.os.Handler;
 import android.text.method.LinkMovementMethod;
 import android.util.Log;
 import android.view.View;
 import android.widget.ImageView;
-import android.widget.ProgressBar;
 import android.widget.Scroller;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -19,7 +19,6 @@ import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.chung.a9rushtobus.elements.BusRouteAdapter;
 import com.chung.a9rushtobus.elements.BusRouteStopItem;
 import com.chung.a9rushtobus.elements.BusRouteStopItemAdapter;
 import com.google.android.gms.maps.CameraUpdateFactory;
@@ -30,9 +29,7 @@ import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.PolylineOptions;
-import com.google.android.material.appbar.MaterialToolbar;
 
-import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -49,6 +46,7 @@ public class BusRouteDetailViewActivity extends AppCompatActivity implements OnM
     private String routeNumber, routeDestination, routeBound, routeServiceType;
     private Utils utils;
     private DataFetcher dataFetcher;
+    private Handler handler = new Handler();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -77,6 +75,7 @@ public class BusRouteDetailViewActivity extends AppCompatActivity implements OnM
 
         dataFetcher = new DataFetcher();
 
+
         initView();
         initListener();
     }
@@ -84,6 +83,7 @@ public class BusRouteDetailViewActivity extends AppCompatActivity implements OnM
     @Override
     protected void onDestroy() {
         super.onDestroy();
+        // Stop ETA updates
         if (dataFetcher != null) {
             dataFetcher.shutdown();
         }
@@ -106,11 +106,6 @@ public class BusRouteDetailViewActivity extends AppCompatActivity implements OnM
         mapFragment.getMapAsync(this);
 
         busRouteStopRecyclerView = findViewById(R.id.recyclerView2);
-
-        // Add a progress bar to your layout XML and initialize it here
-        // If you don't have a progress bar, add this to your layout:
-        // <ProgressBar android:id="@+id/loading_progress_bar" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_gravity="center" android:visibility="gone" />
-
         TextView busRouteNumber = findViewById(R.id.bus_detail_activity_route_number);
         TextView busRouteDestination = findViewById(R.id.bus_detail_activity_route_dest);
         busRouteDestination.setSingleLine(true);
@@ -126,6 +121,7 @@ public class BusRouteDetailViewActivity extends AppCompatActivity implements OnM
         // Initialize the RecyclerView immediately with an empty list
         busRouteStopItems = new ArrayList<>();
         adapter = new BusRouteStopItemAdapter(this, busRouteStopItems, utils);
+        getLifecycle().addObserver(adapter);
         busRouteStopRecyclerView.setLayoutManager(new androidx.recyclerview.widget.LinearLayoutManager(this));
         busRouteStopRecyclerView.setAdapter(adapter);
 
@@ -197,14 +193,12 @@ public class BusRouteDetailViewActivity extends AppCompatActivity implements OnM
                         mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(stopPositions.get(0), 15f));
                     }
 
-                    // Hide loading indicator
                 },
                 error -> {
                     // Handle error
                     Log.e("BusRouteDetailView", "Error fetching route stops: " + error);
                     // Show error message to user
                     Toast.makeText(this, "Failed to load bus stops: " + error, Toast.LENGTH_LONG).show();
-                    // Hide loading indicator
                 }
         );
     }

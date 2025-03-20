@@ -1,5 +1,8 @@
 package com.chung.a9rushtobus.elements;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class BusRouteStopItem {
     private String route;
     private String bound;
@@ -11,6 +14,8 @@ public class BusRouteStopItem {
     private int stopEta1;
     private int stopEta2;
     private int stopEta3;
+    private boolean isExpanded = false;
+    private List<String> etaData = new ArrayList<>();
 
     public BusRouteStopItem(String route, String bound, String serviceType,
                             String stopEn, String stopTc, String stopSc, String stopID) {
@@ -73,6 +78,22 @@ public class BusRouteStopItem {
 
     public void setStopEta3(int stopEta3) {
         this.stopEta3 = stopEta3;
+    }
+
+    public boolean isExpanded() {
+        return isExpanded;
+    }
+
+    public void setExpanded(boolean expanded) {
+        isExpanded = expanded;
+    }
+
+    public List<String> getEtaData() {
+        return etaData;
+    }
+
+    public void setEtaData(List<String> etaData) {
+        this.etaData = etaData;
     }
 
 }
