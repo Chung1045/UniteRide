@@ -11,6 +11,7 @@ public class BusRouteStopItem {
     private String stopTc;
     private String stopSc;
     private String stopID;
+    private String closestETA;
     private int stopEta1;
     private int stopEta2;
     private int stopEta3;
@@ -88,8 +89,16 @@ public class BusRouteStopItem {
         isExpanded = expanded;
     }
 
-    public List<String> getEtaData() {
+    public List<String> getEtaDataFull() {
         return etaData;
+    }
+
+    public void setClosestETA(String closestETA) {
+        this.closestETA = closestETA;
+    }
+
+    public String getClosestETA() {
+        return closestETA;
     }
 
     public void setEtaData(List<String> etaData) {

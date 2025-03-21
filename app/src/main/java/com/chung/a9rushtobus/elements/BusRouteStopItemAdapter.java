@@ -69,7 +69,8 @@ public class BusRouteStopItemAdapter extends RecyclerView.Adapter<BusRouteStopIt
 
         // Clear previous ETA views
         holder.etaLayout.removeAllViews();
-        List<String> etaData = item.getEtaData();
+        List<String> etaDataFull = item.getEtaDataFull();
+        String etaData = item.getClosestETA();
 
         if (etaData == null || etaData.isEmpty()) {
             // Show placeholders if no data available yet
@@ -77,13 +78,13 @@ public class BusRouteStopItemAdapter extends RecyclerView.Adapter<BusRouteStopIt
                 TextView etaTextView = new TextView(context);
                 etaTextView.setText("Loading ETA...");
                 etaTextView.setTextSize(TypedValue.COMPLEX_UNIT_SP, 16);
-                etaTextView.setTextColor(Color.GRAY);
+                etaTextView.setTextColor(R.color.foreground);
                 etaTextView.setPadding(8, 0, 8, 0);
                 holder.etaLayout.addView(etaTextView);
             }
         } else {
             // Bind fetched ETA data
-            for (String eta : etaData) {
+            for (String eta : etaDataFull) {
                 TextView etaTextView = new TextView(context);
                 etaTextView.setText(eta);
                 etaTextView.setTextSize(TypedValue.COMPLEX_UNIT_SP, 16);
@@ -94,8 +95,8 @@ public class BusRouteStopItemAdapter extends RecyclerView.Adapter<BusRouteStopIt
         }
 
         // Update the firstETA TextView if available
-        if (!etaData.isEmpty() && holder.firstETA != null) {
-            holder.firstETA.setText(etaData.get(0));
+        if (!etaDataFull.isEmpty() && holder.firstETA != null) {
+            holder.firstETA.setText(etaData);
         }
 
         // Modify the click listener to update the data model
@@ -110,18 +111,21 @@ public class BusRouteStopItemAdapter extends RecyclerView.Adapter<BusRouteStopIt
     @Override
     public void onResume(@NonNull LifecycleOwner owner) {
         Log.d("ETARefresh", "Activity is in onResume state");
+        Log.d("ETARefresh", "Starting periodic ETA updates at onResume");
         startPeriodicUpdates();
     }
 
     @Override
     public void onPause(@NonNull LifecycleOwner owner) {
         Log.d("ETARefresh", "Activity is in onPause state");
+        Log.d("ETARefresh", "Stopping periodic ETA updates at onPause");
         stopPeriodicUpdates();
     }
 
     @Override
     public void onDestroy(@NonNull LifecycleOwner owner) {
         Log.d("ETARefresh", "Activity is Destroyed");
+        Log.d("ETARefresh", "Stopping periodic ETA updates at onDestroy");
         stopPeriodicUpdates();
     }
 
@@ -132,11 +136,26 @@ public class BusRouteStopItemAdapter extends RecyclerView.Adapter<BusRouteStopIt
 
     // Method to start periodic updates
     public void startPeriodicUpdates() {
-        if (!isUpdating) {
-            isUpdating = true;
-            updateHandler.post(updateRunnable);
-            Log.d("ETARefresh", "Started periodic ETA updates");
+        Log.d("ETARefresh", "Starting method to start periodic updates");
+        Log.d("ETARefresh", "Checking if it is updating: " + isUpdating);
+
+        if (isUpdating) {
+            Log.d("ETARefresh", "Already updating, so not starting periodic updates");
+            return;
         }
+
+        Log.d("ETARefresh", "Not updating, so starting periodic updates");
+        Log.d("ETARefresh", "Number of stops to update: " + items.size());
+
+        if (items.isEmpty()) {
+            Log.d("ETARefresh", "No stops to update. Retrying in 3 seconds...");
+            updateHandler.postDelayed(this::startPeriodicUpdates, 3000);
+            return;
+        }
+        
+        isUpdating = true;
+        updateHandler.post(updateRunnable);
+        Log.d("ETARefresh", "Started periodic ETA updates");
     }
 
     // Method to stop periodic updates
@@ -150,59 +169,17 @@ public class BusRouteStopItemAdapter extends RecyclerView.Adapter<BusRouteStopIt
 
     // Method to refresh all visible ETA data
     private void refreshAllEtaData() {
-        Log.d("ETARefresh", "Refreshing all ETA data");
+        Log.d("ETARefresh", "In refreshAllEtaData method");
+        Log.d("ETARefresh", "Attempting to fetch ETA data for " + items.size() + " stops");
 
         for (int position = 0; position < items.size(); position++) {
             BusRouteStopItem item = items.get(position);
             int finalPosition = position;
             long startTime = System.currentTimeMillis();
 
-            Log.d("ETARefresh", "Fetching ETA for position " + finalPosition);
+            Log.d("ETARefresh", "Fetching ETA for position " + (finalPosition + 1) + " of " + items.size());
 
-            dataFetcher.fetchStopETA(item.getStopID(), item.getRoute(), item.getServiceType(), "kmb",
-                    etaDataArray -> {
-                        long elapsedTime = System.currentTimeMillis() - startTime;
-                        List<String> newEtaData = new ArrayList<>();
-
-                        try {
-                            if (etaDataArray.length() == 0) {
-                                newEtaData.add("No ETA data available");
-                            } else {
-                                for (int i = 0; i < Math.min(etaDataArray.length(), 3); i++) {
-                                    JSONObject etaData = etaDataArray.getJSONObject(i);
-                                    if (!etaData.getString("service_type").equals(item.getServiceType())) {
-                                        continue;
-                                    }
-                                    String etaTime = utils.parseTime(etaData.optString("eta", "N/A"));
-                                    String etaMinutes = utils.getTimeDifference(etaData.optString("eta", "N/A"));
-                                    String displayText = etaMinutes.equals("N/A") ?
-                                            "---" : etaTime + " " + etaMinutes + " mins";
-                                    newEtaData.add(displayText);
-                                }
-                            }
-
-                            item.setEtaData(newEtaData);
-
-                            Log.d("ETARefresh", "ETA fetched for position " + finalPosition + " in " + elapsedTime + "ms");
-
-                            // Force RecyclerView to update immediately
-                            new Handler(Looper.getMainLooper()).post(() -> notifyItemChanged(finalPosition, null));
-
-                        } catch (JSONException e) {
-                            Log.e(TAG, "Error parsing ETA data: " + e.getMessage());
-                        }
-                    },
-                    error -> {
-                        long elapsedTime = System.currentTimeMillis() - startTime;
-                        Log.e(TAG, "Error fetching ETA for position " + finalPosition + " in " + elapsedTime + "ms: " + error);
-
-                        List<String> errorData = new ArrayList<>();
-                        errorData.add("Error: " + error);
-                        item.setEtaData(errorData);
-
-                        new Handler(Looper.getMainLooper()).post(() -> notifyItemChanged(finalPosition, null));
-                    }
-            );
+            fetchEtaForStop(item, finalPosition, startTime);
         }
 
         if (isUpdating) {
@@ -210,7 +187,85 @@ public class BusRouteStopItemAdapter extends RecyclerView.Adapter<BusRouteStopIt
         }
     }
 
+    private void fetchEtaForStop(BusRouteStopItem item, int position, long startTime) {
+        dataFetcher.fetchStopETA(item.getStopID(), item.getRoute(), item.getServiceType(), "kmb",
+                etaDataArray -> {
+                    long elapsedTime = System.currentTimeMillis() - startTime;
+                    List<String> newEtaData = new ArrayList<>();
 
+                    try {
+                        if (etaDataArray.length() == 0) {
+                            newEtaData.add("No ETA data available");
+                            item.setClosestETA(null);
+                        } else {
+                            boolean needsRefetch = false;
+
+                            for (int i = 0; i < Math.min(etaDataArray.length(), 3); i++) {
+                                JSONObject etaData = etaDataArray.getJSONObject(i);
+                                if (!etaData.getString("service_type").equals(item.getServiceType())) {
+                                    continue;
+                                }
+
+                                String etaTime = utils.parseTime(etaData.optString("eta", "N/A"));
+                                String etaMinutes = utils.getTimeDifference(etaData.optString("eta", "N/A"));
+                                String displayText = etaMinutes.equals("N/A") ?
+                                        "No available bus" : etaTime + " " + etaMinutes + " mins";
+
+                                if (i == 0) {
+                                    if (etaMinutes.equals("N/A")) {
+                                        item.setClosestETA("!");
+                                    } else if (etaMinutes.equals("0")) {
+                                        item.setClosestETA("Arriving");
+                                    } else if (Integer.parseInt(etaMinutes) < 0) {
+                                        item.setClosestETA("---");
+                                        Log.d("ETARefresh", "Position " + (position + 1) + " Negative ETA detected: " + etaMinutes + " mins. Will refetch.");
+                                        needsRefetch = true;
+                                    } else {
+                                        item.setClosestETA(etaMinutes + " mins");
+                                    }
+                                }
+
+                                newEtaData.add(displayText);
+                            }
+
+                            // Set the current data regardless
+                            item.setEtaData(newEtaData);
+
+                            // Update the UI with current data
+                            new Handler(Looper.getMainLooper()).post(() -> notifyItemChanged(position, null));
+
+                            // If negative ETA detected, refetch after a short delay
+                            if (needsRefetch) {
+                                new Handler(Looper.getMainLooper()).postDelayed(() -> {
+                                    Log.d("ETARefresh", "Refetching ETA for position " + position + " due to negative value");
+                                    fetchEtaForStop(item, position, System.currentTimeMillis());
+                                }, 5000); // Wait 5 seconds before refetching
+                            }
+
+                            Log.d("ETARefresh", "ETA fetched for position " + position + " in " + elapsedTime + "ms");
+                            return;
+                        }
+
+                    } catch (JSONException e) {
+                        Log.e(TAG, "Error parsing ETA data: " + e.getMessage());
+                        newEtaData.add("Error: JSON parsing failed");
+                    }
+
+                    item.setEtaData(newEtaData);
+                    new Handler(Looper.getMainLooper()).post(() -> notifyItemChanged(position, null));
+                },
+                error -> {
+                    long elapsedTime = System.currentTimeMillis() - startTime;
+                    Log.e(TAG, "Error fetching ETA for position " + position + " in " + elapsedTime + "ms: " + error);
+
+                    List<String> errorData = new ArrayList<>();
+                    errorData.add("Error: " + error);
+                    item.setEtaData(errorData);
+
+                    new Handler(Looper.getMainLooper()).post(() -> notifyItemChanged(position, null));
+                }
+        );
+    }
 
 
     public static class ViewHolder extends RecyclerView.ViewHolder {

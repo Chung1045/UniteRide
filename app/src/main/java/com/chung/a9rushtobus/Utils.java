@@ -23,8 +23,10 @@ import com.google.android.material.snackbar.Snackbar;
 import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.time.ZonedDateTime;
 import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 
 public class Utils {
     private static final int NOTIFICATION_PERMISSION_REQUEST_CODE = 123;
@@ -108,11 +110,13 @@ public class Utils {
 
         public String parseTime(String isoDateTime) {
             try {
-                // Use ZonedDateTime to parse ISO date with timezone information
-                java.time.ZonedDateTime zonedDateTime = java.time.ZonedDateTime.parse(isoDateTime);
-                // Convert to LocalDateTime in system default timezone for comparison
-                java.time.LocalTime time = zonedDateTime.withZoneSameInstant(java.time.ZoneId.systemDefault()).toLocalTime();
-                return time.toString();
+                // Parse the ISO date-time string
+                ZonedDateTime zonedDateTime = ZonedDateTime.parse(isoDateTime);
+                // Convert to LocalTime in system default timezone
+                LocalTime time = zonedDateTime.withZoneSameInstant(ZoneId.systemDefault()).toLocalTime();
+                // Format time without seconds
+                DateTimeFormatter formatter = DateTimeFormatter.ofPattern("HH:mm");
+                return time.format(formatter);
             } catch (Exception e) {
                 return "N/A";
             }
