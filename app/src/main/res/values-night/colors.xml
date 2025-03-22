@@ -7,6 +7,7 @@
     <color name="brand_colorSurfaceSecondary">#204F5F</color>
     <color name="brand_colorOnSurface">#2D4953</color>
     <color name="brand_colorOnSurfaceSecondary">#E1E9EB</color>
+    <color name="brand_colorSurfaceContainer">#2D4953</color>
     <color name="systemSurface">@android:color/background_dark</color>
     <color name="systemOnSurface">@android:color/background_dark</color>
 </resources>

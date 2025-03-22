@@ -6,4 +6,8 @@
         <item name="light_theme">Light</item>
         <item name="dark_theme">Dark</item>
     </string-array>
+
+    <string-array name="settings_category">
+        <item name="category_language">Language</item>
+    </string-array>
 </resources>

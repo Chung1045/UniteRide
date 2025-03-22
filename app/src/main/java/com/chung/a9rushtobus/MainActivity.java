@@ -40,6 +40,9 @@ public class MainActivity extends AppCompatActivity {
         initTheme();
 
         bottomNav = findViewById(R.id.bottomNav_main);
+        bottomNav.setItemActiveIndicatorColor(
+                ContextCompat.getColorStateList(this, R.color.brand_colorPrimary)
+        );
         initListener();
 
         preferenceChangeListener = (sharedPreferences, key) -> {

@@ -213,7 +213,7 @@ public class BusRouteStopItemAdapter extends RecyclerView.Adapter<BusRouteStopIt
                     String displayText = etaMinutes.equals("N/A") ?
                             "No available bus" : etaTime + " " + etaMinutes + " mins";
 
-                    if (i == 0) {
+                    if (i == 0 && !etaMinutes.equals("N/A")) {
                         updateClosestEta(item, etaMinutes, position);
                         if (Integer.parseInt(etaMinutes) < 0) {
                             needsRefetch = true;

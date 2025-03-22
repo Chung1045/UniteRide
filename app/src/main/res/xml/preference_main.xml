@@ -7,7 +7,8 @@
         android:title="Language"
         android:layout_marginStart="10dp"
         android:layout_marginEnd="10dp"
-        android:layout="@layout/components_preference_view" />
+        android:widgetLayout="@layout/components_basic_preference_top"
+        android:layout="@layout/components_basic_preference_top" />
 
     <Preference
         android:key="pref_main_theme"
@@ -15,7 +16,7 @@
         android:iconSpaceReserved="false"
         android:layout_marginStart="16dp"
         android:layout_marginEnd="16dp"
-        android:layout="@layout/components_preference_view" />
+        android:layout="@layout/components_basic_preference_mid" />
 
     <Preference
         android:key="pref_main_accessibility"
@@ -23,7 +24,7 @@
         android:iconSpaceReserved="false"
         android:layout_marginStart="16dp"
         android:layout_marginEnd="16dp"
-        android:layout="@layout/components_preference_view" />
+        android:layout="@layout/components_basic_preference_mid" />
 
     <Preference
         android:key="pref_main_about"
@@ -31,7 +32,7 @@
         android:iconSpaceReserved="false"
         android:layout_marginStart="16dp"
         android:layout_marginEnd="16dp"
-        android:layout="@layout/components_preference_view" />
+        android:layout="@layout/components_basic_preference_mid" />
 
     <Preference
         android:key="pref_main_features"
@@ -39,7 +40,7 @@
         android:iconSpaceReserved="false"
         android:layout_marginStart="16dp"
         android:layout_marginEnd="16dp"
-        android:layout="@layout/components_preference_view" />
+        android:layout="@layout/components_basic_preference_bottom" />
 
     <PreferenceCategory
         android:title="Dev options"/>
@@ -50,6 +51,6 @@
         android:layout_marginStart="16dp"
         android:layout_marginEnd="16dp"
         android:iconSpaceReserved="false"
-        android:layout="@layout/components_preference_view"/>
+        android:layout="@layout/components_basic_preference_top"/>
 
 </PreferenceScreen>

@@ -22,8 +22,9 @@
         android:id="@+id/bottomNav_main"
         android:layout_width="match_parent"
         android:layout_height="100dp"
-        style="@style/Widget.App.BottomNavigationView"
         android:paddingHorizontal="16dp"
+        android:background="@color/brand_colorSurfaceContainer"
+        app:itemIconTint="@drawable/tint_bottom_navbar"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:menu="@menu/menu_main_navigation" />

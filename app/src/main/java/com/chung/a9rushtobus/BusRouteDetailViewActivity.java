@@ -94,8 +94,11 @@ public class BusRouteDetailViewActivity extends AppCompatActivity implements OnM
     @Override
     public void onMapReady(@NonNull GoogleMap googleMap) {
         mMap = googleMap;
+
         UiModeManager uiModeManager = (UiModeManager) getSystemService(UI_MODE_SERVICE);
-        if (uiModeManager.getNightMode() == UiModeManager.MODE_NIGHT_YES){
+        if (UserPreferences.sharedPref.getBoolean(UserPreferences.SETTINGS_THEME_DARK, false)
+                || (UserPreferences.sharedPref.getBoolean(UserPreferences.SETTINGS_THEME_FOLLOW_SYSTEM, false)
+                && (uiModeManager.getNightMode() == UiModeManager.MODE_NIGHT_YES))){
             mMap.setMapStyle(MapStyleOptions.loadRawResourceStyle(this, R.raw.maps_night_theme));
         }
 

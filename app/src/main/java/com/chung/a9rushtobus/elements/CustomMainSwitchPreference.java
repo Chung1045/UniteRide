@@ -3,7 +3,10 @@ package com.chung.a9rushtobus.elements;
 import android.content.Context;
 import android.util.AttributeSet;
 import android.widget.LinearLayout;
+import android.widget.TextView;
 
+import androidx.annotation.NonNull;
+import androidx.core.content.ContextCompat;
 import androidx.preference.PreferenceViewHolder;
 import androidx.preference.SwitchPreferenceCompat;
 
@@ -13,6 +16,7 @@ import com.google.android.material.materialswitch.MaterialSwitch;
 public class CustomMainSwitchPreference extends SwitchPreferenceCompat {
     private MaterialSwitch materialSwitch;
     private LinearLayout container;
+    private TextView switchTextView;
     private boolean isUserInitiated = true; // Flag to prevent recursive calls
 
     public CustomMainSwitchPreference(Context context, AttributeSet attrs, int defStyleAttr) {
@@ -31,13 +35,19 @@ public class CustomMainSwitchPreference extends SwitchPreferenceCompat {
     }
 
     @Override
-    public void onBindViewHolder(PreferenceViewHolder holder) {
+    public void onBindViewHolder(@NonNull PreferenceViewHolder holder) {
         super.onBindViewHolder(holder);
+
+        switchTextView = (TextView) holder.findViewById(android.R.id.title);
+        switchTextView.setTextColor(ContextCompat.getColor(getContext(), android.R.color.black));
 
         // Find the root container and set the initial background
         container = (LinearLayout) holder.findViewById(R.id.icon_container);
         if (container != null) {
             container.setBackgroundResource(isChecked() ? R.drawable.background_main_switch_on : R.drawable.background_main_switch_off);
+            switchTextView.setTextColor(isChecked() ?
+                    ContextCompat.getColor(getContext(), R.color.brand_colorSurface) :
+                    ContextCompat.getColor(getContext(), R.color.brand_colorPrimary));
         }
 
         if (container != null) {
