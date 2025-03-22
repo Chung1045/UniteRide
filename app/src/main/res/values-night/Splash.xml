@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="Theme.AnimationSplash.SplashTheme" parent="Theme.SplashScreen">
+        <item name="windowSplashScreenBackground">@color/brand_colorSurface</item>
+        <item name="windowSplashScreenAnimatedIcon">@drawable/avd_logoanimation_dark</item>
+        <item name="windowSplashScreenAnimationDuration">3000</item>
+        <item name="postSplashScreenTheme">@style/Theme._9RushToBus</item>
+    </style>
+</resources>
