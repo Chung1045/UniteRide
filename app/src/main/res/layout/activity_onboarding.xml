@@ -8,23 +8,26 @@
     android:background="@color/brand_colorSurface"
     tools:context=".OnboardingActivity">
 
+
     <com.google.android.material.appbar.MaterialToolbar
         android:id="@+id/onBoardingAppBar"
         android:layout_width="match_parent"
-        android:layout_height="?attr/actionBarSize"
+        android:layout_height="100dp"
         android:elevation="48dp"
+        android:padding="16dp"
         app:layout_collapseMode="pin"
         app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
         app:navigationIcon="@drawable/back">
 
         <com.google.android.material.progressindicator.LinearProgressIndicator
+            android:id="@+id/progress"
+            style="@style/Widget.9RushToBus.ProgressIndicator"
             android:layout_width="200dp"
             android:layout_height="wrap_content"
-            android:layout_gravity="center_horizontal"
-            style="@style/Widget.9RushToBus.ProgressIndicator"
-            android:indeterminate="true" />
+            android:layout_gravity="center_horizontal" />
 
     </com.google.android.material.appbar.MaterialToolbar>
 
