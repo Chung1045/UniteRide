@@ -65,7 +65,8 @@
         android:fontFamily="@font/general_sans_semibold"
         android:text="@string/onboarding_2_5_button_content"
         android:textStyle="bold"
-        app:backgroundTint="#245768"
+        android:textColor="@color/primary_light_font"
+        app:backgroundTint="@color/primary_light"
         app:layout_constraintBottom_toBottomOf="parent" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
