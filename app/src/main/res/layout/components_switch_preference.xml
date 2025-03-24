@@ -2,6 +2,7 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:gravity="center_vertical"
     android:id="@+id/switch_widget_container">
 
@@ -48,8 +49,9 @@
             android:layout_marginEnd="20dp"
             android:background="@null"
             android:checked="true"
-            android:foregroundTint="@color/brand_colorPrimary"
-            android:layout_gravity="center_vertical"/>
+            android:layout_gravity="center_vertical"
+            app:trackTint="@drawable/tint_switch_track"
+            app:thumbTint="@drawable/tint_switch_thumb"/>
 
     </LinearLayout>
 

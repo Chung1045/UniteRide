@@ -31,7 +31,9 @@
             android:checked="true"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:background="@null" />
+            android:background="@null"
+            app:trackTint="@drawable/tint_switch_track"
+            app:thumbTint="@drawable/tint_switch_thumb"/>
 
     </LinearLayout>
 

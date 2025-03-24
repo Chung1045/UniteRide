@@ -75,8 +75,7 @@ public class BusRouteDetailViewActivity extends AppCompatActivity implements OnM
 
         routeServiceType = getIntent().getStringExtra("serviceType");
 
-        dataFetcher = new DataFetcher();
-
+        dataFetcher = new DataFetcher(this);
 
         initView();
         initListener();

@@ -45,7 +45,7 @@ public class BusRouteStopItemAdapter extends RecyclerView.Adapter<BusRouteStopIt
         this.context = context;
         this.items = items;
         this.utils = utils;
-        this.dataFetcher = new DataFetcher();
+        this.dataFetcher = new DataFetcher(context);
         this.updateHandler = new Handler(Looper.getMainLooper());
         this.updateRunnable = this::refreshAllEtaData;
     }

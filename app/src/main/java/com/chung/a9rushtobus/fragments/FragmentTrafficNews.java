@@ -1,5 +1,7 @@
 package com.chung.a9rushtobus.fragments;
 
+import android.database.Cursor;
+import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -16,6 +18,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
 import com.chung.a9rushtobus.DataFetcher;
+import com.chung.a9rushtobus.DatabaseHelper;
 import com.chung.a9rushtobus.R;
 import com.chung.a9rushtobus.elements.RTHKTrafficAdapter;
 import com.chung.a9rushtobus.elements.RTHKTrafficEntry;
@@ -29,6 +32,7 @@ import java.util.concurrent.Future;
 
 public class FragmentTrafficNews extends Fragment {
     private DataFetcher dataFetcher;
+    private DatabaseHelper databaseHelper;
     private RTHKTrafficAdapter adapter;
     private List<RTHKTrafficEntry> trafficEntries;
     private Handler mainHandler;
@@ -42,6 +46,7 @@ public class FragmentTrafficNews extends Fragment {
         mainHandler = new Handler(Looper.getMainLooper());
         trafficEntries = new ArrayList<>();
         adapter = new RTHKTrafficAdapter(trafficEntries);
+        databaseHelper = new DatabaseHelper(getContext());
         return inflater.inflate(R.layout.fragment_traffic_news, container, false);
     }
 
@@ -49,7 +54,7 @@ public class FragmentTrafficNews extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
-        dataFetcher = new DataFetcher();
+        dataFetcher = new DataFetcher(getContext());
         
         // Initialize views
         RecyclerView recyclerView = view.findViewById(R.id.recyclerView);
@@ -60,11 +65,60 @@ public class FragmentTrafficNews extends Fragment {
         recyclerView.setLayoutManager(new LinearLayoutManager(requireContext()));
         recyclerView.setAdapter(adapter);
 
+        List<RTHKTrafficEntry> cachedNews = loadCachedNewsFromDatabase();
+        trafficEntries.addAll(cachedNews);
+        adapter.notifyDataSetChanged();
+
         // Setup SwipeRefreshLayout
         swipeRefreshLayout.setOnRefreshListener(this::fetchTrafficNews);
 
         // Initial load
         fetchTrafficNews();
+    }
+
+    private List<RTHKTrafficEntry> loadCachedNewsFromDatabase() {
+        List<RTHKTrafficEntry> cachedEntries = new ArrayList<>();
+
+        try {
+            // Get readable database
+            SQLiteDatabase db = databaseHelper.getReadableDatabase();
+
+            // Define projection (columns to retrieve)
+            String[] projection = {
+                    DatabaseHelper.Tables.RTHK_NEWS.COLUMN_CONTENT,
+                    DatabaseHelper.Tables.RTHK_NEWS.COLUMN_DATE
+            };
+
+            // Query the database
+            Cursor cursor = db.query(
+                    DatabaseHelper.Tables.RTHK_NEWS.TABLE_NAME,
+                    projection,
+                    null,  // No WHERE clause
+                    null,  // No WHERE arguments
+                    null,  // No GROUP BY
+                    null,  // No HAVING
+                    DatabaseHelper.Tables.RTHK_NEWS.COLUMN_DATE + " DESC"  // Order by date descending
+            );
+
+            // Process the results
+            while (cursor.moveToNext()) {
+                String content = cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.Tables.RTHK_NEWS.COLUMN_CONTENT));
+                String date = cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.Tables.RTHK_NEWS.COLUMN_DATE));
+
+                cachedEntries.add(new RTHKTrafficEntry(content, date));
+            }
+
+            cursor.close();
+        } catch (Exception e) {
+            // Handle any database errors
+            mainHandler.post(() -> {
+                Toast.makeText(requireContext(),
+                        "Error loading cached news: " + e.getMessage(),
+                        Toast.LENGTH_SHORT).show();
+            });
+        }
+
+        return cachedEntries;
     }
 
     private void fetchTrafficNews() {

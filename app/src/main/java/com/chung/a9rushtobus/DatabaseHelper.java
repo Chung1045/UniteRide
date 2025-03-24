@@ -1,8 +1,14 @@
 package com.chung.a9rushtobus;
 
+import android.content.ContentValues;
 import android.content.Context;
+import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
+import android.util.Log;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class DatabaseHelper extends SQLiteOpenHelper {
     // Database version and name
@@ -10,40 +16,67 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     public static final String DATABASE_NAME = "MyAppDatabase.db";
 
     // Table creation constants
-    private static final String SQL_CREATE_ENTRIES_TABLE =
-            "CREATE TABLE " + Tables.Entry.TABLE_NAME + " (" +
-                    Tables.Entry._ID + " INTEGER PRIMARY KEY," +
-                    Tables.Entry.COLUMN_NAME_TITLE + " TEXT," +
-                    Tables.Entry.COLUMN_NAME_SUBTITLE + " TEXT)";
+    private static final String SQL_CREATE_KMB_ROUTES_TABLE =
+            "CREATE TABLE " + Tables.KMB_ROUTES.TABLE_NAME + " (" +
+                    Tables.KMB_ROUTES.COLUMN_ROUTE + " TEXT," +
+                    Tables.KMB_ROUTES.COLUMN_BOUND + " TEXT," +
+                    Tables.KMB_ROUTES.COLUMN_SERVICE_TYPE + " TEXT," +
+                    Tables.KMB_ROUTES.COLUMN_ORIGIN_EN + " TEXT," +
+                    Tables.KMB_ROUTES.COLUMN_ORIGIN_TC + " TEXT," +
+                    Tables.KMB_ROUTES.COLUMN_ORIGIN_SC + " TEXT," +
+                    Tables.KMB_ROUTES.COLUMN_DEST_EN + " TEXT," +
+                    Tables.KMB_ROUTES.COLUMN_DEST_TC + " TEXT," +
+                    Tables.KMB_ROUTES.COLUMN_DEST_SC + " TEXT" +
+                    ");";
 
-    private static final String SQL_CREATE_USERS_TABLE =
-            "CREATE TABLE " + Tables.Users.TABLE_NAME + " (" +
-                    Tables.Users._ID + " INTEGER PRIMARY KEY," +
-                    Tables.Users.COLUMN_USERNAME + " TEXT," +
-                    Tables.Users.COLUMN_EMAIL + " TEXT)";
+    private static final String SQL_CREATE_KMB_STOPS_TABLE = "CREATE TABLE " + Tables.KMB_STOPS.TABLE_NAME + " (" + Tables.KMB_STOPS.COLUMN_STOP_ID + " TEXT," + Tables.KMB_STOPS.COLUMN_STOP_NAME_EN + " TEXT," + Tables.KMB_STOPS.COLUMN_STOP_NAME_TC + " TEXT," + Tables.KMB_STOPS.COLUMN_STOP_NAME_SC + " TEXT," + Tables.KMB_STOPS.COLUMN_LATITUDE + " TEXT," + Tables.KMB_STOPS.COLUMN_LONGITUDE + " TEXT" + ");";
+
+
+    private static final String SQL_CREATE_RTHK_NEWS_TABLE =
+            "CREATE TABLE " + Tables.RTHK_NEWS.TABLE_NAME +
+                    " (" + Tables.RTHK_NEWS.COLUMN_CONTENT + " TEXT," +
+                    Tables.RTHK_NEWS.COLUMN_DATE + " TEXT" + ");";
 
     // Table deletion constants
-    private static final String SQL_DELETE_ENTRIES_TABLE =
-            "DROP TABLE IF EXISTS " + Tables.Entry.TABLE_NAME;
+    private static final String SQL_DELETE_KMB_ROUTES_TABLE =
+            "DROP TABLE IF EXISTS " + Tables.KMB_ROUTES.TABLE_NAME;
 
-    private static final String SQL_DELETE_USERS_TABLE =
-            "DROP TABLE IF EXISTS " + Tables.Users.TABLE_NAME;
+    private static final String SQL_DELETE_RTHK_NEWS_TABLE = "DROP TABLE IF EXISTS " + Tables.RTHK_NEWS.TABLE_NAME;
+
 
     // Static inner class to hold table contract details
     public static class Tables {
         // Entry table contract
-        public static class Entry implements android.provider.BaseColumns {
-            public static final String TABLE_NAME = "entries";
-            public static final String COLUMN_NAME_TITLE = "title";
-            public static final String COLUMN_NAME_SUBTITLE = "subtitle";
+
+        public static class KMB_ROUTES implements android.provider.BaseColumns {
+            public static final String TABLE_NAME = "kmb_all_routes";
+            public static final String COLUMN_ROUTE = "route";
+            public static final String COLUMN_BOUND = "bound";
+            public static final String COLUMN_SERVICE_TYPE = "service_type";
+            public static final String COLUMN_ORIGIN_EN = "origin_en";
+            public static final String COLUMN_ORIGIN_TC = "origin_tc";
+            public static final String COLUMN_ORIGIN_SC = "origin_sc";
+            public static final String COLUMN_DEST_EN = "dest_en";
+            public static final String COLUMN_DEST_TC = "dest_tc";
+            public static final String COLUMN_DEST_SC = "dest_sc";
         }
 
-        // Users table contract
-        public static class Users implements android.provider.BaseColumns {
-            public static final String TABLE_NAME = "users";
-            public static final String COLUMN_USERNAME = "username";
-            public static final String COLUMN_EMAIL = "email";
+        public static class KMB_STOPS implements android.provider.BaseColumns {
+            public static final String TABLE_NAME = "kmb_all_stops";
+            public static final String COLUMN_STOP_ID = "stop_id";
+            public static final String COLUMN_STOP_NAME_EN = "stop_name_en";
+            public static final String COLUMN_STOP_NAME_TC = "stop_name_tc";
+            public static final String COLUMN_STOP_NAME_SC = "stop_name_sc";
+            public static final String COLUMN_LATITUDE = "latitude";
+            public static final String COLUMN_LONGITUDE = "longitude";
         }
+
+        public static class RTHK_NEWS implements android.provider.BaseColumns {
+            public static final String TABLE_NAME = "rthk_news";
+            public static final String COLUMN_CONTENT = "content";
+            public static final String COLUMN_DATE = "date";
+        }
+
     }
 
     // Constructor
@@ -51,19 +84,92 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         super(context, DATABASE_NAME, null, DATABASE_VERSION);
     }
 
+    public long updateKMBRoute(String route, String bound, String serviceType,
+                               String originEn, String originTc, String originSc,
+                               String destEn, String destTc, String destSc) {
+
+        Log.d("DatabaseHelper", "Attempting to update database with: " + route + " " + bound + " " + serviceType);
+
+        SQLiteDatabase db = this.getWritableDatabase();
+        ContentValues values = new ContentValues();
+        values.put(Tables.KMB_ROUTES.COLUMN_ORIGIN_EN, originEn);
+        values.put(Tables.KMB_ROUTES.COLUMN_ORIGIN_TC, originTc);
+        values.put(Tables.KMB_ROUTES.COLUMN_ORIGIN_SC, originSc);
+        values.put(Tables.KMB_ROUTES.COLUMN_DEST_EN, destEn);
+        values.put(Tables.KMB_ROUTES.COLUMN_DEST_TC, destTc);
+        values.put(Tables.KMB_ROUTES.COLUMN_DEST_SC, destSc);
+
+        // Define the WHERE clause
+        String whereClause = Tables.KMB_ROUTES.COLUMN_ROUTE + "=? AND " +
+                Tables.KMB_ROUTES.COLUMN_BOUND + "=? AND " +
+                Tables.KMB_ROUTES.COLUMN_SERVICE_TYPE + "=?";
+        String[] whereArgs = {route, bound, serviceType};
+
+        // Try updating the row
+        int rowsAffected = db.update(Tables.KMB_ROUTES.TABLE_NAME, values, whereClause, whereArgs);
+
+        // If no rows were updated, insert a new row
+        if (rowsAffected == 0) {
+            values.put(Tables.KMB_ROUTES.COLUMN_ROUTE, route);
+            values.put(Tables.KMB_ROUTES.COLUMN_BOUND, bound);
+            values.put(Tables.KMB_ROUTES.COLUMN_SERVICE_TYPE, serviceType);
+            long result = db.insert(Tables.KMB_ROUTES.TABLE_NAME, null, values);
+            Log.d("DatabaseHelper", "Inserted new record, ID: " + result);
+            db.close();
+            return result;
+        }
+
+        Log.d("DatabaseHelper", "Updated record, rows affected: " + rowsAffected);
+        db.close();
+        return rowsAffected;
+    }
+
+    public long updateRTHKNews(String content, String date) {
+        Log.d("DatabaseHelper", "Attempting to update database with: " + content + " " + date);
+        SQLiteDatabase db = this.getReadableDatabase(); // Use readable db for querying
+
+        // Step 1: Check if the entry already exists
+        Cursor cursor = db.query(
+                Tables.RTHK_NEWS.TABLE_NAME,
+                new String[]{Tables.RTHK_NEWS.COLUMN_CONTENT}, // Just need the content column
+                Tables.RTHK_NEWS.COLUMN_CONTENT + " = ? AND " + Tables.RTHK_NEWS.COLUMN_DATE + " = ?",
+                new String[]{content, date},
+                null, null, null);
+
+        boolean exists = cursor.getCount() > 0; // If count > 0, the entry exists
+        cursor.close();
+
+        if (exists) {
+            Log.d("DatabaseHelper", "Entry already exists, skipping insert");
+            db.close();
+            return -1; // Indicate that no insertion was performed
+        }
+
+        // Step 2: If not exists, insert the new entry
+        ContentValues values = new ContentValues();
+        values.put(Tables.RTHK_NEWS.COLUMN_CONTENT, content);
+        values.put(Tables.RTHK_NEWS.COLUMN_DATE, date);
+
+        long result = db.insert(Tables.RTHK_NEWS.TABLE_NAME, null, values);
+        db.close();
+
+        Log.d("DatabaseHelper", "Insert result: " + result);
+        return result;
+    }
+
     // Create tables
     @Override
     public void onCreate(SQLiteDatabase db) {
-        db.execSQL(SQL_CREATE_ENTRIES_TABLE);
-        db.execSQL(SQL_CREATE_USERS_TABLE);
+        db.execSQL(SQL_CREATE_KMB_ROUTES_TABLE);
+        db.execSQL(SQL_CREATE_RTHK_NEWS_TABLE);
     }
 
     // Handle database upgrades
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
         // Delete existing tables
-        db.execSQL(SQL_DELETE_ENTRIES_TABLE);
-        db.execSQL(SQL_DELETE_USERS_TABLE);
+        db.execSQL(SQL_DELETE_KMB_ROUTES_TABLE);
+        db.execSQL(SQL_DELETE_RTHK_NEWS_TABLE);
 
         // Recreate tables
         onCreate(db);

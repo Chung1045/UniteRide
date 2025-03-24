@@ -1,6 +1,8 @@
 package com.chung.a9rushtobus.fragments;
 
 import android.content.Context;
+import android.database.Cursor;
+import android.database.sqlite.SQLiteDatabase;
 import android.graphics.Rect;
 import android.os.Bundle;
 import androidx.annotation.NonNull;
@@ -19,6 +21,7 @@ import android.widget.ProgressBar;
 import android.widget.Toast;
 
 import com.chung.a9rushtobus.DataFetcher;
+import com.chung.a9rushtobus.DatabaseHelper;
 import com.chung.a9rushtobus.R;
 import com.chung.a9rushtobus.elements.BusRoute;
 import com.chung.a9rushtobus.elements.BusRouteAdapter;
@@ -29,6 +32,7 @@ import java.util.List;
 public class FragmentSearch extends Fragment {
 
     private DataFetcher dataFetcher;
+    private DatabaseHelper databaseHelper;
     private BusRouteAdapter adapter;
     private List<BusRoute> busRoutes;
     private List<BusRoute> allRoutes;
@@ -44,7 +48,8 @@ public class FragmentSearch extends Fragment {
     public void onViewCreated(@NonNull View view, Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
-        dataFetcher = new DataFetcher();
+        dataFetcher = new DataFetcher(getContext());
+        databaseHelper = new DatabaseHelper(requireContext());
         RecyclerView recyclerView = view.findViewById(R.id.recyclerView);
         progressBar = view.findViewById(R.id.progressBar);
         searchEditText = view.findViewById(R.id.search_edit_text);
@@ -57,6 +62,8 @@ public class FragmentSearch extends Fragment {
         recyclerView.setAdapter(adapter);
 
         listenerInit();
+        busRoutes.addAll(loadCachedKMBRoutes());
+        adapter.notifyDataSetChanged();
         fetchBusRoutes();
 
         // Set up touch listener for the root view to hide keyboard when tapping outside
@@ -81,6 +88,59 @@ public class FragmentSearch extends Fragment {
             @Override
             public void afterTextChanged(Editable s) { }
         });
+    }
+
+    private List<BusRoute> loadCachedKMBRoutes(){
+        List<BusRoute> routes = new ArrayList<>();
+        try{
+            SQLiteDatabase db = databaseHelper.getReadableDatabase();
+
+            String[] projection = {
+                    DatabaseHelper.Tables.KMB_ROUTES.COLUMN_ROUTE,
+                    DatabaseHelper.Tables.KMB_ROUTES.COLUMN_BOUND,
+                    DatabaseHelper.Tables.KMB_ROUTES.COLUMN_SERVICE_TYPE,
+                    DatabaseHelper.Tables.KMB_ROUTES.COLUMN_ORIGIN_EN,
+                    DatabaseHelper.Tables.KMB_ROUTES.COLUMN_ORIGIN_TC,
+                    DatabaseHelper.Tables.KMB_ROUTES.COLUMN_ORIGIN_SC,
+                    DatabaseHelper.Tables.KMB_ROUTES.COLUMN_DEST_EN,
+                    DatabaseHelper.Tables.KMB_ROUTES.COLUMN_DEST_TC,
+                    DatabaseHelper.Tables.KMB_ROUTES.COLUMN_DEST_SC
+            };
+
+            Cursor cursor = db.query(
+                    DatabaseHelper.Tables.KMB_ROUTES.TABLE_NAME,
+                    projection,
+                    null,
+                    null,
+                    null,
+                    null,
+                    DatabaseHelper.Tables.KMB_ROUTES.COLUMN_ROUTE + " ASC" // not good enough, need custom sort
+            );
+
+            while (cursor.moveToNext()) {
+                String route = cursor.getString(cursor.getColumnIndex(DatabaseHelper.Tables.KMB_ROUTES.COLUMN_ROUTE));
+                String bound = cursor.getString(cursor.getColumnIndex(DatabaseHelper.Tables.KMB_ROUTES.COLUMN_BOUND));
+                String serviceType = cursor.getString(cursor.getColumnIndex(DatabaseHelper.Tables.KMB_ROUTES.COLUMN_SERVICE_TYPE));
+                String originEn = cursor.getString(cursor.getColumnIndex(DatabaseHelper.Tables.KMB_ROUTES.COLUMN_ORIGIN_EN));
+                String originTc = cursor.getString(cursor.getColumnIndex(DatabaseHelper.Tables.KMB_ROUTES.COLUMN_ORIGIN_TC));
+                String originSc = cursor.getString(cursor.getColumnIndex(DatabaseHelper.Tables.KMB_ROUTES.COLUMN_ORIGIN_SC));
+                String destEn = cursor.getString(cursor.getColumnIndex(DatabaseHelper.Tables.KMB_ROUTES.COLUMN_DEST_EN));
+                String destTc = cursor.getString(cursor.getColumnIndex(DatabaseHelper.Tables.KMB_ROUTES.COLUMN_DEST_TC));
+                String destSc = cursor.getString(cursor.getColumnIndex(DatabaseHelper.Tables.KMB_ROUTES.COLUMN_DEST_SC));
+
+                routes.add(new BusRoute(route, "kmb", bound, serviceType, originEn, originTc, originSc, destEn, destTc, destSc));
+            }
+            cursor.close();
+            db.close();
+
+        } catch (Exception e){
+            Toast.makeText(requireContext(),
+                    "Error loading cached news: " + e.getMessage(),
+                    Toast.LENGTH_SHORT).show();
+        }
+
+        return routes;
+
     }
 
     private void fetchBusRoutes() {

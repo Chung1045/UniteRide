@@ -1,6 +1,7 @@
 package com.chung.a9rushtobus.elements;
 
 public class BusRoute {
+    private String company;
     private String route;
     private String bound;
     private String serviceType;
@@ -12,10 +13,11 @@ public class BusRoute {
     private String destSc;
 
 
-    public BusRoute(String route, String bound, String serviceType,
+    public BusRoute(String route, String company, String bound, String serviceType,
                     String origEn, String origTc, String origSc,
                     String destEn, String destTc, String destSc) {
         this.route = route;
+        this.company = company;
         this.bound = bound;
         this.serviceType = serviceType;
         this.origEn = origEn;
@@ -29,6 +31,10 @@ public class BusRoute {
     // All getters
     public String getRoute() {
         return route;
+    }
+
+    public String getCompany() {
+        return company;
     }
 
     public String getBound() {

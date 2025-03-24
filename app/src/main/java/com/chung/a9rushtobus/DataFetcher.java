@@ -1,5 +1,6 @@
 package com.chung.a9rushtobus;
 
+import android.content.Context;
 import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
@@ -38,9 +39,12 @@ public class DataFetcher {
     private final ExecutorService executorService;
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
     private final OkHttpClient client = new OkHttpClient();
+    private DatabaseHelper databaseHelper;
+    private Context context;
 
-    public DataFetcher(){
+    public DataFetcher(Context context){
         this.executorService = Executors.newCachedThreadPool();
+        databaseHelper = new DatabaseHelper(context);
     }
 
     public void fetchAllBusRoutes(Consumer<List<BusRoute>> onSuccess, Consumer<String> onError) {
@@ -66,35 +70,6 @@ public class DataFetcher {
                     mainHandler.post(() -> onSuccess.accept(routes));
                 } catch (JSONException e) {
                     mainHandler.post(() -> onError.accept("Error parsing JSON: " + e.getMessage()));
-                }
-            }
-        });
-    }
-
-    public void fetchStopEtaInfo(){
-        Log.d("DataFetchKMB", "Fetching stop ETA information");
-        Request request = new Request.Builder()
-                .url(KMB_BASE_URL + "eta/A60AE774B09A5E44/40/1")
-                .build();
-
-        client.newCall(request).enqueue(new Callback() {
-            @Override
-            public void onFailure(Call call, IOException e) {
-                Log.e("DataFetchKMB", "Failed to fetch data: " + e.getMessage());
-            }
-
-            @Override
-            public void onResponse(Call call, Response response) throws IOException {
-                if (!response.isSuccessful()) {
-                    Log.e("DataFetchKMB", "Error: " + response.code());
-                }
-
-                try {
-                    String jsonData = response.body().string();
-                    Log.d("DataFetchKMB", jsonData);
-
-                } catch (Exception e) {
-                    Log.e("DataFetchKMB", "Error parsing JSON: " + e.getMessage());
                 }
             }
         });
@@ -260,13 +235,6 @@ public class DataFetcher {
             mainHandler.post(() -> onError.accept("ETA for other bus company is coming soon"));
         }
     }
-    
-    // For backward compatibility
-    public void fetchStopETA(String stopID, String route, String serviceType, String company) {
-        fetchStopETA(stopID, route, serviceType, company, 
-            data -> Log.d("DataFetchKMB", "ETA data received but no handler provided: " + data.length() + " items"), 
-            error -> Log.e("DataFetchKMB", "ETA error: " + error));
-    }
 
     private List<BusRoute> parseBusRouteJsonData(String jsonData) throws JSONException {
         JSONObject jsonObject = new JSONObject(jsonData);
@@ -286,9 +254,11 @@ public class DataFetcher {
             String destTc = routeObject.getString("dest_tc");
             String destSc = routeObject.getString("dest_sc");
 
-            BusRoute busRoute = new BusRoute(route, bound, serviceType,
+            BusRoute busRoute = new BusRoute(route, "kmb", bound, serviceType,
                     origEn, origTc, origSc,
                     destEn, destTc, destSc);
+
+            databaseHelper.updateKMBRoute(route, bound, serviceType, origEn, origTc, origSc, destEn, destTc, destSc);
             routes.add(busRoute);
         }
 
@@ -324,6 +294,7 @@ public class DataFetcher {
             String date = newsElement.select("div.date").text();
 
             if (!newsText.isEmpty() && !date.isEmpty()) {
+                databaseHelper.updateRTHKNews(newsText, date);
                 entries.add(new RTHKTrafficEntry(newsText, date));
             }
         }
