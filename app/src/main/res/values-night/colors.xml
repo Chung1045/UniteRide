@@ -7,4 +7,14 @@
     <color name="brand_colorSurfaceSecondary">#204F5F</color>
     <color name="brand_colorOnSurface">#2D4953</color>
     <color name="brand_colorOnSurfaceSecondary">#E1E9EB</color>
+
+
+<!--    <color name="brand_colorPrimary">#2C6073</color>-->
+<!--    <color name="brand_colorSecondary">#4AC1E1</color>-->
+<!--    <color name="brand_colorTertiary">#E6F46A</color>-->
+<!--    <color name="brand_colorSurface">#FFFFFF</color>-->
+<!--    <color name="brand_colorSurfaceSecondary">#E7F5F7</color>-->
+<!--    <color name="brand_colorOnSurface">#0C212C</color>-->
+<!--    <color name="brand_colorOnSurfaceSecondary">#2A3235</color>-->
+<!--    <color name="button_colorOnHover">#EFEFEF</color>-->
 </resources>
