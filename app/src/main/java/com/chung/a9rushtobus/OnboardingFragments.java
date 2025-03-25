@@ -101,9 +101,6 @@ public class OnboardingFragments {
 //            {
 //                Toast.makeText(fragment.requireContext(), "Permission not required for this Android version", Toast.LENGTH_LONG).show();
 //            }
-            if (fragment.getActivity() instanceof OnboardingActivity) {
-                ((OnboardingActivity) fragment.getActivity()).goToNextPage();
-            }
         }
     }
 
@@ -113,7 +110,11 @@ public class OnboardingFragments {
         public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
             super.onRequestPermissionsResult(requestCode, permissions, grantResults);
 
-//            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                if (this.getActivity() instanceof OnboardingActivity) {
+                    ((OnboardingActivity) this.getActivity()).goToNextPage();
+                }
+            }
 //                Toast.makeText(requireContext(), "Permission Granted. You can use the API which requires the permission.", Toast.LENGTH_LONG).show();
 //            } else {
 //                Toast.makeText(requireContext(), "Permission Denied. You cannot use the API which requires the permission.", Toast.LENGTH_LONG).show();
