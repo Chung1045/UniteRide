@@ -1,6 +1,9 @@
 package com.chung.a9rushtobus;
 
 import android.app.UiModeManager;
+import android.content.Context;
+import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 
 import androidx.activity.EdgeToEdge;
@@ -23,6 +26,7 @@ import com.google.android.material.color.DynamicColors;
 public class MainActivity extends AppCompatActivity {
     private BottomNavigationView bottomNav;
     private UserPreferences userPreferences;
+    private SharedPreferences sharedPreferences;
     private boolean isDataReady = false;
 
     @Override
@@ -31,14 +35,35 @@ public class MainActivity extends AppCompatActivity {
 
         SplashScreen splashScreen = SplashScreen.installSplashScreen(this);
         splashScreen.setKeepOnScreenCondition(() -> !isDataReady);
+
+        splashScreen.setOnExitAnimationListener(splashScreenView -> {
+            // This code will be executed after the splash screen is dismissed.
+            sharedPreferences = getSharedPreferences("app_prefs", Context.MODE_PRIVATE);
+            boolean isFirstTimeLaunch = sharedPreferences.getBoolean("is_first_time_launch", true);
+
+            if (isFirstTimeLaunch) {
+                startActivity(new Intent(this, OnboardingActivity.class));
+                finish();
+            } else {
+                userPreferences = new UserPreferences(this);
+                initTheme();
+
+                bottomNav = findViewById(R.id.bottomNav_main);
+                initListener();
+            }
+            // Remove the splash screen view from the view hierarchy.
+            splashScreenView.remove();
+        });
+
         new Thread(() -> {
             try {
                 Thread.sleep(3000);
-            } catch (Exception e){
+            } catch (Exception e) {
                 e.printStackTrace();
             }
             isDataReady = true;
         }).start();
+
         EdgeToEdge.enable(this);
         setContentView(R.layout.activity_main);
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
@@ -46,13 +71,6 @@ public class MainActivity extends AppCompatActivity {
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
             return insets;
         });
-
-        userPreferences = new UserPreferences(this);
-        initTheme();
-
-        bottomNav = findViewById(R.id.bottomNav_main);
-        initListener();
-
     }
 
     private void initListener() {

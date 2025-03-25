@@ -1,9 +1,13 @@
 package com.chung.a9rushtobus;
 
 import android.animation.ValueAnimator;
+import android.content.Context;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
+import android.view.Window;
+import android.view.WindowManager;
 import android.view.animation.AccelerateDecelerateInterpolator;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
@@ -26,7 +30,6 @@ public class OnboardingActivity extends AppCompatActivity {
     final private int totalPages = 5;
     private int currentPage = 1;
     private boolean isNavigating = false;
-    private boolean isBackStackChanging = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -41,6 +44,13 @@ public class OnboardingActivity extends AppCompatActivity {
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
             return insets;
         });
+
+        // CHANGE COLOR OF STATUS BAR & NAVIGATION BAR
+        Window myWindow = this.getWindow();
+        myWindow.addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS);
+        myWindow.clearFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS);
+        myWindow.setStatusBarColor(getResources().getColor(R.color.onboarding_appBar));
+        myWindow.setNavigationBarColor(getResources().getColor(R.color.onboarding_colorSurface));
 
         setupToolbar();
 
@@ -151,8 +161,14 @@ public class OnboardingActivity extends AppCompatActivity {
                     if (toolbar != null) {
                         toolbar.postDelayed(() -> {
                             toolbar.setVisibility(View.GONE);
+                            Window myWindow = this.getWindow();
+                            myWindow.addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS);
+                            myWindow.clearFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS);
+                            myWindow.setStatusBarColor(getResources().getColor(R.color.onboarding_colorSurface));
+                            myWindow.setNavigationBarColor(getResources().getColor(R.color.onboarding_colorSurface));
                         }, 300);
                     }
+
                     break;
             }
 
