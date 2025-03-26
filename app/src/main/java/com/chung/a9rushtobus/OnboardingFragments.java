@@ -187,11 +187,11 @@ public class OnboardingFragments {
             setupNavigationButton(finishButton, this, R.color.button_colorOnHover, R.color.brand_colorPrimary, R.color.brand_colorPrimary, R.color.brand_colorSurface);
 
             finishButton.setOnClickListener(v -> {
-                SharedPreferences sharedPreferences = requireActivity().getSharedPreferences("app_prefs", Context.MODE_PRIVATE);
+                SharedPreferences sharedPreferences = requireActivity().getSharedPreferences(UserPreferences.SHARED_PREFS, Context.MODE_PRIVATE);
 
                 SharedPreferences.Editor editor = sharedPreferences.edit();
-                editor.putBoolean("is_first_time_launch", false);
-                editor.apply();
+                editor.putBoolean(UserPreferences.ONBOARDING_COMPLETE, false);
+                editor.commit();
 
                 Intent intent = new Intent(requireActivity(), MainActivity.class);
                 intent.addFlags(Intent.FLAG_ACTIVITY_NO_ANIMATION);

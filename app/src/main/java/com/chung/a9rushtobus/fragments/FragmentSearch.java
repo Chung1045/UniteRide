@@ -23,11 +23,16 @@ import android.widget.Toast;
 import com.chung.a9rushtobus.DataFetcher;
 import com.chung.a9rushtobus.database.DatabaseHelper;
 import com.chung.a9rushtobus.R;
+import com.chung.a9rushtobus.database.KMBDatabase;
 import com.chung.a9rushtobus.elements.BusRoute;
 import com.chung.a9rushtobus.elements.BusRouteAdapter;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class FragmentSearch extends Fragment {
 
@@ -64,7 +69,7 @@ public class FragmentSearch extends Fragment {
         listenerInit();
         busRoutes.addAll(loadCachedKMBRoutes());
         adapter.notifyDataSetChanged();
-        fetchBusRoutes();
+//        fetchBusRoutes();
 
         // Set up touch listener for the root view to hide keyboard when tapping outside
         view.setOnTouchListener((v, event) -> {
@@ -92,89 +97,119 @@ public class FragmentSearch extends Fragment {
 
     private List<BusRoute> loadCachedKMBRoutes(){
         List<BusRoute> routes = new ArrayList<>();
-        try{
+        try {
             SQLiteDatabase db = databaseHelper.getReadableDatabase();
 
             String[] projection = {
-                    DatabaseHelper.Tables.KMB_ROUTES.COLUMN_ROUTE,
-                    DatabaseHelper.Tables.KMB_ROUTES.COLUMN_BOUND,
-                    DatabaseHelper.Tables.KMB_ROUTES.COLUMN_SERVICE_TYPE,
-                    DatabaseHelper.Tables.KMB_ROUTES.COLUMN_ORIGIN_EN,
-                    DatabaseHelper.Tables.KMB_ROUTES.COLUMN_ORIGIN_TC,
-                    DatabaseHelper.Tables.KMB_ROUTES.COLUMN_ORIGIN_SC,
-                    DatabaseHelper.Tables.KMB_ROUTES.COLUMN_DEST_EN,
-                    DatabaseHelper.Tables.KMB_ROUTES.COLUMN_DEST_TC,
-                    DatabaseHelper.Tables.KMB_ROUTES.COLUMN_DEST_SC
+                    KMBDatabase.Tables.KMB_ROUTES.COLUMN_ROUTE,
+                    KMBDatabase.Tables.KMB_ROUTES.COLUMN_BOUND,
+                    KMBDatabase.Tables.KMB_ROUTES.COLUMN_SERVICE_TYPE,
+                    KMBDatabase.Tables.KMB_ROUTES.COLUMN_ORIGIN_EN,
+                    KMBDatabase.Tables.KMB_ROUTES.COLUMN_ORIGIN_TC,
+                    KMBDatabase.Tables.KMB_ROUTES.COLUMN_ORIGIN_SC,
+                    KMBDatabase.Tables.KMB_ROUTES.COLUMN_DEST_EN,
+                    KMBDatabase.Tables.KMB_ROUTES.COLUMN_DEST_TC,
+                    KMBDatabase.Tables.KMB_ROUTES.COLUMN_DEST_SC
             };
 
             Cursor cursor = db.query(
-                    DatabaseHelper.Tables.KMB_ROUTES.TABLE_NAME,
+                    KMBDatabase.Tables.KMB_ROUTES.TABLE_NAME,
                     projection,
                     null,
                     null,
                     null,
                     null,
-                    DatabaseHelper.Tables.KMB_ROUTES.COLUMN_ROUTE + " ASC" // not good enough, need custom sort
+                    null // No initial sorting
             );
 
             while (cursor.moveToNext()) {
-                String route = cursor.getString(cursor.getColumnIndex(DatabaseHelper.Tables.KMB_ROUTES.COLUMN_ROUTE));
-                String bound = cursor.getString(cursor.getColumnIndex(DatabaseHelper.Tables.KMB_ROUTES.COLUMN_BOUND));
-                String serviceType = cursor.getString(cursor.getColumnIndex(DatabaseHelper.Tables.KMB_ROUTES.COLUMN_SERVICE_TYPE));
-                String originEn = cursor.getString(cursor.getColumnIndex(DatabaseHelper.Tables.KMB_ROUTES.COLUMN_ORIGIN_EN));
-                String originTc = cursor.getString(cursor.getColumnIndex(DatabaseHelper.Tables.KMB_ROUTES.COLUMN_ORIGIN_TC));
-                String originSc = cursor.getString(cursor.getColumnIndex(DatabaseHelper.Tables.KMB_ROUTES.COLUMN_ORIGIN_SC));
-                String destEn = cursor.getString(cursor.getColumnIndex(DatabaseHelper.Tables.KMB_ROUTES.COLUMN_DEST_EN));
-                String destTc = cursor.getString(cursor.getColumnIndex(DatabaseHelper.Tables.KMB_ROUTES.COLUMN_DEST_TC));
-                String destSc = cursor.getString(cursor.getColumnIndex(DatabaseHelper.Tables.KMB_ROUTES.COLUMN_DEST_SC));
+                String route = cursor.getString(cursor.getColumnIndex(KMBDatabase.Tables.KMB_ROUTES.COLUMN_ROUTE));
+                String bound = cursor.getString(cursor.getColumnIndex(KMBDatabase.Tables.KMB_ROUTES.COLUMN_BOUND));
+                String serviceType = cursor.getString(cursor.getColumnIndex(KMBDatabase.Tables.KMB_ROUTES.COLUMN_SERVICE_TYPE));
+                String originEn = cursor.getString(cursor.getColumnIndex(KMBDatabase.Tables.KMB_ROUTES.COLUMN_ORIGIN_EN));
+                String originTc = cursor.getString(cursor.getColumnIndex(KMBDatabase.Tables.KMB_ROUTES.COLUMN_ORIGIN_TC));
+                String originSc = cursor.getString(cursor.getColumnIndex(KMBDatabase.Tables.KMB_ROUTES.COLUMN_ORIGIN_SC));
+                String destEn = cursor.getString(cursor.getColumnIndex(KMBDatabase.Tables.KMB_ROUTES.COLUMN_DEST_EN));
+                String destTc = cursor.getString(cursor.getColumnIndex(KMBDatabase.Tables.KMB_ROUTES.COLUMN_DEST_TC));
+                String destSc = cursor.getString(cursor.getColumnIndex(KMBDatabase.Tables.KMB_ROUTES.COLUMN_DEST_SC));
 
                 routes.add(new BusRoute(route, "kmb", bound, serviceType, originEn, originTc, originSc, destEn, destTc, destSc));
+                allRoutes.add(new BusRoute(route, "kmb", bound, serviceType, originEn, originTc, originSc, destEn, destTc, destSc));
             }
             cursor.close();
             db.close();
 
-        } catch (Exception e){
+            // Custom sorting: First sort numerically, then alphabetically
+            Collections.sort(routes, (route1, route2) -> {
+                String routeStr1 = route1.getRoute();  // Assuming BusRoute has getRoute() method
+                String routeStr2 = route2.getRoute();
+
+                // Use a regular expression to split the number and the letter suffix
+                Pattern pattern = Pattern.compile("([0-9]+)([A-Za-z]*)");
+                Matcher matcher1 = pattern.matcher(routeStr1);
+                Matcher matcher2 = pattern.matcher(routeStr2);
+
+                if (matcher1.matches() && matcher2.matches()) {
+                    // Get the numeric part
+                    int num1 = Integer.parseInt(matcher1.group(1));
+                    int num2 = Integer.parseInt(matcher2.group(1));
+
+                    // First, compare by the numeric part
+                    if (num1 != num2) {
+                        return Integer.compare(num1, num2);
+                    }
+
+                    // If the numbers are equal, compare the alphabetic suffix
+                    String suffix1 = matcher1.group(2);
+                    String suffix2 = matcher2.group(2);
+                    return suffix1.compareTo(suffix2);
+                }
+
+                return 0; // Fallback in case matching fails
+            });
+
+        } catch (Exception e) {
             Toast.makeText(requireContext(),
                     "Error loading cached news: " + e.getMessage(),
                     Toast.LENGTH_SHORT).show();
         }
 
         return routes;
-
     }
 
-    private void fetchBusRoutes() {
-        progressBar.setVisibility(View.VISIBLE);
-        
-        dataFetcher.fetchAllBusRoutes(
-            routes -> {
-                if (getActivity() == null) return;
-                
-                progressBar.setVisibility(View.GONE);
-                allRoutes.clear();
-                allRoutes.addAll(routes);
-                busRoutes.clear();
-                busRoutes.addAll(routes);
-                adapter.notifyDataSetChanged();
 
-                if (getContext() != null) {
-                    if (routes.isEmpty()) {
-                        Toast.makeText(getContext(), "No routes found", Toast.LENGTH_SHORT).show();
-                    } else {
-                        Toast.makeText(getContext(), "Found " + routes.size() + " routes", Toast.LENGTH_SHORT).show();
-                    }
-                }
-            },
-            errorMessage -> {
-                if (getActivity() == null) return;
-                
-                progressBar.setVisibility(View.GONE);
-                if (getContext() != null) {
-                    Toast.makeText(getContext(), errorMessage, Toast.LENGTH_LONG).show();
-                }
-            }
-        );
-    }
+//    private void fetchBusRoutes() {
+//        progressBar.setVisibility(View.VISIBLE);
+//
+//        dataFetcher.fetchAllBusRoutes(
+//            routes -> {
+//                if (getActivity() == null) return;
+//
+//                progressBar.setVisibility(View.GONE);
+//                allRoutes.clear();
+//                allRoutes.addAll(routes);
+//                busRoutes.clear();
+//                busRoutes.addAll(routes);
+//                adapter.notifyDataSetChanged();
+//
+//                if (getContext() != null) {
+//                    if (routes.isEmpty()) {
+//                        Toast.makeText(getContext(), "No routes found", Toast.LENGTH_SHORT).show();
+//                    } else {
+//                        Toast.makeText(getContext(), "Found " + routes.size() + " routes", Toast.LENGTH_SHORT).show();
+//                    }
+//                }
+//            },
+//            errorMessage -> {
+//                if (getActivity() == null) return;
+//
+//                progressBar.setVisibility(View.GONE);
+//                if (getContext() != null) {
+//                    Toast.makeText(getContext(), errorMessage, Toast.LENGTH_LONG).show();
+//                }
+//            }
+//        );
+//    }
 
     private void filterRoutes(String query) {
         List<BusRoute> filteredList = new ArrayList<>();

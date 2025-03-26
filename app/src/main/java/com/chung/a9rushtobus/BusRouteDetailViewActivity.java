@@ -24,6 +24,7 @@ import androidx.core.view.WindowInsetsCompat;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.chung.a9rushtobus.database.DatabaseHelper;
+import com.chung.a9rushtobus.database.KMBDatabase;
 import com.chung.a9rushtobus.elements.BusRouteStopItem;
 import com.chung.a9rushtobus.elements.BusRouteStopItemAdapter;
 import com.google.android.gms.maps.CameraUpdateFactory;
@@ -175,21 +176,21 @@ public class BusRouteDetailViewActivity extends AppCompatActivity implements OnM
             SQLiteDatabase db = databaseHelper.getReadableDatabase();
 
             // Query to get all stops for this route in sequence order with DISTINCT to prevent duplicates
-            String query = "SELECT DISTINCT rs." + DatabaseHelper.Tables.KMB_ROUTE_STOPS.COLUMN_STOP_SEQ + ", " +
-                    "rs." + DatabaseHelper.Tables.KMB_ROUTE_STOPS.COLUMN_STOP_ID + ", " +
-                    "s." + DatabaseHelper.Tables.KMB_STOPS.COLUMN_STOP_NAME_EN + ", " +
-                    "s." + DatabaseHelper.Tables.KMB_STOPS.COLUMN_STOP_NAME_TC + ", " +
-                    "s." + DatabaseHelper.Tables.KMB_STOPS.COLUMN_STOP_NAME_SC + ", " +
-                    "s." + DatabaseHelper.Tables.KMB_STOPS.COLUMN_LATITUDE + ", " +
-                    "s." + DatabaseHelper.Tables.KMB_STOPS.COLUMN_LONGITUDE +
-                    " FROM " + DatabaseHelper.Tables.KMB_ROUTE_STOPS.TABLE_NAME + " rs" +
-                    " JOIN " + DatabaseHelper.Tables.KMB_STOPS.TABLE_NAME + " s" +
-                    " ON rs." + DatabaseHelper.Tables.KMB_ROUTE_STOPS.COLUMN_STOP_ID + " = s." + DatabaseHelper.Tables.KMB_STOPS.COLUMN_STOP_ID +
-                    " WHERE rs." + DatabaseHelper.Tables.KMB_ROUTE_STOPS.COLUMN_ROUTE + " = ?" +
-                    " AND rs." + DatabaseHelper.Tables.KMB_ROUTE_STOPS.COLUMN_BOUND + " = ?" +
-                    " AND rs." + DatabaseHelper.Tables.KMB_ROUTE_STOPS.COLUMN_SERVICE_TYPE + " = ?" +
-                    " GROUP BY rs." + DatabaseHelper.Tables.KMB_ROUTE_STOPS.COLUMN_STOP_ID + " " +
-                    " ORDER BY CAST(rs." + DatabaseHelper.Tables.KMB_ROUTE_STOPS.COLUMN_STOP_SEQ + " AS INTEGER)";
+            String query = "SELECT DISTINCT rs." + KMBDatabase.Tables.KMB_ROUTE_STOPS.COLUMN_STOP_SEQ + ", " +
+                    "rs." + KMBDatabase.Tables.KMB_ROUTE_STOPS.COLUMN_STOP_ID + ", " +
+                    "s." + KMBDatabase.Tables.KMB_STOPS.COLUMN_STOP_NAME_EN + ", " +
+                    "s." + KMBDatabase.Tables.KMB_STOPS.COLUMN_STOP_NAME_TC + ", " +
+                    "s." + KMBDatabase.Tables.KMB_STOPS.COLUMN_STOP_NAME_SC + ", " +
+                    "s." + KMBDatabase.Tables.KMB_STOPS.COLUMN_LATITUDE + ", " +
+                    "s." + KMBDatabase.Tables.KMB_STOPS.COLUMN_LONGITUDE +
+                    " FROM " + KMBDatabase.Tables.KMB_ROUTE_STOPS.TABLE_NAME + " rs" +
+                    " JOIN " + KMBDatabase.Tables.KMB_STOPS.TABLE_NAME + " s" +
+                    " ON rs." + KMBDatabase.Tables.KMB_ROUTE_STOPS.COLUMN_STOP_ID + " = s." + KMBDatabase.Tables.KMB_STOPS.COLUMN_STOP_ID +
+                    " WHERE rs." + KMBDatabase.Tables.KMB_ROUTE_STOPS.COLUMN_ROUTE + " = ?" +
+                    " AND rs." + KMBDatabase.Tables.KMB_ROUTE_STOPS.COLUMN_BOUND + " = ?" +
+                    " AND rs." + KMBDatabase.Tables.KMB_ROUTE_STOPS.COLUMN_SERVICE_TYPE + " = ?" +
+                    " GROUP BY rs." + KMBDatabase.Tables.KMB_ROUTE_STOPS.COLUMN_STOP_ID + " " +
+                    " ORDER BY CAST(rs." + KMBDatabase.Tables.KMB_ROUTE_STOPS.COLUMN_STOP_SEQ + " AS INTEGER)";
 
             if (routeBound.equals("outbound")) {
                 routeBound = "O";
@@ -206,12 +207,12 @@ public class BusRouteDetailViewActivity extends AppCompatActivity implements OnM
             if (cursor.moveToFirst()) {
                 do {
                     // Extract data from cursor
-                    String stopId = cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.Tables.KMB_ROUTE_STOPS.COLUMN_STOP_ID));
-                    String stopNameEn = cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.Tables.KMB_STOPS.COLUMN_STOP_NAME_EN));
-                    String stopNameTc = cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.Tables.KMB_STOPS.COLUMN_STOP_NAME_TC));
-                    String stopNameSc = cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.Tables.KMB_STOPS.COLUMN_STOP_NAME_SC));
-                    String latitude = cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.Tables.KMB_STOPS.COLUMN_LATITUDE));
-                    String longitude = cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.Tables.KMB_STOPS.COLUMN_LONGITUDE));
+                    String stopId = cursor.getString(cursor.getColumnIndexOrThrow(KMBDatabase.Tables.KMB_ROUTE_STOPS.COLUMN_STOP_ID));
+                    String stopNameEn = cursor.getString(cursor.getColumnIndexOrThrow(KMBDatabase.Tables.KMB_STOPS.COLUMN_STOP_NAME_EN));
+                    String stopNameTc = cursor.getString(cursor.getColumnIndexOrThrow(KMBDatabase.Tables.KMB_STOPS.COLUMN_STOP_NAME_TC));
+                    String stopNameSc = cursor.getString(cursor.getColumnIndexOrThrow(KMBDatabase.Tables.KMB_STOPS.COLUMN_STOP_NAME_SC));
+                    String latitude = cursor.getString(cursor.getColumnIndexOrThrow(KMBDatabase.Tables.KMB_STOPS.COLUMN_LATITUDE));
+                    String longitude = cursor.getString(cursor.getColumnIndexOrThrow(KMBDatabase.Tables.KMB_STOPS.COLUMN_LONGITUDE));
                     
                     Log.d("BusRouteDetailView", "Processing stop " + index + ": ID=" + stopId + 
                         ", Name=" + stopNameEn + ", Lat=" + latitude + ", Long=" + longitude);

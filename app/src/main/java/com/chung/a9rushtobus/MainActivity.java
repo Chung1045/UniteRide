@@ -1,6 +1,8 @@
 package com.chung.a9rushtobus;
 
 import android.app.UiModeManager;
+import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 
 import androidx.activity.EdgeToEdge;
@@ -23,25 +25,26 @@ import com.google.android.material.color.DynamicColors;
 public class MainActivity extends AppCompatActivity {
     private BottomNavigationView bottomNav;
     private UserPreferences userPreferences;
+    private SharedPreferences.OnSharedPreferenceChangeListener preferenceChangeListener;
     private boolean isDataReady = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
+        userPreferences = new UserPreferences(this);
+
         SplashScreen splashScreen = SplashScreen.installSplashScreen(this);
         splashScreen.setKeepOnScreenCondition(() -> !isDataReady);
 
         splashScreen.setOnExitAnimationListener(splashScreenView -> {
             // This code will be executed after the splash screen is dismissed.
-            sharedPreferences = getSharedPreferences("app_prefs", Context.MODE_PRIVATE);
-            boolean isFirstTimeLaunch = sharedPreferences.getBoolean("is_first_time_launch", true);
+            boolean isFirstTimeLaunch = UserPreferences.sharedPref.getBoolean(UserPreferences.ONBOARDING_COMPLETE, true);
 
             if (isFirstTimeLaunch) {
                 startActivity(new Intent(this, OnboardingActivity.class));
                 finish();
             } else {
-                userPreferences = new UserPreferences(this);
                 initTheme();
 
                 bottomNav = findViewById(R.id.bottomNav_main);
@@ -67,12 +70,19 @@ public class MainActivity extends AppCompatActivity {
             return insets;
         });
 
-        userPreferences = new UserPreferences(this);
-        initTheme();
-
         bottomNav = findViewById(R.id.bottomNav_main);
-        initListener();
+        bottomNav.setItemActiveIndicatorColor(
+                ContextCompat.getColorStateList(this, R.color.brand_colorPrimary)
+        );
 
+        initTheme();
+        initListener();
+    }
+
+    private void updateBottomNavVisibility() {
+        BottomNavigationView bottomNav = findViewById(R.id.bottomNav_main);
+        boolean isVisible = UserPreferences.sharedPref.getBoolean(UserPreferences.SETTINGS_FEATURE_SHOW_RTHK_NEWS, false);
+        bottomNav.getMenu().findItem(R.id.menu_item_main_news).setVisible(isVisible);
     }
 
     private void initListener() {
@@ -101,6 +111,14 @@ public class MainActivity extends AppCompatActivity {
                 return false;
             }
         });
+
+        preferenceChangeListener = (sharedPreferences, key) -> {
+            if (UserPreferences.SETTINGS_FEATURE_SHOW_RTHK_NEWS.equals(key)) {
+                updateBottomNavVisibility();
+            }
+        };
+
+        UserPreferences.sharedPref.registerOnSharedPreferenceChangeListener(preferenceChangeListener);
     }
 
     private void initTheme() {

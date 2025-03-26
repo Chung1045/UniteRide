@@ -80,7 +80,6 @@ public class KMBDatabase {
             values.put(KMBDatabase.Tables.KMB_ROUTES.COLUMN_SERVICE_TYPE, serviceType);
             long result = db.insert(KMBDatabase.Tables.KMB_ROUTES.TABLE_NAME, null, values);
             Log.d("KMBDatabase", "Inserted new record, ID: " + result);
-            db.close();
             return result;
         }
 
