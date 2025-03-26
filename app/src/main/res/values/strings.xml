@@ -1,6 +1,32 @@
 <resources>
     <string name="app_name">UniteRide</string>
     <string name="hello_blank_fragment">Hello blank fragment</string>
+    <string name="onboarding_1_5_title">Welcome to UniteRide</string>
+    <string name="onboarding_1_5_content">Discover fast planning and simple bus info
+start your journey now!</string>
+    <string name="onboarding_1_5_button_content">Get Started</string>
+    <string name="onboarding_1_5_contentDescription">onboarding 1/5 content welcome picture</string>
+
+    <string name="onboarding_2_5_title">Choose your preferred language</string>
+    <string name="onboarding_2_5_content">Please select the language you would like to use while running UniteRide.</string>
+    <string name="onboarding_2_5_language_default">English</string>
+    <string name="onboarding_2_5_button_content">Continue</string>
+
+    <string name="onboarding_3_5_title">Get instant bus arrival notifications!</string>
+    <string name="onboarding_3_5_content">We can send you real-time alerts when your bus arrives, so you know exactly when it’s there and stay on top of your travel plans effortlessly.</string>
+    <string name="onboarding_3_5_access_button_content">Allow notification</string>
+    <string name="onboarding_3_5_button_content">Not right now</string>
+    <string name="onboarding_3_5_contentDescription">onboarding 3/5 content welcome picture</string>
+
+    <string name="onboarding_4_5_title">Ride smarter in a snap!</string>
+    <string name="onboarding_4_5_content">We’ll need to access your current location to locate the closest bus and bus stop, so you can plan your journey with ease and speed right away.</string>
+    <string name="onboarding_4_5_access_button_content">Allow location access</string>
+    <string name="onboarding_4_5_button_content">Not right now</string>
+    <string name="onboarding_4_5_contentDescription">onboarding 4/5 content welcome picture</string>
+
+    <string name="onboarding_5_5_title">You are all set!</string>
+    <string name="onboarding_5_5_content">You are now ready to dive in and start using our bus app to plan your trips with ease and confidence</string>
+    <string name="onboarding_5_5_button_content">Get Started</string>
 
     <string-array name="options_application_theme">
         <item name="light_theme">Light</item>
