@@ -52,6 +52,7 @@ public class BusRouteDetailViewActivity extends AppCompatActivity implements OnM
     private DataFetcher dataFetcher;
     private DatabaseHelper databaseHelper;
     private Handler handler = new Handler();
+    private List<LatLng> pendingStopPositions = null;
     public static final String TAG = "BusRouteDetailView";
 
     @Override
@@ -109,6 +110,11 @@ public class BusRouteDetailViewActivity extends AppCompatActivity implements OnM
         // Default points until we get real data
         LatLng defaultPoint = new LatLng(22.345415, 114.192640);
         mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(defaultPoint, 16f));
+
+        if (pendingStopPositions != null) {
+            drawRouteOnMap(pendingStopPositions);
+            pendingStopPositions = null;
+        }
 
         // We'll update the map with real stop data when it's loaded
     }
@@ -281,27 +287,14 @@ public class BusRouteDetailViewActivity extends AppCompatActivity implements OnM
                                     stopInfo.getString("name_sc"),
                                     stopInfo.getString("stopID")));
 
-                            // Add stop position to map if latitude and longitude are available
-                            if (stopInfo.has("lat") && stopInfo.has("long")) {
-                                try {
                                     double lat = Double.parseDouble(stopInfo.getString("lat"));
                                     double lng = Double.parseDouble(stopInfo.getString("long"));
+                                    Log.d("BusRouteDetailView", "Location coordinate for Stop Seq " + i + " : " + lat + " " + lng);
+                                    Log.d("BusRouteDetailView", "Attempt to add stop position to map");
                                     LatLng stopPosition = new LatLng(lat, lng);
+                                    connectPointsOnMap(stopPositions);
                                     stopPositions.add(stopPosition);
 
-                                    // Add marker to map
-                                    if (mMap != null) {
-                                        mMap.addMarker(new MarkerOptions()
-                                                .position(stopPosition)
-                                                .title(stopInfo.getString("name_en"))
-                                                .icon(BitmapDescriptorFactory.defaultMarker(i == 0 ?
-                                                        BitmapDescriptorFactory.HUE_BLUE :
-                                                        BitmapDescriptorFactory.HUE_RED)));
-                                    }
-                                } catch (NumberFormatException e) {
-                                    Log.e("BusRouteDetailView", "Invalid coordinates: " + e.getMessage());
-                                }
-                            }
                         } catch (JSONException e) {
                             Log.e("BusRouteDetailView", "Error parsing stop info: " + e.getMessage());
                         }
@@ -309,6 +302,10 @@ public class BusRouteDetailViewActivity extends AppCompatActivity implements OnM
 
                     // Update UI
                     adapter.notifyDataSetChanged();
+                    
+                    // Draw the route on the map
+                    Log.d("BusRouteDetailView", "Drawing route with " + stopPositions.size() + " stops from API data");
+                    connectPointsOnMap(stopPositions);
 
                     // Center map on first stop if available
                     if (!stopPositions.isEmpty() && mMap != null) {
@@ -324,14 +321,62 @@ public class BusRouteDetailViewActivity extends AppCompatActivity implements OnM
         );
     }
 
-    private void connectPointsOnMap(List<LatLng> stopPositions) {
-        if (mMap != null && !stopPositions.isEmpty()) {
+
+
+
+
+    private void connectPointsOnMap(final List<LatLng> stopPositions) {
+        final String TAG = "BusRouteDetailView";
+        
+        if (stopPositions == null || stopPositions.isEmpty()) {
+            Log.e(TAG, "No stop positions to connect");
+            return;
+        }
+
+        // Store positions if map isn't ready yet
+        if (mMap == null) {
+            Log.d(TAG, "Map not ready, storing positions for later");
+            pendingStopPositions = new ArrayList<>(stopPositions);
+            return;
+        }
+
+        // Draw route on main thread
+        runOnUiThread(() -> drawRouteOnMap(stopPositions));
+    }
+
+    private void drawRouteOnMap(List<LatLng> stopPositions) {
+        final String TAG = "BusRouteDetailView";
+
+        try {
+            Log.d(TAG, "Drawing route with " + stopPositions.size() + " points");
+            Log.d(TAG, "First point: " + stopPositions.get(0));
+            Log.d(TAG, "Last point: " + stopPositions.get(stopPositions.size() - 1));
+
+            mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(stopPositions.get(0), 16f));
+
+            // Draw the route as a polyline
             PolylineOptions polylineOptions = new PolylineOptions()
                     .addAll(stopPositions)
                     .color(Color.RED)
-                    .width(10f);
+                    .width(10f)
+                    .geodesic(true);
 
             mMap.addPolyline(polylineOptions);
+            Log.d(TAG, "Route line drawn successfully");
+
+            // Add a marker for each bus stop
+            for (LatLng stop : stopPositions) {
+                mMap.addMarker(new MarkerOptions()
+                        .position(stop)
+                        .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_BLUE)) // Blue marker
+                        .title("Bus Stop")); // You can customize this title
+            }
+
+            Log.d(TAG, "Bus stop markers added successfully");
+
+        } catch (Exception e) {
+            Log.e(TAG, "Error drawing route line: " + e.getMessage(), e);
         }
     }
+
 }
