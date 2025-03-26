@@ -32,6 +32,7 @@ import java.util.Locale;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 
 import okhttp3.Call;
@@ -42,7 +43,7 @@ import okhttp3.Response;
 
 public class DataFetcher {
     private static final String KMB_BASE_URL = "https://data.etabus.gov.hk/v1/transport/kmb/";
-    private static final String BUS_ROUTES_URL = "https://data.etabus.gov.hk/v1/transport/kmb/route/";
+    private static final String BUS_ROUTES_URL = "https://data.etabus.gov.hk/v1/transport/kmb/route";
     private static final String TRAFFIC_NEWS_URL = "https://programme.rthk.hk/channel/radio/trafficnews/index.php";
     private final ExecutorService executorService;
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
@@ -61,21 +62,63 @@ public class DataFetcher {
             if (success) {
                 Log.d("DataFetcher", "Database backup successful");
                 databaseHelper.removeAllValues();
-                fetchAllKMBBusStop();
-                fetchAllBusRoutes(
-                        onSuccess -> Log.d("DataFetcher", "All bus routes fetched successfully"),
-                        onError -> {
-                            Log.e("DataFetcher", "Error fetching all bus routes: " + onError);
-                            handleDataFetchFailure();
+
+                // Flag to track whether any operation fails
+                AtomicBoolean failed = new AtomicBoolean(false);
+
+                // Fetch KM Bus Stops
+                Log.d("DataFetcher", "1. Fetching all kmb bus stops");
+                fetchAllKMBBusStop(
+                        onSuccess -> Log.d("DataFetcher", "All kmb bus stops fetched successfully, now processing"),
+                        error -> {
+                            if (!failed.get()) {
+                                failed.set(true);
+                                Log.e("DataFetcher", "Error fetching all kmb bus stops: " + error);
+                                handleDataFetchFailure();
+                            }
                         }
                 );
-                fetchAllKMBRouteStop();
+
+                // Fetch Bus Routes
+                Log.d("DataFetcher", "2. Fetching all bus routes");
+                fetchAllBusRoutes(
+                        onSuccess -> {
+                            if (!failed.get()) {
+                                Log.d("DataFetcher", "All bus routes fetched successfully");
+                            }
+                        },
+                        error -> {
+                            if (!failed.get()) {
+                                failed.set(true);
+                                Log.e("DataFetcher", "2. Error fetching all bus routes: " + error);
+                                handleDataFetchFailure();
+                            }
+                        }
+                );
+
+                // Fetch KMB Route Stops
+                Log.d("DataFetcher", "3. Fetching all kmb route-stop");
+                fetchAllKMBRouteStop(
+                        onSuccess -> {
+                            if (!failed.get()) {
+                                Log.d("DataFetcher", "All kmb route-stop fetched successfully, now processing");
+                            }
+                        },
+                        error -> {
+                            if (!failed.get()) {
+                                failed.set(true);
+                                Log.e("DataFetcher", "Error fetching all kmb route-stop: " + error);
+                                handleDataFetchFailure();
+                            }
+                        }
+                );
             } else {
                 Log.e("DataFetcher", "Database backup failed");
                 Toast.makeText(context, "Database backup failed. Please try again later.", Toast.LENGTH_SHORT).show();
             }
         });
     }
+
 
     // Handle failures by restoring the database
     private void handleDataFetchFailure() {
@@ -91,7 +134,8 @@ public class DataFetcher {
 
     public void fetchAllBusRoutes(Consumer<List<BusRoute>> onSuccess, Consumer<String> onError) {
         Request request = new Request.Builder()
-                .url(BUS_ROUTES_URL)
+                .url("https://data.etabus.gov.hk/v1/transport/kmb/route/")
+                .header("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.36")
                 .build();
 
         client.newCall(request).enqueue(new Callback() {
@@ -117,7 +161,7 @@ public class DataFetcher {
         });
     }
 
-    public void fetchAllKMBBusStop() {
+    public void fetchAllKMBBusStop(Consumer<String> onSuccess, Consumer<String> onError) {
         Request request = new Request.Builder()
                 .url(KMB_BASE_URL + "stop")
                 .build();
@@ -126,20 +170,24 @@ public class DataFetcher {
             @Override
             public void onFailure(Call call, IOException e) {
                 Log.e("DataFetchKMB", "Error Fetching all kmb bus stops: " + e.getMessage());
+                onError.accept("Failed to fetch data: " + e.getMessage());
             }
 
             @Override
             public void onResponse(Call call, Response response) {
                 if (!response.isSuccessful()) {
                     mainHandler.post(() -> Log.e("DataFetchehKMB", "Error Fetching all kmb bus stops: " + response.code()));
+                    onError.accept("Error: " + response.code());
                 }
 
                 executorService.execute(() -> {
                     try {
                         String jsonData = response.body().string();
                         processAllKMBBusStop(jsonData);
+                        onSuccess.accept("All kmb bus stops fetched successfully, now processing");
                     } catch (Exception e) {
                         Log.e("DataFetchKMB", "Error Fetching all kmb bus stops: " + e.getMessage());
+                        onError.accept("Error processing data: " + e.getMessage());
                     }
                 });
             }
@@ -162,29 +210,38 @@ public class DataFetcher {
         }
     }
 
-    public void fetchAllKMBRouteStop() {
+    public void fetchAllKMBRouteStop(Consumer<String> onSuccess, Consumer<String> onError) {
+        Log.d("DataFetch", "Attempt to fetching all kmb route-stop");
         Request request = new Request.Builder()
-                .url(KMB_BASE_URL + "route-stop")
+                .url(KMB_BASE_URL + "/route-stop")
                 .build();
+
+        Log.d("DataFetch", "Request URL: " + KMB_BASE_URL + "route-stop/");
 
         client.newCall(request).enqueue(new Callback() {
             @Override
             public void onFailure(Call call, IOException e) {
-                Log.e("DataFetchKMB", "Error Fetching all kmb bus stops: " + e.getMessage());
+                Log.e("DataFetch", "On Failure: Error Fetching all kmb route stops: " + e.getMessage());
+                onError.accept("Failed to fetch data: " + e.getMessage());
             }
 
             @Override
             public void onResponse(Call call, Response response) {
+                Log.d("DataFetch", "Successful: " + response.isSuccessful());
                 if (!response.isSuccessful()) {
-                    mainHandler.post(() -> Log.e("DataFetchehKMB", "Error Fetching all kmb bus stops: " + response.code()));
+                    mainHandler.post(() -> Log.e("DataFetcheh", "onResponse: Error Fetching all kmb route stops: " + response.code()));
+                    Log.e("DataFetch", "Response: " + response);
+                    onError.accept("Error: " + response.code());
                 }
 
                 executorService.execute(() -> {
                     try {
                         String jsonData = response.body().string();
                         processAllKMBRouteStop(jsonData);
+                        onSuccess.accept("Executor: All kmb route-stop fetched successfully, now processing");
                     } catch (Exception e) {
-                        Log.e("DataFetchKMB", "Error Fetching all kmb bus stops: " + e.getMessage());
+                        Log.e("DataFetch", "Executor: Error Fetching all kmb route stops: " + e.getMessage());
+                        onError.accept("Error processing data: " + e.getMessage());
                     }
                 });
             }

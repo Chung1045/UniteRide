@@ -1,6 +1,8 @@
 package com.chung.a9rushtobus;
 
 import android.app.UiModeManager;
+import android.database.Cursor;
+import android.database.sqlite.SQLiteDatabase;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.os.Handler;
@@ -48,7 +50,9 @@ public class BusRouteDetailViewActivity extends AppCompatActivity implements OnM
     private String routeNumber, routeDestination, routeBound, routeServiceType;
     private Utils utils;
     private DataFetcher dataFetcher;
+    private DatabaseHelper databaseHelper;
     private Handler handler = new Handler();
+    public static final String TAG = "BusRouteDetailView";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -67,7 +71,7 @@ public class BusRouteDetailViewActivity extends AppCompatActivity implements OnM
 
         routeNumber = getIntent().getStringExtra("route");
         routeDestination = getIntent().getStringExtra("destination");
-        if (Objects.equals(getIntent().getStringExtra("bound"), "O")){
+        if (Objects.equals(getIntent().getStringExtra("bound"), "O")) {
             routeBound = "outbound";
         } else {
             routeBound = "inbound";
@@ -76,6 +80,7 @@ public class BusRouteDetailViewActivity extends AppCompatActivity implements OnM
         routeServiceType = getIntent().getStringExtra("serviceType");
 
         dataFetcher = new DataFetcher(this);
+        databaseHelper = new DatabaseHelper(this);
 
         initView();
         initListener();
@@ -97,7 +102,7 @@ public class BusRouteDetailViewActivity extends AppCompatActivity implements OnM
         UiModeManager uiModeManager = (UiModeManager) getSystemService(UI_MODE_SERVICE);
         if (UserPreferences.sharedPref.getBoolean(UserPreferences.SETTINGS_THEME_DARK, false)
                 || (UserPreferences.sharedPref.getBoolean(UserPreferences.SETTINGS_THEME_FOLLOW_SYSTEM, false)
-                && (uiModeManager.getNightMode() == UiModeManager.MODE_NIGHT_YES))){
+                && (uiModeManager.getNightMode() == UiModeManager.MODE_NIGHT_YES))) {
             mMap.setMapStyle(MapStyleOptions.loadRawResourceStyle(this, R.raw.maps_night_theme));
         }
 
@@ -108,7 +113,7 @@ public class BusRouteDetailViewActivity extends AppCompatActivity implements OnM
         // We'll update the map with real stop data when it's loaded
     }
 
-    public void initView(){
+    public void initView() {
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
@@ -137,13 +142,123 @@ public class BusRouteDetailViewActivity extends AppCompatActivity implements OnM
         loadBusRouteStopData();
     }
 
-    public void initListener(){
+    public void initListener() {
         ImageView backBtn = findViewById(R.id.bus_detail_activity_back_button);
         backBtn.setOnClickListener(v -> finish());
     }
 
-    public void loadBusRouteStopData(){
 
+    public void loadBusRouteStopData() {
+
+        Log.d("BusRouteDetailView", "Loading bus route stops");
+        busRouteStopItems.clear();
+        List<LatLng> stopPositions = new ArrayList<>();
+
+        try {
+            SQLiteDatabase db = databaseHelper.getReadableDatabase();
+
+            // Query to get all stops for this route in sequence order with DISTINCT to prevent duplicates
+            String query = "SELECT DISTINCT rs." + DatabaseHelper.Tables.KMB_ROUTE_STOPS.COLUMN_STOP_SEQ + ", " +
+                    "rs." + DatabaseHelper.Tables.KMB_ROUTE_STOPS.COLUMN_STOP_ID + ", " +
+                    "s." + DatabaseHelper.Tables.KMB_STOPS.COLUMN_STOP_NAME_EN + ", " +
+                    "s." + DatabaseHelper.Tables.KMB_STOPS.COLUMN_STOP_NAME_TC + ", " +
+                    "s." + DatabaseHelper.Tables.KMB_STOPS.COLUMN_STOP_NAME_SC + ", " +
+                    "s." + DatabaseHelper.Tables.KMB_STOPS.COLUMN_LATITUDE + ", " +
+                    "s." + DatabaseHelper.Tables.KMB_STOPS.COLUMN_LONGITUDE +
+                    " FROM " + DatabaseHelper.Tables.KMB_ROUTE_STOPS.TABLE_NAME + " rs" +
+                    " JOIN " + DatabaseHelper.Tables.KMB_STOPS.TABLE_NAME + " s" +
+                    " ON rs." + DatabaseHelper.Tables.KMB_ROUTE_STOPS.COLUMN_STOP_ID + " = s." + DatabaseHelper.Tables.KMB_STOPS.COLUMN_STOP_ID +
+                    " WHERE rs." + DatabaseHelper.Tables.KMB_ROUTE_STOPS.COLUMN_ROUTE + " = ?" +
+                    " AND rs." + DatabaseHelper.Tables.KMB_ROUTE_STOPS.COLUMN_BOUND + " = ?" +
+                    " AND rs." + DatabaseHelper.Tables.KMB_ROUTE_STOPS.COLUMN_SERVICE_TYPE + " = ?" +
+                    " GROUP BY rs." + DatabaseHelper.Tables.KMB_ROUTE_STOPS.COLUMN_STOP_ID + " " +
+                    " ORDER BY CAST(rs." + DatabaseHelper.Tables.KMB_ROUTE_STOPS.COLUMN_STOP_SEQ + " AS INTEGER)";
+
+            if (routeBound.equals("outbound")) {
+                routeBound = "O";
+            } else {
+                routeBound = "I";
+            }
+
+            String[] selectionArgs = {routeNumber, routeBound, routeServiceType};
+
+            Cursor cursor = db.rawQuery(query, selectionArgs);
+
+            int index = 0;
+            Log.d("BusRouteDetailView", "Found " + cursor.getCount() + " stops for route " + routeNumber);
+            if (cursor.moveToFirst()) {
+                do {
+                    // Extract data from cursor
+                    String stopId = cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.Tables.KMB_ROUTE_STOPS.COLUMN_STOP_ID));
+                    String stopNameEn = cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.Tables.KMB_STOPS.COLUMN_STOP_NAME_EN));
+                    String stopNameTc = cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.Tables.KMB_STOPS.COLUMN_STOP_NAME_TC));
+                    String stopNameSc = cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.Tables.KMB_STOPS.COLUMN_STOP_NAME_SC));
+                    String latitude = cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.Tables.KMB_STOPS.COLUMN_LATITUDE));
+                    String longitude = cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.Tables.KMB_STOPS.COLUMN_LONGITUDE));
+                    
+                    Log.d("BusRouteDetailView", "Processing stop " + index + ": ID=" + stopId + 
+                        ", Name=" + stopNameEn + ", Lat=" + latitude + ", Long=" + longitude);
+
+                    // Add to bus route stop items list
+                    busRouteStopItems.add(new BusRouteStopItem(
+                            routeNumber,
+                            routeBound,
+                            routeServiceType,
+                            stopNameEn,
+                            stopNameTc,
+                            stopNameSc,
+                            stopId));
+
+                    // Add stop position to map if latitude and longitude are available
+                    if (latitude != null && !latitude.isEmpty() && longitude != null && !longitude.isEmpty()) {
+                        try {
+                            double lat = Double.parseDouble(latitude);
+                            double lng = Double.parseDouble(longitude);
+                            LatLng stopPosition = new LatLng(lat, lng);
+                            stopPositions.add(stopPosition);
+
+                            // Add marker to map
+                            if (mMap != null) {
+                                mMap.addMarker(new MarkerOptions()
+                                        .position(stopPosition)
+                                        .title(stopNameEn)
+                                        .icon(BitmapDescriptorFactory.defaultMarker(index == 0 ?
+                                                BitmapDescriptorFactory.HUE_BLUE :
+                                                BitmapDescriptorFactory.HUE_RED)));
+                            }
+                        } catch (NumberFormatException e) {
+                            Log.e("BusRouteDetailView", "Invalid coordinates: " + e.getMessage());
+                        }
+                    }
+
+                    index++;
+                } while (cursor.moveToNext());
+            }
+
+            cursor.close();
+
+            // Update UI
+            adapter.notifyDataSetChanged();
+            connectPointsOnMap(stopPositions);
+
+            // Center map on first stop if available
+            if (!stopPositions.isEmpty() && mMap != null) {
+                mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(stopPositions.get(0), 15f));
+            }
+
+        } catch (Exception e) {
+            Log.e(TAG, "Error fetching route stops from database", e);
+            Log.e(TAG, "Stack trace: ", e);
+            // Show error message to user
+            Toast.makeText(this, "Failed to load bus stops from database: " + e.getMessage(), Toast.LENGTH_LONG).show();
+
+            Log.d(TAG, "Falling back to API data fetch");
+            // Fallback to API if database fetch fails
+            fetchRouteStopsFromAPI();
+        }
+    }
+
+    private void fetchRouteStopsFromAPI() {
         dataFetcher.fetchRouteStopInfo(
                 routeNumber,
                 "kmb",
@@ -194,13 +309,11 @@ public class BusRouteDetailViewActivity extends AppCompatActivity implements OnM
 
                     // Update UI
                     adapter.notifyDataSetChanged();
-                    connectPointsOnMap(stopPositions);
 
                     // Center map on first stop if available
                     if (!stopPositions.isEmpty() && mMap != null) {
                         mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(stopPositions.get(0), 15f));
                     }
-
                 },
                 error -> {
                     // Handle error
