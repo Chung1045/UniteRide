@@ -53,4 +53,12 @@
         android:iconSpaceReserved="false"
         android:layout="@layout/components_basic_preference_top"/>
 
+    <Preference
+        android:key="pref_dev_fetchData"
+        android:title="Fetch Data"
+        android:layout_marginStart="16dp"
+        android:layout_marginEnd="16dp"
+        android:iconSpaceReserved="false"
+        android:layout="@layout/components_basic_preference_bottom"/>
+
 </PreferenceScreen>

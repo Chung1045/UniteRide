@@ -180,10 +180,6 @@ public class FragmentSearch extends Fragment {
         List<BusRoute> filteredList = new ArrayList<>();
 
         for (BusRoute route : allRoutes) {
-//            if (route.getRoute().toLowerCase().contains(query.toLowerCase())
-//                    || route.getDestEn().toLowerCase().contains(query.toLowerCase())) {
-//                filteredList.add(route);
-//            }
             if (route.getRoute().toLowerCase().contains(query.toLowerCase())) {
                 filteredList.add(route);
             }

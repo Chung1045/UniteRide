@@ -1,14 +1,18 @@
 package com.chung.a9rushtobus.preferences;
 
+import static org.chromium.base.ThreadUtils.runOnUiThread;
+
 import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.preference.Preference;
 import androidx.preference.PreferenceFragmentCompat;
 
+import com.chung.a9rushtobus.DataFetcher;
 import com.chung.a9rushtobus.OnboardingActivity;
 import com.chung.a9rushtobus.R;
 import com.google.android.material.appbar.CollapsingToolbarLayout;
@@ -18,10 +22,12 @@ import com.google.android.material.bottomnavigation.BottomNavigationView;
 public class SettingsMainPreferenceView extends PreferenceFragmentCompat {
 
     private BottomNavigationView bottomNavigationView;
+    private DataFetcher dataFetcher;
 
     @Override
     public void onCreatePreferences(Bundle savedInstanceState, String rootKey) {
         setPreferencesFromResource(R.xml.preference_main, rootKey);
+        dataFetcher = new DataFetcher(requireActivity());
         listenerInit();
     }
 
@@ -114,6 +120,25 @@ public class SettingsMainPreferenceView extends PreferenceFragmentCompat {
         dev_OnboardPreference.setOnPreferenceClickListener(view -> {
             Intent newActivity = new Intent(view.getContext(), OnboardingActivity.class);
             startActivity(newActivity, null);
+            return false;
+        });
+
+        Preference dev_FetchData = findPreference("pref_dev_fetchData");
+        assert dev_FetchData!= null;
+
+        dev_FetchData.setOnPreferenceClickListener(view -> {
+            new Thread(() -> {
+                try {
+                    runOnUiThread(() -> {
+                        Toast.makeText(getContext(), "Fetching data...", Toast.LENGTH_SHORT).show();
+                        dataFetcher.refreshAllData();
+                    });
+//                    dataFetcher.fetchAllData(); // will implement later
+                    runOnUiThread(() -> Toast.makeText(getContext(), "Data fetched", Toast.LENGTH_SHORT).show());
+                } catch (Exception e) {
+                    runOnUiThread(() -> Toast.makeText(getContext(), "Error: " + e.getMessage(), Toast.LENGTH_SHORT).show());
+                }
+            }).start();
             return false;
         });
 
