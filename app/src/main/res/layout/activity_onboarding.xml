@@ -5,7 +5,6 @@
     android:id="@+id/main"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/brand_colorSurface"
     tools:context=".OnboardingActivity">
 
 
@@ -13,8 +12,10 @@
         android:id="@+id/onBoardingAppBar"
         android:layout_width="match_parent"
         android:layout_height="100dp"
-        android:elevation="48dp"
+        android:elevation="200dp"
         android:padding="16dp"
+        android:background="@color/onboarding_appBar"
+        android:clipToPadding="false"
         app:layout_collapseMode="pin"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.0"
@@ -27,7 +28,9 @@
             style="@style/Widget.9RushToBus.ProgressIndicator"
             android:layout_width="200dp"
             android:layout_height="wrap_content"
-            android:layout_gravity="center_horizontal" />
+            android:layout_gravity="center_horizontal"
+            app:indicatorColor="@color/brand_colorPrimary"
+            app:trackColor="@color/onboarding_colorSurface"/>
 
     </com.google.android.material.appbar.MaterialToolbar>
 
@@ -35,6 +38,7 @@
         android:layout_width="0dp"
         android:layout_height="0dp"
         android:id="@+id/fragmentContainerView_Onboard"
+        android:background="@color/onboarding_colorSurface"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
