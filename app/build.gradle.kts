@@ -1,3 +1,4 @@
+import java.util.Properties
 plugins {
     alias(libs.plugins.android.application)
     id("com.google.android.libraries.mapsplatform.secrets-gradle-plugin")
@@ -12,6 +13,13 @@ android {
     }
 
     defaultConfig {
+
+        val secretsPropertiesFile = rootProject.file("secrets.properties")
+        val secretsProperties = Properties()
+        if (secretsPropertiesFile.exists()) {
+            secretsProperties.load(secretsPropertiesFile.inputStream())
+        }
+
         applicationId = "com.chung.a9rushtobus"
         minSdk = 29
         targetSdk = 35
@@ -19,6 +27,8 @@ android {
         versionName = "1.0"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         buildConfigField("int", "REFRESH_INTERVAL", "60") // refresh interval in seconds
+        val apiKey = secretsProperties.getProperty("MAPS_API_KEY", "")
+        buildConfigField("String", "MAPS_API_KEY", "\"$apiKey\"")
     }
 
     buildTypes {

@@ -21,7 +21,7 @@ import android.widget.ProgressBar;
 import android.widget.Toast;
 
 import com.chung.a9rushtobus.DataFetcher;
-import com.chung.a9rushtobus.DatabaseHelper;
+import com.chung.a9rushtobus.database.DatabaseHelper;
 import com.chung.a9rushtobus.R;
 import com.chung.a9rushtobus.elements.BusRoute;
 import com.chung.a9rushtobus.elements.BusRouteAdapter;

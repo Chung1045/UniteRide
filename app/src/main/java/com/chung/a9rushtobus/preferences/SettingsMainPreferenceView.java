@@ -59,7 +59,12 @@ public class SettingsMainPreferenceView extends PreferenceFragmentCompat {
         applicationLanguage.setOnPreferenceClickListener(view -> {
             updateToolbarTitle("Language");
             getParentFragmentManager().beginTransaction()
-                    .replace(R.id.fragmentContainerView, new SettingsLanguagePreferenceView())
+                    .setCustomAnimations(
+                            R.anim.slide_in_right,
+                            R.anim.slide_out_left,
+                            R.anim.slide_in_left,
+                            R.anim.slide_out_right
+                    ).replace(R.id.fragmentContainerView, new SettingsLanguagePreferenceView())
                     .addToBackStack(null)
                     .commit();
             bottomNavigationView.setVisibility(View.GONE);
@@ -72,7 +77,12 @@ public class SettingsMainPreferenceView extends PreferenceFragmentCompat {
         applicationTheme.setOnPreferenceClickListener(view -> {
             updateToolbarTitle("Theme");
             getParentFragmentManager().beginTransaction()
-                    .replace(R.id.fragmentContainerView, new SettingsThemePreferenceView())
+                    .setCustomAnimations(
+                    R.anim.slide_in_right,
+                    R.anim.slide_out_left,
+                    R.anim.slide_in_left,
+                    R.anim.slide_out_right
+                    ).replace(R.id.fragmentContainerView, new SettingsThemePreferenceView())
                     .addToBackStack(null)
                     .commit();
             return false;
@@ -83,8 +93,12 @@ public class SettingsMainPreferenceView extends PreferenceFragmentCompat {
 
         feauturePreference.setOnPreferenceClickListener(view -> {
             updateToolbarTitle("Features");
-            getParentFragmentManager().beginTransaction()
-                    .replace(R.id.fragmentContainerView, new SettingsFeaturesPreferenceView())
+            getParentFragmentManager().beginTransaction().setCustomAnimations(
+                            R.anim.slide_in_right,
+                            R.anim.slide_out_left,
+                            R.anim.slide_in_left,
+                            R.anim.slide_out_right
+                    ).replace(R.id.fragmentContainerView, new SettingsFeaturesPreferenceView())
                     .addToBackStack(null)
                     .commit();
             return false;
@@ -95,8 +109,12 @@ public class SettingsMainPreferenceView extends PreferenceFragmentCompat {
 
         aboutPreference.setOnPreferenceClickListener(view -> {
             updateToolbarTitle("About");
-            getParentFragmentManager().beginTransaction()
-                    .replace(R.id.fragmentContainerView, new SettingsAboutView())
+            getParentFragmentManager().beginTransaction().setCustomAnimations(
+                            R.anim.slide_in_right,
+                            R.anim.slide_out_left,
+                            R.anim.slide_in_left,
+                            R.anim.slide_out_right
+                    ).replace(R.id.fragmentContainerView, new SettingsAboutView())
                     .addToBackStack(null)
                     .commit();
             return false;
@@ -107,8 +125,12 @@ public class SettingsMainPreferenceView extends PreferenceFragmentCompat {
 
         accessibilityPreference.setOnPreferenceClickListener(view -> {
             updateToolbarTitle("Accessibility");
-            getParentFragmentManager().beginTransaction()
-                    .replace(R.id.fragmentContainerView, new SettingsAccessibilityPreferenceView())
+            getParentFragmentManager().beginTransaction().setCustomAnimations(
+                            R.anim.slide_in_right,
+                            R.anim.slide_out_left,
+                            R.anim.slide_in_left,
+                            R.anim.slide_out_right
+                    ).replace(R.id.fragmentContainerView, new SettingsAccessibilityPreferenceView())
                     .addToBackStack(null)
                     .commit();
             return false;

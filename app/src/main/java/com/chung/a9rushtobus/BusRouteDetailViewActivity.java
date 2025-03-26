@@ -4,6 +4,7 @@ import android.app.UiModeManager;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.graphics.Color;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
 import android.text.method.LinkMovementMethod;
@@ -22,6 +23,7 @@ import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.chung.a9rushtobus.database.DatabaseHelper;
 import com.chung.a9rushtobus.elements.BusRouteStopItem;
 import com.chung.a9rushtobus.elements.BusRouteStopItemAdapter;
 import com.google.android.gms.maps.CameraUpdateFactory;
@@ -34,9 +36,16 @@ import com.google.android.gms.maps.model.MapStyleOptions;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.PolylineOptions;
 
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.BufferedInputStream;
+import java.io.BufferedReader;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -48,6 +57,7 @@ public class BusRouteDetailViewActivity extends AppCompatActivity implements OnM
     private RecyclerView busRouteStopRecyclerView;
     private List<BusRouteStopItem> busRouteStopItems;
     private String routeNumber, routeDestination, routeBound, routeServiceType;
+    private Integer initialStopSeqView = 0;
     private Utils utils;
     private DataFetcher dataFetcher;
     private DatabaseHelper databaseHelper;
@@ -72,6 +82,7 @@ public class BusRouteDetailViewActivity extends AppCompatActivity implements OnM
 
         routeNumber = getIntent().getStringExtra("route");
         routeDestination = getIntent().getStringExtra("destination");
+        initialStopSeqView = getIntent().getIntExtra("initialStopSeqView", 0);
         if (Objects.equals(getIntent().getStringExtra("bound"), "O")) {
             routeBound = "outbound";
         } else {
@@ -321,10 +332,6 @@ public class BusRouteDetailViewActivity extends AppCompatActivity implements OnM
         );
     }
 
-
-
-
-
     private void connectPointsOnMap(final List<LatLng> stopPositions) {
         final String TAG = "BusRouteDetailView";
         
@@ -337,46 +344,168 @@ public class BusRouteDetailViewActivity extends AppCompatActivity implements OnM
         if (mMap == null) {
             Log.d(TAG, "Map not ready, storing positions for later");
             pendingStopPositions = new ArrayList<>(stopPositions);
-            return;
         }
 
-        // Draw route on main thread
         runOnUiThread(() -> drawRouteOnMap(stopPositions));
     }
 
     private void drawRouteOnMap(List<LatLng> stopPositions) {
         final String TAG = "BusRouteDetailView";
 
+        Log.d(TAG, "Drawing route with " + stopPositions.size() + " points");
+
+        if (stopPositions.size() < 2) {
+            Log.e(TAG, "At least two points are needed to draw a route.");
+            return;
+        }
+
         try {
-            Log.d(TAG, "Drawing route with " + stopPositions.size() + " points");
-            Log.d(TAG, "First point: " + stopPositions.get(0));
-            Log.d(TAG, "Last point: " + stopPositions.get(stopPositions.size() - 1));
+            Log.d(TAG, "Fetching route for " + stopPositions.size() + " points");
 
-            mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(stopPositions.get(0), 16f));
+            // Construct the Directions API request URL
+            String origin = stopPositions.get(0).latitude + "," + stopPositions.get(0).longitude;
+            String destination = stopPositions.get(stopPositions.size() - 1).latitude + "," + stopPositions.get(stopPositions.size() - 1).longitude;
 
-            // Draw the route as a polyline
-            PolylineOptions polylineOptions = new PolylineOptions()
-                    .addAll(stopPositions)
-                    .color(Color.RED)
-                    .width(10f)
-                    .geodesic(true);
+            mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(stopPositions.get(initialStopSeqView), 16f));
 
-            mMap.addPolyline(polylineOptions);
-            Log.d(TAG, "Route line drawn successfully");
-
-            // Add a marker for each bus stop
-            for (LatLng stop : stopPositions) {
-                mMap.addMarker(new MarkerOptions()
+            // Add a marker for each stop
+            for (int i = 0; i < stopPositions.size(); i++) {
+                LatLng stop = stopPositions.get(i);
+                MarkerOptions markerOptions = new MarkerOptions()
                         .position(stop)
-                        .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_BLUE)) // Blue marker
-                        .title("Bus Stop")); // You can customize this title
+                        .title("Stop " + (i + 1)) // You can customize this with actual names
+                        .snippet("Lat: " + stop.latitude + ", Lng: " + stop.longitude);
+                mMap.addMarker(markerOptions);
             }
 
-            Log.d(TAG, "Bus stop markers added successfully");
+            // Waypoints for intermediate stops (optional)
+            StringBuilder waypoints = new StringBuilder();
+            if (stopPositions.size() > 2) {
+                waypoints.append("waypoints=");
+                for (int i = 1; i < stopPositions.size() - 1; i++) {
+                    waypoints.append(stopPositions.get(i).latitude)
+                            .append(",")
+                            .append(stopPositions.get(i).longitude);
+                    if (i < stopPositions.size() - 2) waypoints.append("|");
+                }
+                Log.d(TAG, "Waypoints URL: " + waypoints);
+            }
+
+            String apiKey = BuildConfig.MAPS_API_KEY; // Replace with your API key
+            String requestUrl = "https://maps.googleapis.com/maps/api/directions/json?"
+                    + "origin=" + origin
+                    + "&destination=" + destination
+                    + "&mode=driving"
+                    + (waypoints.length() > 0 ? "&" + waypoints.toString() : "")
+                    + "&key=" + apiKey;
+
+            // Execute API request in a background thread
+            new FetchRouteTask().execute(requestUrl);
 
         } catch (Exception e) {
-            Log.e(TAG, "Error drawing route line: " + e.getMessage(), e);
+            Log.e(TAG, "Error fetching route: " + e.getMessage(), e);
         }
     }
+
+
+    private class FetchRouteTask extends AsyncTask<String, Void, String> {
+        @Override
+        protected String doInBackground(String... urls) {
+            try {
+                Log.d(TAG, "Fetching route from " + urls[0]);
+
+                URL url = new URL(urls[0]);
+                HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+                connection.setRequestMethod("GET");
+
+                InputStream inputStream = new BufferedInputStream(connection.getInputStream());
+                BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
+                StringBuilder response = new StringBuilder();
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    response.append(line);
+                    Log.d(TAG, "Response: " + line);
+                }
+
+                return response.toString();
+
+            } catch (Exception e) {
+                Log.e(TAG, "Error fetching route: " + e.getMessage(), e);
+                return null;
+            }
+        }
+
+        @Override
+        protected void onPostExecute(String result) {
+            if (result == null) {
+                Log.e(TAG, "Failed to get route data");
+                return;
+            }
+
+            try {
+                JSONObject jsonResponse = new JSONObject(result);
+
+                JSONArray routes = jsonResponse.getJSONArray("routes");
+                if (routes.length() == 0) {
+                    Log.e(TAG, "No routes found");
+                    return;
+                }
+
+                JSONObject route = routes.getJSONObject(0);
+                JSONObject overviewPolyline = route.getJSONObject("overview_polyline");
+                String encodedPolyline = overviewPolyline.getString("points");
+
+                List<LatLng> routePoints = decodePolyline(encodedPolyline);
+
+                // Draw the route on the map
+                PolylineOptions polylineOptions = new PolylineOptions()
+                        .addAll(routePoints)
+                        .color(Color.RED)
+                        .width(15f)
+                        .geodesic(true);
+
+                mMap.addPolyline(polylineOptions);
+                Log.d(TAG, "Route drawn successfully");
+
+            } catch (Exception e) {
+                Log.e(TAG, "Error parsing route JSON: " + e.getMessage(), e);
+            }
+        }
+
+        private List<LatLng> decodePolyline(String encoded) {
+            List<LatLng> polyline = new ArrayList<>();
+            int index = 0, len = encoded.length();
+            int lat = 0, lng = 0;
+
+            while (index < len) {
+                int b, shift = 0, result = 0;
+                do {
+                    b = encoded.charAt(index++) - 63;
+                    result |= (b & 0x1F) << shift;
+                    shift += 5;
+                } while (b >= 0x20);
+                int dlat = ((result & 1) != 0 ? ~(result >> 1) : (result >> 1));
+                lat += dlat;
+
+                shift = 0;
+                result = 0;
+                do {
+                    b = encoded.charAt(index++) - 63;
+                    result |= (b & 0x1F) << shift;
+                    shift += 5;
+                } while (b >= 0x20);
+                int dlng = ((result & 1) != 0 ? ~(result >> 1) : (result >> 1));
+                lng += dlng;
+
+                LatLng p = new LatLng((lat / 1E5), (lng / 1E5));
+                polyline.add(p);
+            }
+
+            return polyline;
+        }
+
+
+    }
+
 
 }

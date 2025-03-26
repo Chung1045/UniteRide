@@ -6,8 +6,9 @@ import android.os.Looper;
 import android.util.Log;
 import android.widget.Toast;
 
+import com.chung.a9rushtobus.database.DatabaseHelper;
+import com.chung.a9rushtobus.database.KMBDatabase;
 import com.chung.a9rushtobus.elements.BusRoute;
-import com.chung.a9rushtobus.elements.BusRouteStopItem;
 import com.chung.a9rushtobus.elements.RTHKTrafficEntry;
 
 import org.json.JSONArray;
