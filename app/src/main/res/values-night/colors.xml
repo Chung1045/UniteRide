@@ -14,5 +14,5 @@
     <color name="onboarding_appBar">#132F38</color>
     <color name="onboarding_colorSurface">#223C45</color>
 
-    <color name="button_colorOnHover">#FFFFFF</color>
+    <color name="button_colorOnHover">#132F38</color>
 </resources>
