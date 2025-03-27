@@ -28,13 +28,16 @@ public class OnboardingFragments {
     private static final int LOCATION_PERMISSION_CODE = 101;
 
     @SuppressLint("ClickableViewAccessibility")
-    protected static void setupNavigationButton(Button button, Fragment fragment, int hoveredBackgroundTintColor, int originalBackgroundTintColor, int hoveredTextColor, int originalTextColor) {
+    protected static void setupNavigationButton(Button button, Fragment fragment) {
         button.setOnClickListener(v -> {
             if (fragment.getActivity() instanceof OnboardingActivity) {
                 ((OnboardingActivity) fragment.getActivity()).goToNextPage();
             }
         });
+    }
 
+    @SuppressLint("ClickableViewAccessibility")
+    protected static void onHoverListener(Button button, Fragment fragment, int hoveredBackgroundTintColor, int originalBackgroundTintColor, int hoveredTextColor, int originalTextColor){
         if (button instanceof com.google.android.material.button.MaterialButton) {
             com.google.android.material.button.MaterialButton materialButton =
                     (com.google.android.material.button.MaterialButton) button;
@@ -44,10 +47,12 @@ public class OnboardingFragments {
                     case MotionEvent.ACTION_HOVER_ENTER:
                         materialButton.setBackgroundTintList(ColorStateList.valueOf(ContextCompat.getColor(fragment.requireContext(), hoveredBackgroundTintColor)));
                         materialButton.setTextColor(ColorStateList.valueOf(ContextCompat.getColor(fragment.requireContext(), hoveredTextColor)));
+                        materialButton.setIconTint(ColorStateList.valueOf(ContextCompat.getColor(fragment.requireContext(), hoveredTextColor)));
                         break;
                     case MotionEvent.ACTION_HOVER_EXIT:
                         materialButton.setBackgroundTintList(ColorStateList.valueOf(ContextCompat.getColor(fragment.requireContext(), originalBackgroundTintColor)));
                         materialButton.setTextColor(ColorStateList.valueOf(ContextCompat.getColor(fragment.requireContext(), originalTextColor)));
+                        materialButton.setIconTint(ColorStateList.valueOf(ContextCompat.getColor(fragment.requireContext(), originalTextColor)));
                         break;
                 }
                 return false;
@@ -58,11 +63,13 @@ public class OnboardingFragments {
                     case MotionEvent.ACTION_DOWN:
                         materialButton.setBackgroundTintList(ColorStateList.valueOf(ContextCompat.getColor(fragment.requireContext(), hoveredBackgroundTintColor)));
                         materialButton.setTextColor(ColorStateList.valueOf(ContextCompat.getColor(fragment.requireContext(), hoveredTextColor)));
+                        materialButton.setIconTint(ColorStateList.valueOf(ContextCompat.getColor(fragment.requireContext(), hoveredTextColor)));
                         break;
                     case MotionEvent.ACTION_UP:
                     case MotionEvent.ACTION_CANCEL:
                         materialButton.setBackgroundTintList(ColorStateList.valueOf(ContextCompat.getColor(fragment.requireContext(), originalBackgroundTintColor)));
                         materialButton.setTextColor(ColorStateList.valueOf(ContextCompat.getColor(fragment.requireContext(), originalTextColor)));
+                        materialButton.setIconTint(ColorStateList.valueOf(ContextCompat.getColor(fragment.requireContext(), originalTextColor)));
                         break;
                 }
                 return false;
@@ -110,7 +117,8 @@ public class OnboardingFragments {
             super.onViewCreated(view, savedInstanceState);
 
             Button nextButton = view.findViewById(R.id.onboarding_1_5_next_button);
-            setupNavigationButton(nextButton, this, R.color.button_colorOnHover, R.color.brand_colorPrimary, R.color.brand_colorPrimary, R.color.brand_colorSurface);
+            setupNavigationButton(nextButton, this);
+            onHoverListener(nextButton, this, R.color.button_colorOnHover, R.color.brand_colorPrimary, R.color.brand_colorPrimary, R.color.brand_colorSurface);
         }
     }
 
@@ -125,7 +133,11 @@ public class OnboardingFragments {
             super.onViewCreated(view, savedInstanceState);
 
             Button nextButton = view.findViewById(R.id.onboarding_2_5_next_button);
-            setupNavigationButton(nextButton, this, R.color.button_colorOnHover, R.color.brand_colorPrimary, R.color.brand_colorPrimary, R.color.brand_colorSurface);        }
+            Button languageButton = view.findViewById(R.id.language_button);
+            setupNavigationButton(nextButton, this);
+            onHoverListener(nextButton, this, R.color.button_colorOnHover, R.color.brand_colorPrimary, R.color.brand_colorPrimary, R.color.brand_colorSurface);
+            onHoverListener(languageButton, this, R.color.brand_colorTertiary, R.color.brand_colorPrimary, R.color.brand_colorTertiary, R.color.brand_colorOnSurface);
+        }
     }
 
     public static class FragmentOnBoarding3 extends BaseOnboardingFragment {
@@ -141,8 +153,10 @@ public class OnboardingFragments {
 
             Button nextButton = view.findViewById(R.id.onboarding_3_5_next_button);
             Button accessButton = view.findViewById(R.id.onboarding_3_5_access_button);
-            setupNavigationButton(nextButton, this, R.color.button_colorOnHover, R.color.brand_colorPrimary, R.color.brand_colorPrimary, R.color.brand_colorSurface);
-            setupNavigationButton(accessButton, this, R.color.button_colorOnHover, R.color.brand_colorTertiary, R.color.brand_colorPrimary, R.color.button_access);
+            setupNavigationButton(nextButton, this);
+            onHoverListener(nextButton, this, R.color.button_colorOnHover, R.color.brand_colorPrimary, R.color.brand_colorPrimary, R.color.brand_colorSurface);
+            setupNavigationButton(accessButton, this);
+            onHoverListener(accessButton, this, R.color.button_colorOnHover, R.color.brand_colorTertiary, R.color.brand_colorPrimary, R.color.button_access);
             accessButton.setOnClickListener(v -> {
                 requestPermission(this, Manifest.permission.POST_NOTIFICATIONS, NOTIFICATION_PERMISSION_CODE);
             });
@@ -163,8 +177,10 @@ public class OnboardingFragments {
 
             Button nextButton = view.findViewById(R.id.onboarding_4_5_next_button);
             Button accessButton = view.findViewById(R.id.onboarding_4_5_access_button);
-            setupNavigationButton(nextButton, this, R.color.button_colorOnHover, R.color.brand_colorPrimary, R.color.brand_colorPrimary, R.color.brand_colorSurface);
-            setupNavigationButton(accessButton, this, R.color.button_colorOnHover, R.color.brand_colorTertiary, R.color.brand_colorPrimary, R.color.button_access);
+            setupNavigationButton(nextButton, this);
+            onHoverListener(nextButton, this, R.color.button_colorOnHover, R.color.brand_colorPrimary, R.color.brand_colorPrimary, R.color.brand_colorSurface);
+            setupNavigationButton(accessButton, this);
+            onHoverListener(accessButton, this, R.color.button_colorOnHover, R.color.brand_colorTertiary, R.color.brand_colorPrimary, R.color.button_access);
             accessButton.setOnClickListener(v -> {
                 requestPermission(this, Manifest.permission.ACCESS_FINE_LOCATION, LOCATION_PERMISSION_CODE);
             });
@@ -183,7 +199,8 @@ public class OnboardingFragments {
             super.onViewCreated(view, savedInstanceState);
 
             Button finishButton = view.findViewById(R.id.onboarding_5_5_next_button);
-            setupNavigationButton(finishButton, this, R.color.button_colorOnHover, R.color.brand_colorPrimary, R.color.brand_colorPrimary, R.color.brand_colorSurface);
+            setupNavigationButton(finishButton, this);
+            onHoverListener(finishButton, this, R.color.button_colorOnHover, R.color.brand_colorPrimary, R.color.brand_colorPrimary, R.color.brand_colorSurface);
 
             finishButton.setOnClickListener(v -> {
                 SharedPreferences sharedPreferences = requireActivity().getSharedPreferences("app_prefs", Context.MODE_PRIVATE);
