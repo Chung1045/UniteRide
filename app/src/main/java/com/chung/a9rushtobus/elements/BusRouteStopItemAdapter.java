@@ -172,7 +172,9 @@ public class BusRouteStopItemAdapter extends RecyclerView.Adapter<BusRouteStopIt
         for (int position = 0; position < items.size(); position++) {
             BusRouteStopItem item = items.get(position);
             int finalPosition = position;
-            fetchEtaForStop(item, finalPosition, System.currentTimeMillis());
+            if (item.getCompany().equals("kmb")) {
+                fetchEtaForStop(item, finalPosition, System.currentTimeMillis());
+            }
         }
 
         if (isUpdating) {

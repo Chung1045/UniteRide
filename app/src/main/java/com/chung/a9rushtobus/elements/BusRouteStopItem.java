@@ -4,14 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class BusRouteStopItem {
-    private String route;
-    private String bound;
-    private String serviceType;
-    private String stopEn;
-    private String stopTc;
-    private String stopSc;
-    private String stopID;
-    private String closestETA;
+    private String route, bound, serviceType, stopEn, stopTc, stopSc, stopID, company, closestETA;
     private int stopEta1;
     private int stopEta2;
     private int stopEta3;
@@ -19,7 +12,7 @@ public class BusRouteStopItem {
     private List<String> etaData = new ArrayList<>();
 
     public BusRouteStopItem(String route, String bound, String serviceType,
-                            String stopEn, String stopTc, String stopSc, String stopID) {
+                            String stopEn, String stopTc, String stopSc, String stopID, String company) {
         this.route = route;
         this.bound = bound;
         this.serviceType = serviceType;
@@ -27,6 +20,7 @@ public class BusRouteStopItem {
         this.stopTc = stopTc;
         this.stopSc = stopSc;
         this.stopID = stopID;
+        this.company = company;
     }
 
     public String getRoute() {
@@ -55,6 +49,10 @@ public class BusRouteStopItem {
 
     public String getStopID() {
         return stopID;
+    }
+
+    public String getCompany() {
+        return company;
     }
 
     public int getStopEta1() {
