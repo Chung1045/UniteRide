@@ -42,7 +42,14 @@ public class BusRouteAdapter extends RecyclerView.Adapter<BusRouteAdapter.ViewHo
         holder.tvRouteName.setText(routeNumber);
         holder.tvDestination.setText(String.format("To %s", routeInfo.getDestEn()));
         holder.tvOrigin.setText(routeInfo.getOrigEn());
-        holder.tvRouteBusCompany.setText("KMB");
+
+        if (routeInfo.getCompany().equals("kmb")) {
+            holder.tvRouteBusCompany.setText("KMB");
+        } else if (routeInfo.getCompany().equals("ctb")) {
+            holder.tvRouteBusCompany.setText("CTB");
+        }
+
+
         holder.bind(routeInfo);
 
         if (!Objects.equals(routeInfo.getServiceType(), "1")){

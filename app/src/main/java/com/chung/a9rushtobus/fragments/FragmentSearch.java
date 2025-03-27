@@ -21,6 +21,7 @@ import android.widget.ProgressBar;
 import android.widget.Toast;
 
 import com.chung.a9rushtobus.DataFetcher;
+import com.chung.a9rushtobus.database.CTBDatabase;
 import com.chung.a9rushtobus.database.DatabaseHelper;
 import com.chung.a9rushtobus.R;
 import com.chung.a9rushtobus.database.KMBDatabase;
@@ -137,36 +138,78 @@ public class FragmentSearch extends Fragment {
                 allRoutes.add(new BusRoute(route, "kmb", bound, serviceType, originEn, originTc, originSc, destEn, destTc, destSc));
             }
             cursor.close();
-            db.close();
 
-            // Custom sorting: First sort numerically, then alphabetically
+            String [] ctbRoutesProjection = {
+                CTBDatabase.Tables.CTB_ROUTES.COLUMN_ROUTE,
+                CTBDatabase.Tables.CTB_ROUTES.COLUMN_ORIGIN_EN,
+                CTBDatabase.Tables.CTB_ROUTES.COLUMN_ORIGIN_TC,
+                CTBDatabase.Tables.CTB_ROUTES.COLUMN_ORIGIN_SC,
+                CTBDatabase.Tables.CTB_ROUTES.COLUMN_DEST_EN,
+                CTBDatabase.Tables.CTB_ROUTES.COLUMN_DEST_TC,
+                CTBDatabase.Tables.CTB_ROUTES.COLUMN_DEST_SC
+            };
+
+            Cursor cursor2 = db.query(
+                    CTBDatabase.Tables.CTB_ROUTES.TABLE_NAME,
+                    ctbRoutesProjection,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null // No initial sorting
+            );
+
+            while (cursor2.moveToNext()) {
+                String route = cursor2.getString(cursor2.getColumnIndex(CTBDatabase.Tables.CTB_ROUTES.COLUMN_ROUTE));
+                String originEn = cursor2.getString(cursor2.getColumnIndex(CTBDatabase.Tables.CTB_ROUTES.COLUMN_ORIGIN_EN));
+                String originTc = cursor2.getString(cursor2.getColumnIndex(CTBDatabase.Tables.CTB_ROUTES.COLUMN_ORIGIN_TC));
+                String originSc = cursor2.getString(cursor2.getColumnIndex(CTBDatabase.Tables.CTB_ROUTES.COLUMN_ORIGIN_SC));
+                String destEn = cursor2.getString(cursor2.getColumnIndex(CTBDatabase.Tables.CTB_ROUTES.COLUMN_DEST_EN));
+                String destTc = cursor2.getString(cursor2.getColumnIndex(CTBDatabase.Tables.CTB_ROUTES.COLUMN_DEST_TC));
+                String destSc = cursor2.getString(cursor2.getColumnIndex(CTBDatabase.Tables.CTB_ROUTES.COLUMN_DEST_SC));
+
+                routes.add(new BusRoute(route, "ctb", "outbound", null, originEn, originTc, originSc, destEn, destTc, destSc));
+                allRoutes.add(new BusRoute(route, "ctb", "outbound", null, originEn, originTc, originSc, destEn, destTc, destSc));
+
+                // Flipped for inbound directions
+                routes.add(new BusRoute(route, "ctb", "inbound", null, destEn, destTc, destSc, originEn, originTc, originSc));
+                allRoutes.add(new BusRoute(route, "ctb", "inbound", null, destEn, destTc, destSc, originEn, originTc, originSc));
+            }
+
             Collections.sort(routes, (route1, route2) -> {
-                String routeStr1 = route1.getRoute();  // Assuming BusRoute has getRoute() method
+                String routeStr1 = route1.getRoute();
                 String routeStr2 = route2.getRoute();
 
-                // Use a regular expression to split the number and the letter suffix
-                Pattern pattern = Pattern.compile("([0-9]+)([A-Za-z]*)");
+                // Regex to capture numeric and alphabetic parts
+                Pattern pattern = Pattern.compile("^([0-9]+)?([A-Za-z]*)$");
                 Matcher matcher1 = pattern.matcher(routeStr1);
                 Matcher matcher2 = pattern.matcher(routeStr2);
 
-                if (matcher1.matches() && matcher2.matches()) {
-                    // Get the numeric part
-                    int num1 = Integer.parseInt(matcher1.group(1));
-                    int num2 = Integer.parseInt(matcher2.group(1));
+                boolean match1 = matcher1.matches();
+                boolean match2 = matcher2.matches();
 
-                    // First, compare by the numeric part
+                if (match1 && match2) {
+                    // Extract numeric parts (default to -1 if missing)
+                    int num1 = matcher1.group(1) != null ? Integer.parseInt(matcher1.group(1)) : -1;
+                    int num2 = matcher2.group(1) != null ? Integer.parseInt(matcher2.group(1)) : -1;
+
+                    // Compare numeric part first
                     if (num1 != num2) {
                         return Integer.compare(num1, num2);
                     }
 
-                    // If the numbers are equal, compare the alphabetic suffix
-                    String suffix1 = matcher1.group(2);
-                    String suffix2 = matcher2.group(2);
+                    // Extract alphabetic suffixes (default to empty string if missing)
+                    String suffix1 = matcher1.group(2) != null ? matcher1.group(2) : "";
+                    String suffix2 = matcher2.group(2) != null ? matcher2.group(2) : "";
+
+                    // Compare suffixes alphabetically
                     return suffix1.compareTo(suffix2);
                 }
 
-                return 0; // Fallback in case matching fails
+                // If one of them doesn't match the expected format, compare as strings
+                return routeStr1.compareTo(routeStr2);
             });
+
 
         } catch (Exception e) {
             Toast.makeText(requireContext(),
@@ -176,40 +219,6 @@ public class FragmentSearch extends Fragment {
 
         return routes;
     }
-
-
-//    private void fetchBusRoutes() {
-//        progressBar.setVisibility(View.VISIBLE);
-//
-//        dataFetcher.fetchAllBusRoutes(
-//            routes -> {
-//                if (getActivity() == null) return;
-//
-//                progressBar.setVisibility(View.GONE);
-//                allRoutes.clear();
-//                allRoutes.addAll(routes);
-//                busRoutes.clear();
-//                busRoutes.addAll(routes);
-//                adapter.notifyDataSetChanged();
-//
-//                if (getContext() != null) {
-//                    if (routes.isEmpty()) {
-//                        Toast.makeText(getContext(), "No routes found", Toast.LENGTH_SHORT).show();
-//                    } else {
-//                        Toast.makeText(getContext(), "Found " + routes.size() + " routes", Toast.LENGTH_SHORT).show();
-//                    }
-//                }
-//            },
-//            errorMessage -> {
-//                if (getActivity() == null) return;
-//
-//                progressBar.setVisibility(View.GONE);
-//                if (getContext() != null) {
-//                    Toast.makeText(getContext(), errorMessage, Toast.LENGTH_LONG).show();
-//                }
-//            }
-//        );
-//    }
 
     private void filterRoutes(String query) {
         List<BusRoute> filteredList = new ArrayList<>();

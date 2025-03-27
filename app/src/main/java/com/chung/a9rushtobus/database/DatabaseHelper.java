@@ -48,6 +48,9 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         Log.d("DatabaseHelper", "Attempting to remove all values 3");
         db.execSQL("DELETE FROM " + CTBDatabase.Tables.CTB_ROUTES.TABLE_NAME);
         Log.d("DatabaseHelper", "Attempting to remove all values 4");
+        db.execSQL("DELETE FROM " + CTBDatabase.Tables.CTB_ROUTE_STOPS.TABLE_NAME);
+        Log.d("DatabaseHelper", "Attempting to remove all values 5");
+        db.execSQL("DELETE FROM " + CTBDatabase.Tables.CTB_STOPS.TABLE_NAME);
         Log.d("DatabaseHelper", "All values removed");
     }
 
@@ -86,6 +89,8 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         db.execSQL(KMBDatabase.SQL_CREATE_KMB_ROUTE_STOPS_TABLE);
         db.execSQL(KMBDatabase.SQL_CREATE_KMB_STOPS_TABLE);
         db.execSQL(CTBDatabase.SQL_CREATE_CTB_ROUTES_TABLE);
+        db.execSQL(CTBDatabase.SQL_CREATE_CTB_ROUTE_STOPS_TABLE);
+        db.execSQL(CTBDatabase.SQL_CREATE_CTB_STOPS_TABLE);
         db.execSQL(SQL_CREATE_RTHK_NEWS_TABLE);
     }
 
@@ -94,9 +99,11 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
         // Delete existing tables
         db.execSQL(KMBDatabase.SQL_DELETE_KMB_ROUTES_TABLE);
-        db.execSQL(KMBDatabase.SQL_CREATE_KMB_ROUTE_STOPS_TABLE);
-        db.execSQL(KMBDatabase.SQL_CREATE_KMB_STOPS_TABLE);
+        db.execSQL(KMBDatabase.SQL_DELETE_KMB_ROUTE_STOPS_TABLE);
+        db.execSQL(KMBDatabase.SQL_DELETE_KMB_STOPS_TABLE);
         db.execSQL(CTBDatabase.SQL_DELETE_CTB_ROUTES_TABLE);
+        db.execSQL(CTBDatabase.SQL_DELETE_CTB_ROUTE_STOPS_TABLE);
+        db.execSQL(CTBDatabase.SQL_DELETE_CTB_STOPS_TABLE);
         db.execSQL(SQL_DELETE_RTHK_NEWS_TABLE);
 
         // Recreate tables

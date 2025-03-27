@@ -48,6 +48,7 @@ import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 
@@ -199,6 +200,8 @@ public class BusRouteDetailViewActivity extends AppCompatActivity implements OnM
             }
 
             String[] selectionArgs = {routeNumber, routeBound, routeServiceType};
+            Log.d("BusRouteDetailView", "Query Args: " + Arrays.toString(selectionArgs));
+            Log.d("BusRouteDetailView", "Query: " + query);
 
             Cursor cursor = db.rawQuery(query, selectionArgs);
 
@@ -269,68 +272,7 @@ public class BusRouteDetailViewActivity extends AppCompatActivity implements OnM
             Log.e(TAG, "Stack trace: ", e);
             // Show error message to user
             Toast.makeText(this, "Failed to load bus stops from database: " + e.getMessage(), Toast.LENGTH_LONG).show();
-
-            Log.d(TAG, "Falling back to API data fetch");
-            // Fallback to API if database fetch fails
-            fetchRouteStopsFromAPI();
         }
-    }
-
-    private void fetchRouteStopsFromAPI() {
-        dataFetcher.fetchRouteStopInfo(
-                routeNumber,
-                "kmb",
-                routeBound,
-                routeServiceType,
-                routeStopInfo -> {
-                    // Process the route stop info
-                    busRouteStopItems.clear();
-                    List<LatLng> stopPositions = new ArrayList<>();
-
-                    for (int i = 0; i < routeStopInfo.length(); i++) {
-                        try {
-                            JSONObject stopInfo = routeStopInfo.getJSONObject(i);
-                            busRouteStopItems.add(new BusRouteStopItem(
-                                    routeNumber,
-                                    routeBound,
-                                    routeServiceType,
-                                    stopInfo.getString("name_en"),
-                                    stopInfo.getString("name_tc"),
-                                    stopInfo.getString("name_sc"),
-                                    stopInfo.getString("stopID")));
-
-                                    double lat = Double.parseDouble(stopInfo.getString("lat"));
-                                    double lng = Double.parseDouble(stopInfo.getString("long"));
-                                    Log.d("BusRouteDetailView", "Location coordinate for Stop Seq " + i + " : " + lat + " " + lng);
-                                    Log.d("BusRouteDetailView", "Attempt to add stop position to map");
-                                    LatLng stopPosition = new LatLng(lat, lng);
-                                    connectPointsOnMap(stopPositions);
-                                    stopPositions.add(stopPosition);
-
-                        } catch (JSONException e) {
-                            Log.e("BusRouteDetailView", "Error parsing stop info: " + e.getMessage());
-                        }
-                    }
-
-                    // Update UI
-                    adapter.notifyDataSetChanged();
-                    
-                    // Draw the route on the map
-                    Log.d("BusRouteDetailView", "Drawing route with " + stopPositions.size() + " stops from API data");
-                    connectPointsOnMap(stopPositions);
-
-                    // Center map on first stop if available
-                    if (!stopPositions.isEmpty() && mMap != null) {
-                        mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(stopPositions.get(0), 15f));
-                    }
-                },
-                error -> {
-                    // Handle error
-                    Log.e("BusRouteDetailView", "Error fetching route stops: " + error);
-                    // Show error message to user
-                    Toast.makeText(this, "Failed to load bus stops: " + error, Toast.LENGTH_LONG).show();
-                }
-        );
     }
 
     private void connectPointsOnMap(final List<LatLng> stopPositions) {
