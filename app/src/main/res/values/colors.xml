@@ -7,6 +7,7 @@
     <color name="brand_colorPrimary">#2C6073</color>
     <color name="brand_colorSecondary">#4AC1E1</color>
     <color name="brand_colorTertiary">#E6F46A</color>
+
     <color name="brand_colorSurface">#FFFFFF</color>
     <color name="brand_colorSurfaceMain">#FAF8FF</color>
     <color name="brand_colorSurfaceSecondary">#E7F5F7</color>
