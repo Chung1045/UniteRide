@@ -14,6 +14,8 @@
     <color name="brand_colorOnSurface">#0C212C</color>
     <color name="brand_colorOnSurfaceSecondary">#2A3235</color>
 
+    <color name="button_access">#0C212C</color>
+
     <color name="onboarding_appBar">#FFFFFF</color>
     <color name="onboarding_colorSurface">#EFEFEF</color>
 

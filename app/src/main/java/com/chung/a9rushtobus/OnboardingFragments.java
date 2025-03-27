@@ -142,7 +142,7 @@ public class OnboardingFragments {
             Button nextButton = view.findViewById(R.id.onboarding_3_5_next_button);
             Button accessButton = view.findViewById(R.id.onboarding_3_5_access_button);
             setupNavigationButton(nextButton, this, R.color.button_colorOnHover, R.color.brand_colorPrimary, R.color.brand_colorPrimary, R.color.brand_colorSurface);
-            setupNavigationButton(accessButton, this, R.color.button_colorOnHover, R.color.brand_colorTertiary, R.color.brand_colorPrimary, R.color.brand_colorOnSurface);
+            setupNavigationButton(accessButton, this, R.color.button_colorOnHover, R.color.brand_colorTertiary, R.color.brand_colorPrimary, R.color.button_access);
             accessButton.setOnClickListener(v -> {
                 requestPermission(this, Manifest.permission.POST_NOTIFICATIONS, NOTIFICATION_PERMISSION_CODE);
             });
@@ -164,7 +164,7 @@ public class OnboardingFragments {
             Button nextButton = view.findViewById(R.id.onboarding_4_5_next_button);
             Button accessButton = view.findViewById(R.id.onboarding_4_5_access_button);
             setupNavigationButton(nextButton, this, R.color.button_colorOnHover, R.color.brand_colorPrimary, R.color.brand_colorPrimary, R.color.brand_colorSurface);
-            setupNavigationButton(accessButton, this, R.color.button_colorOnHover, R.color.brand_colorTertiary, R.color.brand_colorPrimary, R.color.brand_colorOnSurface);
+            setupNavigationButton(accessButton, this, R.color.button_colorOnHover, R.color.brand_colorTertiary, R.color.brand_colorPrimary, R.color.button_access);
             accessButton.setOnClickListener(v -> {
                 requestPermission(this, Manifest.permission.ACCESS_FINE_LOCATION, LOCATION_PERMISSION_CODE);
             });

@@ -9,6 +9,8 @@
     <color name="brand_colorOnSurface">#FFFFFF</color>
     <color name="brand_colorOnSurfaceSecondary">#E1E9EB</color>
 
+    <color name="button_access">#0C212C</color>
+
     <color name="onboarding_appBar">#132F38</color>
     <color name="onboarding_colorSurface">#223C45</color>
 
