@@ -49,6 +49,26 @@ public class KMBDatabase {
         }
 
     }
+
+    public static class Queries {
+        public static final String QUERY_GET_STOP_FROM_ROUTE =
+                "SELECT DISTINCT rs." + Tables.KMB_ROUTE_STOPS.COLUMN_STOP_SEQ + ", " +
+                "rs." + Tables.KMB_ROUTE_STOPS.COLUMN_STOP_ID + ", " +
+                "s." + Tables.KMB_STOPS.COLUMN_STOP_NAME_EN + ", " +
+                "s." + Tables.KMB_STOPS.COLUMN_STOP_NAME_TC + ", " +
+                "s." + Tables.KMB_STOPS.COLUMN_STOP_NAME_SC + ", " +
+                "s." + Tables.KMB_STOPS.COLUMN_LATITUDE + ", " +
+                "s." + Tables.KMB_STOPS.COLUMN_LONGITUDE +
+                " FROM " + Tables.KMB_ROUTE_STOPS.TABLE_NAME + " rs" +
+                " JOIN " + Tables.KMB_STOPS.TABLE_NAME + " s" +
+                " ON rs." + Tables.KMB_ROUTE_STOPS.COLUMN_STOP_ID +
+                " = s." + Tables.KMB_STOPS.COLUMN_STOP_ID +
+                " WHERE rs." + Tables.KMB_ROUTE_STOPS.COLUMN_ROUTE + " = ?" +
+                " AND rs." + Tables.KMB_ROUTE_STOPS.COLUMN_BOUND + " = ?" +
+                " AND rs." + Tables.KMB_ROUTE_STOPS.COLUMN_SERVICE_TYPE + " = ?" +
+                " GROUP BY rs." + Tables.KMB_ROUTE_STOPS.COLUMN_STOP_ID +
+                " ORDER BY CAST(rs." + Tables.KMB_ROUTE_STOPS.COLUMN_STOP_SEQ + " AS INTEGER)";
+    }
     
     public KMBDatabase(SQLiteOpenHelper helper) {
         db = helper.getWritableDatabase();

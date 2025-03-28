@@ -33,8 +33,10 @@ public class CTBDatabase {
                     Tables.CTB_ROUTE_STOPS.COLUMN_STOP_ID + " TEXT NOT NULL, " +
                     Tables.CTB_ROUTE_STOPS.COLUMN_ROUTE + " TEXT NOT NULL, " +
                     Tables.CTB_ROUTE_STOPS.COLUMN_BOUND + " TEXT NOT NULL, " +
-                    Tables.CTB_ROUTE_STOPS.COLUMN_STOP_SEQ + " TEXT NOT NULL, " +
-                    "UNIQUE (" + Tables.CTB_ROUTE_STOPS.COLUMN_STOP_ID + ") ON CONFLICT REPLACE" +
+                    Tables.CTB_ROUTE_STOPS.COLUMN_STOP_SEQ + " TEXT NOT NULL, " + // Note the comma here
+                    "UNIQUE (" + Tables.CTB_ROUTE_STOPS.COLUMN_ROUTE + ", " +
+                    Tables.CTB_ROUTE_STOPS.COLUMN_BOUND + ", " +
+                    Tables.CTB_ROUTE_STOPS.COLUMN_STOP_SEQ + ") ON CONFLICT REPLACE" +
                     ");";
 
     public static final String SQL_CREATE_CTB_STOPS_TABLE =
@@ -47,7 +49,6 @@ public class CTBDatabase {
                     Tables.CTB_STOPS.COLUMN_LATITUDE + " TEXT NOT NULL, " +
                     Tables.CTB_STOPS.COLUMN_LONGITUDE + " TEXT NOT NULL, " +
                     "UNIQUE (" + Tables.CTB_STOPS.COLUMN_STOP_ID + ") ON CONFLICT REPLACE" + ");";
-
 
     public static final String SQL_DELETE_CTB_ROUTES_TABLE = "DROP TABLE IF EXISTS " + Tables.CTB_ROUTES.TABLE_NAME;
     public static final String SQL_DELETE_CTB_ROUTE_STOPS_TABLE = "DROP TABLE IF EXISTS " + Tables.CTB_ROUTE_STOPS.TABLE_NAME;
@@ -83,6 +84,24 @@ public class CTBDatabase {
             public static final String COLUMN_LATITUDE = "latitude";
             public static final String COLUMN_LONGITUDE = "longitude";
         }
+    }
+
+    public static class Queries {
+        public static final String QUERY_GET_STOP_FROM_ROUTE =
+                "SELECT DISTINCT rs." + Tables.CTB_ROUTE_STOPS.COLUMN_STOP_SEQ + ", " +
+                        "rs." + Tables.CTB_ROUTE_STOPS.COLUMN_STOP_ID + ", " +
+                        "s." + Tables.CTB_STOPS.COLUMN_NAME_EN + ", " +
+                        "s." + Tables.CTB_STOPS.COLUMN_NAME_TC + ", " +
+                        "s." + Tables.CTB_STOPS.COLUMN_NAME_SC + ", " +
+                        "s." + Tables.CTB_STOPS.COLUMN_LATITUDE + ", " +
+                        "s." + Tables.CTB_STOPS.COLUMN_LONGITUDE +
+                        " FROM " + Tables.CTB_ROUTE_STOPS.TABLE_NAME +
+                        " rs JOIN " + Tables.CTB_STOPS.TABLE_NAME + " s" +
+                        " ON rs." + Tables.CTB_ROUTE_STOPS.COLUMN_STOP_ID +
+                        " = s." + Tables.CTB_STOPS.COLUMN_STOP_ID +
+                        " WHERE rs." + Tables.CTB_ROUTE_STOPS.COLUMN_ROUTE + " = ?" +
+                        " AND rs." + Tables.CTB_ROUTE_STOPS.COLUMN_BOUND + " = ?" +
+                        " ORDER BY CAST(rs." + Tables.CTB_ROUTE_STOPS.COLUMN_STOP_SEQ + " AS INTEGER)";
     }
 
     public void updateCTBRoute(String route, String originEn, String originTc, String originSc, String destEn, String destTc, String destSc) {
