@@ -6,6 +6,8 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 
 import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AppCompatActivity;
@@ -37,25 +39,25 @@ public class MainActivity extends AppCompatActivity {
 
         SplashScreen splashScreen = SplashScreen.installSplashScreen(this);
         splashScreen.setKeepOnScreenCondition(() -> !isDataReady);
-
-        splashScreen.setOnExitAnimationListener(splashScreenView -> {
-            // This code will be executed after the splash screen is dismissed.
-            sharedPreferences = getSharedPreferences("app_prefs", Context.MODE_PRIVATE);
-            boolean isFirstTimeLaunch = sharedPreferences.getBoolean("is_first_time_launch", true);
-
-            if (isFirstTimeLaunch) {
+        sharedPreferences = getSharedPreferences("app_prefs", Context.MODE_PRIVATE);
+        boolean isFirstTimeLaunch = sharedPreferences.getBoolean("is_first_time_launch", true);
+        if (isFirstTimeLaunch){
+            new Handler(Looper.getMainLooper()).postDelayed(() -> {
                 startActivity(new Intent(this, OnboardingActivity.class));
                 finish();
-            } else {
+            }, 2500);
+        } else {
+            splashScreen.setOnExitAnimationListener(splashScreenView -> {
+                // This code will be executed after the splash screen is dismissed.
                 userPreferences = new UserPreferences(this);
                 initTheme();
 
                 bottomNav = findViewById(R.id.bottomNav_main);
                 initListener();
-            }
-            // Remove the splash screen view from the view hierarchy.
-            splashScreenView.remove();
-        });
+                // Remove the splash screen view from the view hierarchy.
+                splashScreenView.remove();
+            });
+        }
 
         new Thread(() -> {
             try {
