@@ -9,12 +9,22 @@
     <color name="brand_colorTertiary">#E6F46A</color>
     <color name="brand_colorSurface">#FFFFFF</color>
     <color name="brand_colorSurfaceContainer">#ECF5F8</color>
+    <color name="brand_colorSurfaceMain">#FAF8FF</color>
     <color name="brand_colorSurfaceSecondary">#E7F5F7</color>
-    <color name="brand_colorOnSurface">#ECF5F8</color>
-    <color name="brand_colorOnSurfaceSecondary">#E1E9EB</color>
-    <color name="primarySecond_light">#0C212C</color>
-    <color name="mainColors_sys_ref">#2A3235</color>
+    <color name="brand_colorOnSurface">#0C212C</color>
+    <color name="brand_colorOnSurfaceSecondary">#2A3235</color>
+    <color name="brand_colorOnSurfaceSecondaryInvert">#E1E9EB</color>
+
+<!--    onboarding colors declaration-->
+    <color name="onboarding_topHeading">#0C212C</color>
     <color name="onboarding_appBar">#FFFFFF</color>
     <color name="onboarding_colorSurface">#EFEFEF</color>
-    <color name="button_colorOnHover">#FFFFFF</color>
+    <color name="default_buttonColorBackground">#FFFFFF</color>
+    <color name="default_buttonColorText">#0C212C</color>
+    <color name="default_buttonColorBackgroundInverted">#2C6073</color>
+    <color name="default_buttonColorTextInverted">#FFFFFF</color>
+
+<!--    unchanged color declaration-->
+    <color name="default_accessButtonColorBackground">#E6F46A</color>
+    <color name="default_accessButtonColorText">#0C212C</color>
 </resources>

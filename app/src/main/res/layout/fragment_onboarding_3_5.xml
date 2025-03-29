@@ -20,7 +20,7 @@
             android:layout_height="wrap_content"
             android:fontFamily="@font/avenir_lt_std_black"
             android:text="@string/onboarding_3_5_title"
-            android:textColor="@color/brand_colorOnSurface"
+            android:textColor="@color/onboarding_topHeading"
             android:textFontWeight="800"
             android:textSize="34sp" />
 
@@ -54,8 +54,8 @@
         android:background="@drawable/roundedbutton"
         android:fontFamily="@font/general_sans_semibold"
         android:text="@string/onboarding_3_5_access_button_content"
-        android:textColor="@color/brand_colorOnSurface"
-        app:backgroundTint="@color/brand_colorTertiary"
+        android:textColor="@color/default_accessButtonColorText"
+        app:backgroundTint="@color/default_accessButtonColorBackground"
         android:textStyle="bold"
         app:layout_constraintBottom_toTopOf="@+id/onboarding_3_5_next_button" />
 
@@ -67,8 +67,8 @@
         android:fontFamily="@font/general_sans_semibold"
         android:text="@string/onboarding_3_5_button_content"
         android:textStyle="bold"
-        android:textColor="@color/brand_colorSurface"
-        app:backgroundTint="@color/brand_colorPrimary"
+        android:textColor="@color/default_buttonColorText"
+        app:backgroundTint="@color/default_buttonColorBackground"
         app:layout_constraintBottom_toBottomOf="parent" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
