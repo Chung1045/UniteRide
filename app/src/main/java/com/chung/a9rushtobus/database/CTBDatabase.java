@@ -14,7 +14,7 @@ public class CTBDatabase {
     }
 
     public static final String SQL_CREATE_CTB_ROUTES_TABLE =
-            "CREATE TABLE " + Tables.CTB_ROUTES.TABLE_NAME + " (" +
+            "CREATE TABLE IF NOT EXISTS " + Tables.CTB_ROUTES.TABLE_NAME + " (" +
                     Tables.CTB_ROUTES._ID + " INTEGER PRIMARY KEY AUTOINCREMENT, " +
                     Tables.CTB_ROUTES.COLUMN_ROUTE + " TEXT NOT NULL, " +
                     Tables.CTB_ROUTES.COLUMN_ORIGIN_EN + " TEXT, " +
@@ -28,7 +28,7 @@ public class CTBDatabase {
 
 
     public static final String SQL_CREATE_CTB_ROUTE_STOPS_TABLE =
-            "CREATE TABLE " + Tables.CTB_ROUTE_STOPS.TABLE_NAME + " (" +
+            "CREATE TABLE IF NOT EXISTS " + Tables.CTB_ROUTE_STOPS.TABLE_NAME + " (" +
                     Tables.CTB_ROUTE_STOPS._ID + " INTEGER PRIMARY KEY AUTOINCREMENT, " +
                     Tables.CTB_ROUTE_STOPS.COLUMN_STOP_ID + " TEXT NOT NULL, " +
                     Tables.CTB_ROUTE_STOPS.COLUMN_ROUTE + " TEXT NOT NULL, " +
@@ -40,7 +40,7 @@ public class CTBDatabase {
                     ");";
 
     public static final String SQL_CREATE_CTB_STOPS_TABLE =
-            "CREATE TABLE " + Tables.CTB_STOPS.TABLE_NAME + " (" +
+            "CREATE TABLE IF NOT EXISTS " + Tables.CTB_STOPS.TABLE_NAME + " (" +
                     Tables.CTB_STOPS._ID + " INTEGER PRIMARY KEY AUTOINCREMENT, " +
                     Tables.CTB_STOPS.COLUMN_STOP_ID + " TEXT NOT NULL, " +
                     Tables.CTB_STOPS.COLUMN_NAME_EN + " TEXT NOT NULL, " +

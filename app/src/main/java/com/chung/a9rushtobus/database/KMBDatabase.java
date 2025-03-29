@@ -8,9 +8,32 @@ import android.util.Log;
 public class KMBDatabase {
     
     private SQLiteDatabase db;
-    public static final String SQL_CREATE_KMB_ROUTES_TABLE = "CREATE TABLE " + KMBDatabase.Tables.KMB_ROUTES.TABLE_NAME + " (" + KMBDatabase.Tables.KMB_ROUTES.COLUMN_ROUTE + " TEXT," + KMBDatabase.Tables.KMB_ROUTES.COLUMN_BOUND + " TEXT," + KMBDatabase.Tables.KMB_ROUTES.COLUMN_SERVICE_TYPE + " TEXT," + KMBDatabase.Tables.KMB_ROUTES.COLUMN_ORIGIN_EN + " TEXT," + KMBDatabase.Tables.KMB_ROUTES.COLUMN_ORIGIN_TC + " TEXT," + KMBDatabase.Tables.KMB_ROUTES.COLUMN_ORIGIN_SC + " TEXT," + KMBDatabase.Tables.KMB_ROUTES.COLUMN_DEST_EN + " TEXT," + KMBDatabase.Tables.KMB_ROUTES.COLUMN_DEST_TC + " TEXT," + KMBDatabase.Tables.KMB_ROUTES.COLUMN_DEST_SC + " TEXT" + ");";
-    public static final String SQL_CREATE_KMB_STOPS_TABLE = "CREATE TABLE " + KMBDatabase.Tables.KMB_STOPS.TABLE_NAME + " (" + KMBDatabase.Tables.KMB_STOPS.COLUMN_STOP_ID + " TEXT," + KMBDatabase.Tables.KMB_STOPS.COLUMN_STOP_NAME_EN + " TEXT," + KMBDatabase.Tables.KMB_STOPS.COLUMN_STOP_NAME_TC + " TEXT," + KMBDatabase.Tables.KMB_STOPS.COLUMN_STOP_NAME_SC + " TEXT," + KMBDatabase.Tables.KMB_STOPS.COLUMN_LATITUDE + " TEXT," + KMBDatabase.Tables.KMB_STOPS.COLUMN_LONGITUDE + " TEXT" + ");";
-    public static final String SQL_CREATE_KMB_ROUTE_STOPS_TABLE = "CREATE TABLE " + KMBDatabase.Tables.KMB_ROUTE_STOPS.TABLE_NAME + " (" + KMBDatabase.Tables.KMB_ROUTE_STOPS.COLUMN_STOP_ID + " TEXT," + KMBDatabase.Tables.KMB_ROUTE_STOPS.COLUMN_ROUTE + " TEXT," + KMBDatabase.Tables.KMB_ROUTE_STOPS.COLUMN_BOUND + " TEXT," + KMBDatabase.Tables.KMB_ROUTE_STOPS.COLUMN_SERVICE_TYPE + " TEXT," + KMBDatabase.Tables.KMB_ROUTE_STOPS.COLUMN_STOP_SEQ + " TEXT" + ");";
+    public static final String SQL_CREATE_KMB_ROUTES_TABLE = "CREATE TABLE IF NOT EXISTS "
+            + KMBDatabase.Tables.KMB_ROUTES.TABLE_NAME + " ("
+            + KMBDatabase.Tables.KMB_ROUTES.COLUMN_ROUTE + " TEXT,"
+            + KMBDatabase.Tables.KMB_ROUTES.COLUMN_BOUND + " TEXT,"
+            + KMBDatabase.Tables.KMB_ROUTES.COLUMN_SERVICE_TYPE + " TEXT,"
+            + KMBDatabase.Tables.KMB_ROUTES.COLUMN_ORIGIN_EN + " TEXT,"
+            + KMBDatabase.Tables.KMB_ROUTES.COLUMN_ORIGIN_TC + " TEXT,"
+            + KMBDatabase.Tables.KMB_ROUTES.COLUMN_ORIGIN_SC + " TEXT,"
+            + KMBDatabase.Tables.KMB_ROUTES.COLUMN_DEST_EN + " TEXT,"
+            + KMBDatabase.Tables.KMB_ROUTES.COLUMN_DEST_TC + " TEXT,"
+            + KMBDatabase.Tables.KMB_ROUTES.COLUMN_DEST_SC + " TEXT" + ");";
+    public static final String SQL_CREATE_KMB_STOPS_TABLE = "CREATE TABLE IF NOT EXISTS "
+            + KMBDatabase.Tables.KMB_STOPS.TABLE_NAME + " ("
+            + KMBDatabase.Tables.KMB_STOPS.COLUMN_STOP_ID + " TEXT,"
+            + KMBDatabase.Tables.KMB_STOPS.COLUMN_STOP_NAME_EN + " TEXT,"
+            + KMBDatabase.Tables.KMB_STOPS.COLUMN_STOP_NAME_TC + " TEXT,"
+            + KMBDatabase.Tables.KMB_STOPS.COLUMN_STOP_NAME_SC + " TEXT,"
+            + KMBDatabase.Tables.KMB_STOPS.COLUMN_LATITUDE + " TEXT,"
+            + KMBDatabase.Tables.KMB_STOPS.COLUMN_LONGITUDE + " TEXT" + ");";
+    public static final String SQL_CREATE_KMB_ROUTE_STOPS_TABLE = "CREATE TABLE IF NOT EXISTS "
+            + KMBDatabase.Tables.KMB_ROUTE_STOPS.TABLE_NAME + " ("
+            + KMBDatabase.Tables.KMB_ROUTE_STOPS.COLUMN_STOP_ID + " TEXT,"
+            + KMBDatabase.Tables.KMB_ROUTE_STOPS.COLUMN_ROUTE + " TEXT,"
+            + KMBDatabase.Tables.KMB_ROUTE_STOPS.COLUMN_BOUND + " TEXT,"
+            + KMBDatabase.Tables.KMB_ROUTE_STOPS.COLUMN_SERVICE_TYPE + " TEXT,"
+            + KMBDatabase.Tables.KMB_ROUTE_STOPS.COLUMN_STOP_SEQ + " TEXT" + ");";
     public static final String SQL_DELETE_KMB_ROUTES_TABLE = "DROP TABLE IF EXISTS " + KMBDatabase.Tables.KMB_ROUTES.TABLE_NAME;
     public static final String SQL_DELETE_KMB_STOPS_TABLE = "DROP TABLE IF EXISTS " + KMBDatabase.Tables.KMB_STOPS.TABLE_NAME;
     public static final String SQL_DELETE_KMB_ROUTE_STOPS_TABLE = "DROP TABLE IF EXISTS " + KMBDatabase.Tables.KMB_ROUTE_STOPS.TABLE_NAME;

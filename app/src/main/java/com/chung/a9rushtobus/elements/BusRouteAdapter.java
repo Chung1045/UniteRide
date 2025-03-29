@@ -97,6 +97,8 @@ public class BusRouteAdapter extends RecyclerView.Adapter<BusRouteAdapter.ViewHo
             tvRouteBusCompany = itemView.findViewById(R.id.tvRouteBusCompany);
             routeSpecialIndicator = itemView.findViewById(R.id.tvRouteBusSpecialIndicator);
 
+            tvDestination.setSelected(true);
+
             busRouteItemView.setOnClickListener(view -> {
                 Log.d("BusRouteAdapter", "Item clicked: " + tvRouteName.getText());
                 Intent intent = new Intent(view.getContext(), BusRouteDetailViewActivity.class);

@@ -7,15 +7,20 @@
     app:cardElevation="4dp">
 
     <LinearLayout
+        android:id="@+id/item_bus_route_info_holder"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:layout_marginBottom="8dp"
+        android:background="@drawable/background_bus_route_entry"
+        android:clickable="true"
+        android:gravity="center_vertical"
         android:orientation="horizontal"
         android:padding="16dp"
-        android:gravity="center_vertical"
-        android:background="?attr/selectableItemBackground"
-        android:clickable="true"
-        tools:ignore="MissingConstraints"
-        android:id="@+id/item_bus_route_info_holder">
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        tools:ignore="MissingConstraints">
 
         <LinearLayout
             android:layout_width="wrap_content"
@@ -26,22 +31,21 @@
                 android:id="@+id/tvRouteBusSpecialIndicator"
                 android:layout_width="70dp"
                 android:layout_height="wrap_content"
-                android:textSize="12sp"
-                android:textAlignment="center"
                 android:layout_marginEnd="16dp"
-                android:text="SPECIAL"/>
+                android:text="SPECIAL"
+                android:textAlignment="center"
+                android:textSize="12sp" />
 
             <TextView
                 android:id="@+id/tvRouteName"
                 android:layout_width="70dp"
                 android:layout_height="wrap_content"
-                android:textSize="24sp"
-                android:textAlignment="center"
                 android:layout_marginEnd="16dp"
-                android:text="83K"/>
+                android:text="83K"
+                android:textAlignment="center"
+                android:textSize="24sp" />
 
         </LinearLayout>
-
 
 
         <LinearLayout
@@ -53,17 +57,23 @@
                 android:id="@+id/tvRouteBusCompany"
                 android:layout_width="70dp"
                 android:layout_height="wrap_content"
-                android:textSize="12sp"
                 android:layout_marginEnd="16dp"
-                android:text="KMB"/>
+                android:text="KMB"
+                android:textSize="12sp" />
 
             <TextView
                 android:id="@+id/tvRouteDestination"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:textSize="16sp"
-                android:text="TO SHA TIN CENTRAL"/>
+                android:ellipsize="marquee"
+                android:marqueeRepeatLimit="marquee_forever"
+                android:singleLine="true"
+                android:scrollHorizontally="true"
+                android:focusable="true"
+                android:focusableInTouchMode="true"
+                android:text="TO SHA TIN CENTRAL"
+                android:textSize="16sp" />
 
             <TextView
                 android:id="@+id/tvRouteOrigin"
@@ -71,11 +81,10 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:textSize="12sp"
-                android:text="WONG NAI TAU"/>
+                android:text="WONG NAI TAU"
+                android:textSize="12sp" />
 
         </LinearLayout>
-
 
 
         <TextView

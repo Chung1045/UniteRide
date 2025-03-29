@@ -16,7 +16,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 
     // Table creation constants
 
-    private static final String SQL_CREATE_RTHK_NEWS_TABLE = "CREATE TABLE " + Tables.RTHK_NEWS.TABLE_NAME + " (" + Tables.RTHK_NEWS.COLUMN_CONTENT + " TEXT," + Tables.RTHK_NEWS.COLUMN_DATE + " TEXT" + ");";
+    private static final String SQL_CREATE_RTHK_NEWS_TABLE = "CREATE TABLE IF NOT EXISTS " + Tables.RTHK_NEWS.TABLE_NAME + " (" + Tables.RTHK_NEWS.COLUMN_CONTENT + " TEXT," + Tables.RTHK_NEWS.COLUMN_DATE + " TEXT" + ");";
     private static final String SQL_DELETE_RTHK_NEWS_TABLE = "DROP TABLE IF EXISTS " + Tables.RTHK_NEWS.TABLE_NAME;
 
 
@@ -37,7 +37,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         super(context, DATABASE_NAME, null, DATABASE_VERSION);
     }
 
-    public void removeAllValues(){
+    public void removeAllValues() {
         SQLiteDatabase db = this.getWritableDatabase();
         Log.d("DatabaseHelper", "Attempting to remove all values");
         db.execSQL("DELETE FROM " + KMBDatabase.Tables.KMB_STOPS.TABLE_NAME);

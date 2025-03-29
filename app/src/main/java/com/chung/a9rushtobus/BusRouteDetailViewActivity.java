@@ -307,7 +307,7 @@ public class BusRouteDetailViewActivity extends AppCompatActivity implements OnM
             // Center the map on the user-selected initial stop
             mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(stopPositions.get(initialStopSeqView), 16f));
 
-            // Optionally, add a marker for each stop (if not already added while loading stops)
+            // Add markers for each stop
             for (int i = 0; i < stopPositions.size(); i++) {
                 LatLng stop = stopPositions.get(i);
                 MarkerOptions markerOptions = new MarkerOptions()
@@ -317,8 +317,45 @@ public class BusRouteDetailViewActivity extends AppCompatActivity implements OnM
                 mMap.addMarker(markerOptions);
             }
 
-            // Build the Directions API request URL
+            // Get the origin (first stop) and final destination (last stop)
             String origin = stopPositions.get(0).latitude + "," + stopPositions.get(0).longitude;
+            String finalDestination = stopPositions.get(stopPositions.size() - 1).latitude + "," + 
+                                    stopPositions.get(stopPositions.size() - 1).longitude;
+
+            // Break intermediate stops into batches of 23 (25 total including origin and destination)
+            List<List<LatLng>> batches = new ArrayList<>();
+            // Skip first point as it's the origin
+            List<LatLng> intermediatePoints = stopPositions.subList(1, stopPositions.size() - 1);
+            
+            for (int i = 0; i < intermediatePoints.size(); i += 23) {
+                int end = Math.min(i + 23, intermediatePoints.size());
+                batches.add(intermediatePoints.subList(i, end));
+            }
+
+            // Process each batch
+            for (List<LatLng> batch : batches) {
+                StringBuilder waypoints = new StringBuilder();
+                waypoints.append("waypoints=");
+                for (int i = 0; i < batch.size(); i++) {
+                    waypoints.append(batch.get(i).latitude)
+                            .append(",")
+                            .append(batch.get(i).longitude);
+                    if (i < batch.size() - 1) {
+                        waypoints.append("|");
+                    }
+                }
+                Log.d(TAG, "Waypoints URL: " + waypoints);
+
+                String apiKey = BuildConfig.MAPS_API_KEY;
+                String requestUrl = "https://maps.googleapis.com/maps/api/directions/json?"
+                        + "origin=" + origin
+                        + "&destination=" + finalDestination
+                        + "&" + waypoints.toString()
+                        + "&key=" + apiKey;
+
+                // Execute API request in a background thread
+                new FetchRouteTask().execute(requestUrl);
+            }
             String destination = stopPositions.get(stopPositions.size() - 1).latitude + "," + stopPositions.get(stopPositions.size() - 1).longitude;
 
             StringBuilder waypoints = new StringBuilder();
@@ -339,7 +376,6 @@ public class BusRouteDetailViewActivity extends AppCompatActivity implements OnM
             String requestUrl = "https://maps.googleapis.com/maps/api/directions/json?"
                     + "origin=" + origin
                     + "&destination=" + destination
-                    + "&mode=driving"
                     + (waypoints.length() > 0 ? "&" + waypoints.toString() : "")
                     + "&key=" + apiKey;
 

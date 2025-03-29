@@ -14,6 +14,7 @@ import androidx.core.splashscreen.SplashScreen;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
+import com.chung.a9rushtobus.database.DatabaseHelper;
 import com.chung.a9rushtobus.fragments.FragmentNearby;
 import com.chung.a9rushtobus.fragments.FragmentSaved;
 import com.chung.a9rushtobus.fragments.FragmentSearch;
@@ -25,6 +26,7 @@ import com.google.android.material.color.DynamicColors;
 public class MainActivity extends AppCompatActivity {
     private BottomNavigationView bottomNav;
     private UserPreferences userPreferences;
+    private DatabaseHelper dbHelper;
     private SharedPreferences.OnSharedPreferenceChangeListener preferenceChangeListener;
     private boolean isDataReady = false;
 
@@ -33,6 +35,8 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
 
         userPreferences = new UserPreferences(this);
+        dbHelper = new DatabaseHelper(this);
+        dbHelper.onCreate(dbHelper.getWritableDatabase());
 
         SplashScreen splashScreen = SplashScreen.installSplashScreen(this);
         splashScreen.setKeepOnScreenCondition(() -> !isDataReady);
