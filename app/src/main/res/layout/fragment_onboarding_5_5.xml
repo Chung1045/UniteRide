@@ -24,7 +24,7 @@
             android:fontFamily="@font/avenir_lt_std_black"
             android:gravity="center"
             android:text="@string/onboarding_5_5_title"
-            android:textColor="@color/brand_colorOnSurface"
+            android:textColor="@color/onboarding_topHeading"
             android:textFontWeight="800"
             android:textSize="25sp"
             android:layout_marginBottom="20dp"/>

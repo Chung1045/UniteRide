@@ -20,7 +20,7 @@
             android:layout_height="wrap_content"
             android:fontFamily="@font/avenir_lt_std_black"
             android:text="@string/onboarding_3_5_title"
-            android:textColor="@color/brand_colorOnSurface"
+            android:textColor="@color/onboarding_topHeading"
             android:textFontWeight="800"
             android:textSize="34sp" />
 

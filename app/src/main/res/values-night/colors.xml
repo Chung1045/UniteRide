@@ -13,6 +13,7 @@
     <color name="brand_colorOnSurfaceSecondaryInvert">#2A3235</color>
 
     <!-- onboarding colors declaration-->
+    <color name="onboarding_topHeading">#FFFFFF</color>
     <color name="onboarding_appBar">#2D4953</color>
     <color name="onboarding_colorSurface">#132F38</color>
 
