@@ -1,12 +1,9 @@
 package com.chung.a9rushtobus;
 
 import android.app.UiModeManager;
-import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
-import android.os.Handler;
-import android.os.Looper;
 
 import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AppCompatActivity;
@@ -17,6 +14,7 @@ import androidx.core.splashscreen.SplashScreen;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
+import com.chung.a9rushtobus.database.DatabaseHelper;
 import com.chung.a9rushtobus.fragments.FragmentNearby;
 import com.chung.a9rushtobus.fragments.FragmentSaved;
 import com.chung.a9rushtobus.fragments.FragmentSearch;
@@ -30,7 +28,6 @@ public class MainActivity extends AppCompatActivity {
     private UserPreferences userPreferences;
     private DatabaseHelper dbHelper;
     private SharedPreferences.OnSharedPreferenceChangeListener preferenceChangeListener;
-    private SharedPreferences sharedPreferences;
     private boolean isDataReady = false;
 
     @Override
@@ -43,26 +40,32 @@ public class MainActivity extends AppCompatActivity {
 
         SplashScreen splashScreen = SplashScreen.installSplashScreen(this);
         splashScreen.setKeepOnScreenCondition(() -> !isDataReady);
-        sharedPreferences = getSharedPreferences("app_prefs", Context.MODE_PRIVATE);
-        boolean isFirstTimeLaunch = sharedPreferences.getBoolean("is_first_time_launch", true);
-        if (isFirstTimeLaunch){
-            new Handler(Looper.getMainLooper()).postDelayed(() -> {
+
+        splashScreen.setOnExitAnimationListener(splashScreenView -> {
+            // This code will be executed after the splash screen is dismissed.
+            boolean isFirstTimeLaunch = UserPreferences.sharedPref.getBoolean(UserPreferences.ONBOARDING_COMPLETE, true);
+
+            if (isFirstTimeLaunch) {
                 startActivity(new Intent(this, OnboardingActivity.class));
                 finish();
-            }, 2500);
-        } else {
-            splashScreen.setOnExitAnimationListener(splashScreenView -> {
-                // This code will be executed after the splash screen is dismissed.
-                userPreferences = new UserPreferences(this);
+            } else {
                 initTheme();
 
                 bottomNav = findViewById(R.id.bottomNav_main);
                 initListener();
-                // Remove the splash screen view from the view hierarchy.
-                splashScreenView.remove();
-            });
-        }
+            }
+            // Remove the splash screen view from the view hierarchy.
+            splashScreenView.remove();
+        });
 
+        new Thread(() -> {
+            try {
+                Thread.sleep(3000);
+            } catch (Exception e){
+                e.printStackTrace();
+            }
+            isDataReady = true;
+        }).start();
         EdgeToEdge.enable(this);
         setContentView(R.layout.activity_main);
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
@@ -84,39 +87,6 @@ public class MainActivity extends AppCompatActivity {
         BottomNavigationView bottomNav = findViewById(R.id.bottomNav_main);
         boolean isVisible = UserPreferences.sharedPref.getBoolean(UserPreferences.SETTINGS_FEATURE_SHOW_RTHK_NEWS, false);
         bottomNav.getMenu().findItem(R.id.menu_item_main_news).setVisible(isVisible);
-
-        userPreferences = new UserPreferences(this);
-        initTheme();
-
-        bottomNav = findViewById(R.id.bottomNav_main);
-        bottomNav.setItemActiveIndicatorColor(
-                ContextCompat.getColorStateList(this, R.color.brand_colorPrimary)
-        );
-        initListener();
-
-        preferenceChangeListener = (sharedPreferences, key) -> {
-            if (UserPreferences.SETTINGS_FEATURE_SHOW_RTHK_NEWS.equals(key)) {
-                updateBottomNavVisibility();
-            }
-        };
-
-        UserPreferences.sharedPref.registerOnSharedPreferenceChangeListener(preferenceChangeListener);
-
-    }
-
-    private void updateBottomNavVisibility() {
-        BottomNavigationView bottomNav = findViewById(R.id.bottomNav_main);
-        boolean isVisible = UserPreferences.sharedPref.getBoolean(UserPreferences.SETTINGS_FEATURE_SHOW_RTHK_NEWS, false);
-        bottomNav.getMenu().findItem(R.id.menu_item_main_news).setVisible(isVisible);
-    }
-
-    @Override
-    protected void onDestroy() {
-        super.onDestroy();
-        // Unregister the listener to avoid memory leaks
-        if (preferenceChangeListener != null) {
-            UserPreferences.sharedPref.unregisterOnSharedPreferenceChangeListener(preferenceChangeListener);
-        }
     }
 
     private void initListener() {
