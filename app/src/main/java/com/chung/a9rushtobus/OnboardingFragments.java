@@ -37,10 +37,13 @@ public class OnboardingFragments {
     }
 
     @SuppressLint("ClickableViewAccessibility")
-    protected static void onHoverListener(Button button, Fragment fragment, int hoveredBackgroundTintColor, int originalBackgroundTintColor, int hoveredTextColor, int originalTextColor){
+    protected static void onHoverListener(Button button, Fragment fragment, int hoveredBackgroundTintColor, int hoveredTextColor){
         if (button instanceof com.google.android.material.button.MaterialButton) {
             com.google.android.material.button.MaterialButton materialButton =
                     (com.google.android.material.button.MaterialButton) button;
+
+            ColorStateList originalBackgroundTintColor = materialButton.getBackgroundTintList();
+            ColorStateList originalTextColor = materialButton.getTextColors();
 
             button.setOnHoverListener((v, event) -> {
                 switch (event.getAction()) {
@@ -50,9 +53,9 @@ public class OnboardingFragments {
                         materialButton.setIconTint(ColorStateList.valueOf(ContextCompat.getColor(fragment.requireContext(), hoveredTextColor)));
                         break;
                     case MotionEvent.ACTION_HOVER_EXIT:
-                        materialButton.setBackgroundTintList(ColorStateList.valueOf(ContextCompat.getColor(fragment.requireContext(), originalBackgroundTintColor)));
-                        materialButton.setTextColor(ColorStateList.valueOf(ContextCompat.getColor(fragment.requireContext(), originalTextColor)));
-                        materialButton.setIconTint(ColorStateList.valueOf(ContextCompat.getColor(fragment.requireContext(), originalTextColor)));
+                        materialButton.setBackgroundTintList(originalBackgroundTintColor);
+                        materialButton.setTextColor(originalTextColor);
+                        materialButton.setIconTint(originalTextColor);
                         break;
                 }
                 return false;
@@ -67,9 +70,9 @@ public class OnboardingFragments {
                         break;
                     case MotionEvent.ACTION_UP:
                     case MotionEvent.ACTION_CANCEL:
-                        materialButton.setBackgroundTintList(ColorStateList.valueOf(ContextCompat.getColor(fragment.requireContext(), originalBackgroundTintColor)));
-                        materialButton.setTextColor(ColorStateList.valueOf(ContextCompat.getColor(fragment.requireContext(), originalTextColor)));
-                        materialButton.setIconTint(ColorStateList.valueOf(ContextCompat.getColor(fragment.requireContext(), originalTextColor)));
+                        materialButton.setBackgroundTintList(originalBackgroundTintColor);
+                        materialButton.setTextColor(originalTextColor);
+                        materialButton.setIconTint(originalTextColor);
                         break;
                 }
                 return false;
@@ -118,7 +121,7 @@ public class OnboardingFragments {
 
             Button nextButton = view.findViewById(R.id.onboarding_1_5_next_button);
             setupNavigationButton(nextButton, this);
-            onHoverListener(nextButton, this, R.color.button_colorOnHover, R.color.brand_colorPrimary, R.color.brand_colorPrimary, R.color.brand_colorSurface);
+            onHoverListener(nextButton, this, R.color.default_buttonColorBackgroundInverted, R.color.default_buttonColorTextInverted);
         }
     }
 
@@ -135,8 +138,8 @@ public class OnboardingFragments {
             Button nextButton = view.findViewById(R.id.onboarding_2_5_next_button);
             Button languageButton = view.findViewById(R.id.language_button);
             setupNavigationButton(nextButton, this);
-            onHoverListener(nextButton, this, R.color.button_colorOnHover, R.color.brand_colorPrimary, R.color.brand_colorPrimary, R.color.brand_colorSurface);
-            onHoverListener(languageButton, this, R.color.brand_colorTertiary, R.color.brand_colorPrimary, R.color.brand_colorTertiary, R.color.brand_colorOnSurface);
+            onHoverListener(nextButton, this, R.color.default_buttonColorBackgroundInverted, R.color.default_buttonColorTextInverted);
+            onHoverListener(languageButton, this, R.color.default_buttonColorBackgroundInverted, R.color.default_buttonColorTextInverted);
         }
     }
 
@@ -154,9 +157,9 @@ public class OnboardingFragments {
             Button nextButton = view.findViewById(R.id.onboarding_3_5_next_button);
             Button accessButton = view.findViewById(R.id.onboarding_3_5_access_button);
             setupNavigationButton(nextButton, this);
-            onHoverListener(nextButton, this, R.color.button_colorOnHover, R.color.brand_colorPrimary, R.color.brand_colorPrimary, R.color.brand_colorSurface);
+            onHoverListener(nextButton, this, R.color.default_buttonColorBackgroundInverted, R.color.default_buttonColorTextInverted);
             setupNavigationButton(accessButton, this);
-            onHoverListener(accessButton, this, R.color.button_colorOnHover, R.color.brand_colorTertiary, R.color.brand_colorPrimary, R.color.button_access);
+            onHoverListener(accessButton, this, R.color.default_buttonColorBackgroundInverted, R.color.default_buttonColorTextInverted);
             accessButton.setOnClickListener(v -> {
                 requestPermission(this, Manifest.permission.POST_NOTIFICATIONS, NOTIFICATION_PERMISSION_CODE);
             });
@@ -178,9 +181,9 @@ public class OnboardingFragments {
             Button nextButton = view.findViewById(R.id.onboarding_4_5_next_button);
             Button accessButton = view.findViewById(R.id.onboarding_4_5_access_button);
             setupNavigationButton(nextButton, this);
-            onHoverListener(nextButton, this, R.color.button_colorOnHover, R.color.brand_colorPrimary, R.color.brand_colorPrimary, R.color.brand_colorSurface);
+            onHoverListener(nextButton, this, R.color.default_buttonColorBackgroundInverted, R.color.default_buttonColorTextInverted);
             setupNavigationButton(accessButton, this);
-            onHoverListener(accessButton, this, R.color.button_colorOnHover, R.color.brand_colorTertiary, R.color.brand_colorPrimary, R.color.button_access);
+            onHoverListener(accessButton, this, R.color.default_buttonColorBackgroundInverted, R.color.default_buttonColorTextInverted);
             accessButton.setOnClickListener(v -> {
                 requestPermission(this, Manifest.permission.ACCESS_FINE_LOCATION, LOCATION_PERMISSION_CODE);
             });
@@ -200,7 +203,7 @@ public class OnboardingFragments {
 
             Button finishButton = view.findViewById(R.id.onboarding_5_5_next_button);
             setupNavigationButton(finishButton, this);
-            onHoverListener(finishButton, this, R.color.button_colorOnHover, R.color.brand_colorPrimary, R.color.brand_colorPrimary, R.color.brand_colorSurface);
+            onHoverListener(finishButton, this, R.color.default_buttonColorBackgroundInverted, R.color.default_buttonColorTextInverted);
 
             finishButton.setOnClickListener(v -> {
                 SharedPreferences sharedPreferences = requireActivity().getSharedPreferences("app_prefs", Context.MODE_PRIVATE);

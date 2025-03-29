@@ -8,11 +8,14 @@
 
     <color name="brand_colorOnSurface">#FFFFFF</color>
     <color name="brand_colorOnSurfaceSecondary">#E1E9EB</color>
+    <color name="brand_colorOnSurfaceSecondaryInvert">#2A3235</color>
 
-    <color name="button_access">#0C212C</color>
+    <!-- onboarding colors declaration-->
+    <color name="onboarding_appBar">#2D4953</color>
+    <color name="onboarding_colorSurface">#132F38</color>
 
-    <color name="onboarding_appBar">#132F38</color>
-    <color name="onboarding_colorSurface">#223C45</color>
-
-    <color name="button_colorOnHover">#132F38</color>
+    <color name="default_buttonColorBackground">#2C6073</color>
+    <color name="default_buttonColorText">#FFFFFF</color>
+    <color name="default_buttonColorBackgroundInverted">#FFFFFF</color>
+    <color name="default_buttonColorTextInverted">#0C212C</color>
 </resources>

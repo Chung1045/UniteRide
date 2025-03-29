@@ -54,8 +54,8 @@
         android:background="@drawable/roundedbutton"
         android:fontFamily="@font/general_sans_semibold"
         android:text="@string/onboarding_4_5_access_button_content"
-        android:textColor="@color/button_access"
-        app:backgroundTint="@color/brand_colorTertiary"
+        android:textColor="@color/default_accessButtonColorText"
+        app:backgroundTint="@color/default_accessButtonColorBackground"
         android:textStyle="bold"
         app:layout_constraintBottom_toTopOf="@+id/onboarding_4_5_next_button" />
 
@@ -67,8 +67,8 @@
         android:fontFamily="@font/general_sans_semibold"
         android:text="@string/onboarding_4_5_button_content"
         android:textStyle="bold"
-        android:textColor="@color/brand_colorSurface"
-        app:backgroundTint="@color/brand_colorPrimary"
+        android:textColor="@color/default_buttonColorText"
+        app:backgroundTint="@color/default_buttonColorBackground"
         app:layout_constraintBottom_toBottomOf="parent" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
