@@ -155,8 +155,6 @@ public class SettingsMainPreferenceView extends PreferenceFragmentCompat {
                         Toast.makeText(getContext(), "Fetching data...", Toast.LENGTH_SHORT).show();
                         dataFetcher.refreshAllData();
                     });
-//                    dataFetcher.fetchAllData(); // will implement later
-                    runOnUiThread(() -> Toast.makeText(getContext(), "Data fetched", Toast.LENGTH_SHORT).show());
                 } catch (Exception e) {
                     runOnUiThread(() -> Toast.makeText(getContext(), "Error: " + e.getMessage(), Toast.LENGTH_SHORT).show());
                 }

@@ -38,6 +38,7 @@ public class BusRouteStopItemAdapter extends RecyclerView.Adapter<BusRouteStopIt
     private final DataFetcher dataFetcher;
     private final Utils utils;
     private final Handler updateHandler;
+    private final Handler refetchHandler;
     private final Runnable updateRunnable;
     private boolean isUpdating = false;
 
@@ -47,6 +48,7 @@ public class BusRouteStopItemAdapter extends RecyclerView.Adapter<BusRouteStopIt
         this.utils = utils;
         this.dataFetcher = new DataFetcher(context);
         this.updateHandler = new Handler(Looper.getMainLooper());
+        this.refetchHandler = new Handler(Looper.getMainLooper());
         this.updateRunnable = this::refreshAllEtaData;
     }
 
@@ -132,6 +134,8 @@ public class BusRouteStopItemAdapter extends RecyclerView.Adapter<BusRouteStopIt
     public void onDestroy(@NonNull LifecycleOwner owner) {
         Log.d("ETARefresh", "Stopping periodic ETA updates at onDestroy");
         stopPeriodicUpdates();
+        // Cancel any pending refetch tasks
+        refetchHandler.removeCallbacksAndMessages(null);
     }
 
     @Override
@@ -172,7 +176,7 @@ public class BusRouteStopItemAdapter extends RecyclerView.Adapter<BusRouteStopIt
         for (int position = 0; position < items.size(); position++) {
             BusRouteStopItem item = items.get(position);
             int finalPosition = position;
-            if (item.getCompany().equals("kmb")) {
+            if (item.getCompany().equals("kmb") || item.getCompany().equals("ctb")) {
                 fetchEtaForStop(item, finalPosition, System.currentTimeMillis());
             }
         }
@@ -187,7 +191,7 @@ public class BusRouteStopItemAdapter extends RecyclerView.Adapter<BusRouteStopIt
             item.getStopID(), 
             item.getRoute(), 
             item.getServiceType(), 
-            "kmb",
+            item.getCompany(),
             etaDataArray -> processEtaData(item, position, etaDataArray, startTime),
             error -> handleEtaError(item, position, error)
         );
@@ -206,7 +210,7 @@ public class BusRouteStopItemAdapter extends RecyclerView.Adapter<BusRouteStopIt
 
                 for (int i = 0; i < Math.min(etaDataArray.length(), 3); i++) {
                     JSONObject etaData = etaDataArray.getJSONObject(i);
-                    if (!etaData.getString("service_type").equals(item.getServiceType())) {
+                    if (item.getCompany().equals("kmb") && !etaData.getString("service_type").equals(item.getServiceType())) {
                         continue;
                     }
 
@@ -263,7 +267,7 @@ public class BusRouteStopItemAdapter extends RecyclerView.Adapter<BusRouteStopIt
     }
 
     private void scheduleRefetch(BusRouteStopItem item, int position) {
-        new Handler(Looper.getMainLooper()).postDelayed(() -> {
+        refetchHandler.postDelayed(() -> {
             Log.d("ETARefresh", "Refetching ETA for position " + position + " due to negative value");
             fetchEtaForStop(item, position, System.currentTimeMillis());
         }, 5000); // Wait 5 seconds before re-fetching
