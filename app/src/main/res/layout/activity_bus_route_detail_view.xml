@@ -3,7 +3,7 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     xmlns:map="http://schemas.android.com/apk/res-auto"
-    android:id="@+id/main"
+    android:id="@+id/activity_bus_detail_constraint_layout"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     tools:context=".BusRouteDetailViewActivity">
@@ -61,6 +61,7 @@
         app:layout_constraintTop_toTopOf="@+id/recyclerGuideline">
 
         <TextView
+            android:id="@+id/bus_detail_activity_route_number"
             android:layout_width="60dp"
             android:layout_height="wrap_content"
             android:gravity="center_horizontal"
@@ -69,6 +70,7 @@
             android:textStyle="bold" />
 
         <TextView
+            android:id="@+id/bus_detail_activity_route_dest"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="To Wong Tai Sin"

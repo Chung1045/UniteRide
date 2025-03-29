@@ -9,6 +9,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.net.Uri;
+import android.util.Log;
 import android.view.View;
 import android.widget.Toast;
 
@@ -20,6 +21,14 @@ import androidx.core.content.ContextCompat;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.snackbar.Snackbar;
 
+import java.time.Duration;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.time.ZonedDateTime;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
+
 public class Utils {
     private static final int NOTIFICATION_PERMISSION_REQUEST_CODE = 123;
     private static final String CHANNEL_ID = "dummy_channel";
@@ -30,6 +39,7 @@ public class Utils {
     private NotificationUtils notificationUtils;
     private DialogUtils dialogUtils;
     private IntentUtils intentUtils;
+    private TimeUtils timeUtils;
 
     public Utils(Activity a, View v, Context c){
         this.activity = a;
@@ -44,6 +54,7 @@ public class Utils {
         notificationUtils = new NotificationUtils(a, v);
         dialogUtils = new DialogUtils(c);
         intentUtils = new IntentUtils(c);
+        timeUtils = new TimeUtils();
     }
 
     // Functions
@@ -73,6 +84,44 @@ public class Utils {
 
     public void startUrlIntent(String url){
         intentUtils.urlIntent(url);
+    }
+
+    public String getTimeDifference(String isoDateTime){
+        return timeUtils.getTimeDifference(isoDateTime);
+    }
+
+    public String parseTime(String isoDateTime){
+        return timeUtils.parseTime(isoDateTime);
+    }
+
+    public static class TimeUtils {
+        public String getTimeDifference(String isoDateTime) {
+            try {
+                // Use ZonedDateTime to parse ISO date with timezone information
+                java.time.ZonedDateTime zonedDateTime = java.time.ZonedDateTime.parse(isoDateTime);
+                // Convert to LocalDateTime in system default timezone for comparison
+                java.time.LocalDateTime dateTime = zonedDateTime.withZoneSameInstant(java.time.ZoneId.systemDefault()).toLocalDateTime();
+                Duration duration = Duration.between(LocalDateTime.now(), dateTime);
+                return String.valueOf(duration.toMinutes());
+            } catch (Exception e) {
+
+                return "N/A";
+            }
+        }
+
+        public String parseTime(String isoDateTime) {
+            try {
+                // Parse the ISO date-time string
+                ZonedDateTime zonedDateTime = ZonedDateTime.parse(isoDateTime);
+                // Convert to LocalTime in system default timezone
+                LocalTime time = zonedDateTime.withZoneSameInstant(ZoneId.systemDefault()).toLocalTime();
+                // Format time without seconds
+                DateTimeFormatter formatter = DateTimeFormatter.ofPattern("HH:mm");
+                return time.format(formatter);
+            } catch (Exception e) {
+                return "N/A";
+            }
+        }
     }
 
     //Classes to handel the functions
@@ -205,8 +254,11 @@ public class Utils {
 
         public void urlIntent(String url){
             Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
-
-            context.startActivity(intent);
+            if (intent.resolveActivity(context.getPackageManager()) != null) {
+                context.startActivity(intent);
+            } else {
+                Log.e("URLIntent", "No browser found to open the URL.");
+            }
         }
 
     }

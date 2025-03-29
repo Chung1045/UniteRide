@@ -42,7 +42,6 @@ public class SettingsMainPreferenceView extends PreferenceFragmentCompat {
         toolbar.setTitle(title);
         if (collapsingToolbar != null) {
             collapsingToolbar.setTitle(title);
-
         }
     }
 
@@ -90,6 +89,10 @@ public class SettingsMainPreferenceView extends PreferenceFragmentCompat {
 
         aboutPreference.setOnPreferenceClickListener(view -> {
             updateToolbarTitle("About");
+            getParentFragmentManager().beginTransaction()
+                    .replace(R.id.fragmentContainerView, new SettingsAboutView())
+                    .addToBackStack(null)
+                    .commit();
             return false;
         });
 

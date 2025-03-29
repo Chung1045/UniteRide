@@ -17,6 +17,7 @@ import com.chung.a9rushtobus.BusRouteDetailViewActivity;
 import com.chung.a9rushtobus.R;
 
 import java.util.List;
+import java.util.Objects;
 
 public class BusRouteAdapter extends RecyclerView.Adapter<BusRouteAdapter.ViewHolder> {
     private Context context;
@@ -36,12 +37,19 @@ public class BusRouteAdapter extends RecyclerView.Adapter<BusRouteAdapter.ViewHo
 
     @Override
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
-        BusRoute route = busRoutes.get(position);
-        String routeNumber = route.getRoute();
+        BusRoute routeInfo = busRoutes.get(position);
+        String routeNumber = routeInfo.getRoute();
         holder.tvRouteName.setText(routeNumber);
-        holder.tvDestination.setText(String.format("To %s", route.getDestEn()));
-        holder.tvOrigin.setText(route.getOrigEn());
+        holder.tvDestination.setText(String.format("To %s", routeInfo.getDestEn()));
+        holder.tvOrigin.setText(routeInfo.getOrigEn());
         holder.tvRouteBusCompany.setText("KMB");
+        holder.bind(routeInfo);
+
+        if (!Objects.equals(routeInfo.getServiceType(), "1")){
+            holder.routeSpecialIndicator.setVisibility(View.VISIBLE);
+        } else {
+            holder.routeSpecialIndicator.setVisibility(View.GONE);
+        }
 
         // Background and text color logic
         setTextColorAndBackground(holder.tvRouteName, routeNumber);
@@ -69,8 +77,9 @@ public class BusRouteAdapter extends RecyclerView.Adapter<BusRouteAdapter.ViewHo
     }
 
     public static class ViewHolder extends RecyclerView.ViewHolder {
-        TextView tvRouteName, tvOrigin, tvDestination, tvRouteBusCompany;
+        TextView tvRouteName, tvOrigin, tvDestination, tvRouteBusCompany, routeSpecialIndicator;
         LinearLayout busRouteItemView;
+        private BusRoute routeInfo;
 
         public ViewHolder(@NonNull View itemView) {
             super(itemView);
@@ -79,13 +88,22 @@ public class BusRouteAdapter extends RecyclerView.Adapter<BusRouteAdapter.ViewHo
             tvDestination = itemView.findViewById(R.id.tvRouteDestination);
             tvOrigin = itemView.findViewById(R.id.tvRouteOrigin);
             tvRouteBusCompany = itemView.findViewById(R.id.tvRouteBusCompany);
+            routeSpecialIndicator = itemView.findViewById(R.id.tvRouteBusSpecialIndicator);
 
             busRouteItemView.setOnClickListener(view -> {
                 Log.d("BusRouteAdapter", "Item clicked: " + tvRouteName.getText());
                 Intent intent = new Intent(view.getContext(), BusRouteDetailViewActivity.class);
+                intent.putExtra("route", routeInfo.getRoute());
+                intent.putExtra("destination", routeInfo.getDestEn());
+                intent.putExtra("bound", routeInfo.getBound());
+                intent.putExtra("serviceType", routeInfo.getServiceType());
                 startActivity(view.getContext(), intent, null);
             });
-
         }
+
+        public void bind(BusRoute route) {
+            this.routeInfo = route;
+        }
+
     }
 }

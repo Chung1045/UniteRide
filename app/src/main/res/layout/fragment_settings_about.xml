@@ -37,7 +37,6 @@
             android:layout_marginTop="4dp"
             android:text="1.0.0"/>
 
-        <!-- Spacer to push content to bottom -->
         <Space
             android:layout_width="match_parent"
             android:layout_height="0dp"
@@ -47,43 +46,47 @@
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:orientation="vertical"
             android:background="?attr/selectableItemBackground">
 
             <TextView
+                android:id="@+id/pref_about_permission"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginHorizontal="30dp"
-                android:paddingVertical="15dp"
+                android:layout_marginHorizontal="16dp"
+                android:layout_marginBottom="8dp"
+                android:paddingVertical="16dp"
+                android:paddingHorizontal="16dp"
+                android:background="@drawable/background_basic_preference_top"
                 android:text="Permissions"
+                android:clickable="true"
                 android:textSize="20sp"/>
-        </LinearLayout>
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:background="?attr/selectableItemBackground">
 
             <TextView
+                android:id="@+id/pref_about_libraries"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginHorizontal="30dp"
-                android:paddingVertical="15dp"
+                android:layout_marginHorizontal="16dp"
+                android:layout_marginBottom="8dp"
+                android:paddingVertical="16dp"
+                android:paddingHorizontal="16dp"
+                android:background="@drawable/background_basic_preference_mid"
                 android:text="Libraries"
+                android:clickable="true"
                 android:textSize="20sp"/>
-        </LinearLayout>
 
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:background="?attr/selectableItemBackground"
-            android:layout_marginBottom="16dp">
 
             <TextView
+                android:id="@+id/pref_about_github"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginHorizontal="30dp"
-                android:paddingVertical="15dp"
+                android:layout_marginHorizontal="16dp"
+                android:layout_marginBottom="8dp"
+                android:paddingVertical="16dp"
+                android:paddingHorizontal="16dp"
+                android:background="@drawable/background_basic_preference_bottom"
                 android:text="View On Github"
+                android:clickable="true"
                 android:textSize="20sp"/>
         </LinearLayout>
 

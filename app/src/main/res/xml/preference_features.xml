@@ -3,7 +3,7 @@
 
     <com.chung.a9rushtobus.elements.CustomSwitchPreference
         android:iconSpaceReserved="false"
-        android:key="pref_feature_1"
+        android:key="pref_feature_rthkNews"
         android:widgetLayout="@layout/components_switch_preference"
         android:summary="News available only in Traditional Chinese"
         android:title="Show RTHK Traffic News"/>
