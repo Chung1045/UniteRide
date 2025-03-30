@@ -107,6 +107,8 @@ public class BusRouteAdapter extends RecyclerView.Adapter<BusRouteAdapter.ViewHo
                 intent.putExtra("bound", routeInfo.getBound());
                 intent.putExtra("serviceType", routeInfo.getServiceType());
                 intent.putExtra("company", routeInfo.getCompany());
+                Log.e("BusRouteAdapter", "Item clicked: " + "Route " + routeInfo.getRoute() + " Destination " + routeInfo.getDestEn() + " Bound " + routeInfo.getBound() + " ServiceType " + routeInfo.getServiceType() + " Company " + routeInfo.getCompany());
+                Log.e("BusRouteAdapter", "Attempting to start new BusRouteDetailViewActivity");
                 startActivity(view.getContext(), intent, null);
             });
         }

@@ -21,12 +21,13 @@ public class KMBDatabase {
             + KMBDatabase.Tables.KMB_ROUTES.COLUMN_DEST_SC + " TEXT" + ");";
     public static final String SQL_CREATE_KMB_STOPS_TABLE = "CREATE TABLE IF NOT EXISTS "
             + KMBDatabase.Tables.KMB_STOPS.TABLE_NAME + " ("
-            + KMBDatabase.Tables.KMB_STOPS.COLUMN_STOP_ID + " TEXT,"
+            + KMBDatabase.Tables.KMB_STOPS.COLUMN_STOP_ID + " TEXT PRIMARY KEY,"
             + KMBDatabase.Tables.KMB_STOPS.COLUMN_STOP_NAME_EN + " TEXT,"
             + KMBDatabase.Tables.KMB_STOPS.COLUMN_STOP_NAME_TC + " TEXT,"
             + KMBDatabase.Tables.KMB_STOPS.COLUMN_STOP_NAME_SC + " TEXT,"
             + KMBDatabase.Tables.KMB_STOPS.COLUMN_LATITUDE + " TEXT,"
-            + KMBDatabase.Tables.KMB_STOPS.COLUMN_LONGITUDE + " TEXT" + ");";
+            + KMBDatabase.Tables.KMB_STOPS.COLUMN_LONGITUDE + " TEXT"
+            + ");";
     public static final String SQL_CREATE_KMB_ROUTE_STOPS_TABLE = "CREATE TABLE IF NOT EXISTS "
             + KMBDatabase.Tables.KMB_ROUTE_STOPS.TABLE_NAME + " ("
             + KMBDatabase.Tables.KMB_ROUTE_STOPS.COLUMN_STOP_ID + " TEXT,"
@@ -91,6 +92,14 @@ public class KMBDatabase {
                 " AND rs." + Tables.KMB_ROUTE_STOPS.COLUMN_SERVICE_TYPE + " = ?" +
                 " GROUP BY rs." + Tables.KMB_ROUTE_STOPS.COLUMN_STOP_ID +
                 " ORDER BY CAST(rs." + Tables.KMB_ROUTE_STOPS.COLUMN_STOP_SEQ + " AS INTEGER)";
+
+        public static final String QUERY_GET_STOPID_FROM_ROUTEBOUND =
+                "SELECT " + Tables.KMB_ROUTE_STOPS.COLUMN_STOP_SEQ + ", " +
+                        Tables.KMB_ROUTE_STOPS.COLUMN_STOP_ID +
+                        " FROM " + Tables.KMB_ROUTE_STOPS.TABLE_NAME +
+                        " WHERE " + Tables.KMB_ROUTE_STOPS.COLUMN_ROUTE + " =?" +
+                        " AND " + Tables.KMB_ROUTE_STOPS.COLUMN_BOUND + " =?" +
+                        " ORDER BY CAST(" + Tables.KMB_ROUTE_STOPS.COLUMN_STOP_SEQ + " AS INTEGER)";
     }
     
     public KMBDatabase(SQLiteOpenHelper helper) {

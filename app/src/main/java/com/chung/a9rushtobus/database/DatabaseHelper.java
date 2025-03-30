@@ -23,11 +23,19 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     // Static inner class to hold table contract details
     public static class Tables {
         // Entry table contract
-
         public static class RTHK_NEWS implements android.provider.BaseColumns {
             public static final String TABLE_NAME = "rthk_news";
             public static final String COLUMN_CONTENT = "content";
             public static final String COLUMN_DATE = "date";
+        }
+
+        public static class USER_SAVED implements android.provider.BaseColumns {
+            public static final String TABLE_NAME = "user_saved";
+            public static final String COLUMN_ROUTE_ID = "route_id";
+            public static final String COLUMN_COMPANY_ID = "company";
+            public static final String COLUMN_ROUTE_BOUND = "route_bound";
+            public static final String COLUMN_ROUTE_SERVICE_TYPE = "route_service_type";
+            public static final String COLUMN_STOP_ID = "stop_id";
         }
 
     }
@@ -49,8 +57,6 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         db.execSQL("DELETE FROM " + CTBDatabase.Tables.CTB_ROUTES.TABLE_NAME);
         Log.d("DatabaseHelper", "Attempting to remove all values 4");
         db.execSQL("DELETE FROM " + CTBDatabase.Tables.CTB_ROUTE_STOPS.TABLE_NAME);
-        Log.d("DatabaseHelper", "Attempting to remove all values 5");
-        db.execSQL("DELETE FROM " + CTBDatabase.Tables.CTB_STOPS.TABLE_NAME);
         Log.d("DatabaseHelper", "All values removed");
     }
 

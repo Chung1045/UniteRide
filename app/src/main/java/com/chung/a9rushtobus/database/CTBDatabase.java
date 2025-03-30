@@ -5,6 +5,8 @@ import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.util.Log;
 
+import java.util.Objects;
+
 public class CTBDatabase {
 
     private SQLiteDatabase db;
@@ -88,7 +90,7 @@ public class CTBDatabase {
 
     public static class Queries {
         public static final String QUERY_GET_STOP_FROM_ROUTE =
-                "SELECT DISTINCT rs." + Tables.CTB_ROUTE_STOPS.COLUMN_STOP_SEQ + ", " +
+                "SELECT rs." + Tables.CTB_ROUTE_STOPS.COLUMN_STOP_SEQ + ", " +
                         "rs." + Tables.CTB_ROUTE_STOPS.COLUMN_STOP_ID + ", " +
                         "s." + Tables.CTB_STOPS.COLUMN_NAME_EN + ", " +
                         "s." + Tables.CTB_STOPS.COLUMN_NAME_TC + ", " +
@@ -102,6 +104,14 @@ public class CTBDatabase {
                         " WHERE rs." + Tables.CTB_ROUTE_STOPS.COLUMN_ROUTE + " = ?" +
                         " AND rs." + Tables.CTB_ROUTE_STOPS.COLUMN_BOUND + " = ?" +
                         " ORDER BY CAST(rs." + Tables.CTB_ROUTE_STOPS.COLUMN_STOP_SEQ + " AS INTEGER)";
+
+        public static final String QUERY_GET_STOPID_FROM_ROUTEBOUND =
+                "SELECT " + Tables.CTB_ROUTE_STOPS.COLUMN_STOP_SEQ + ", " +
+                        Tables.CTB_ROUTE_STOPS.COLUMN_STOP_ID +
+                        " FROM " + Tables.CTB_ROUTE_STOPS.TABLE_NAME +
+                        " WHERE " + Tables.CTB_ROUTE_STOPS.COLUMN_ROUTE + " =?" +
+                        " AND " + Tables.CTB_ROUTE_STOPS.COLUMN_BOUND + " =?" +
+                        " ORDER BY CAST(" + Tables.CTB_ROUTE_STOPS.COLUMN_STOP_SEQ + " AS INTEGER)";
     }
 
     public void updateCTBRoute(String route, String originEn, String originTc, String originSc, String destEn, String destTc, String destSc) {
@@ -134,51 +144,58 @@ public class CTBDatabase {
         Log.d("CTBDatabase", "Updated record, rows affected: " + rowsAffected);
     }
 
-    public void updateCTBRouteStops(String stopId, String route, String bound, String stopSeq) {
-        ContentValues values = new ContentValues();
-        values.put(Tables.CTB_ROUTE_STOPS.COLUMN_STOP_ID, stopId);
-        values.put(Tables.CTB_ROUTE_STOPS.COLUMN_ROUTE, route);
-        values.put(Tables.CTB_ROUTE_STOPS.COLUMN_BOUND, bound);
-        values.put(Tables.CTB_ROUTE_STOPS.COLUMN_STOP_SEQ, stopSeq);
+    public synchronized void updateCTBRouteStops(String stopId, String route, String bound, String stopSeq) {
+        db.beginTransaction();
+        try {
+            ContentValues values = new ContentValues();
+            values.put(Tables.CTB_ROUTE_STOPS.COLUMN_STOP_ID, stopId);
+            values.put(Tables.CTB_ROUTE_STOPS.COLUMN_ROUTE, route);
+            values.put(Tables.CTB_ROUTE_STOPS.COLUMN_BOUND, bound);
+            values.put(Tables.CTB_ROUTE_STOPS.COLUMN_STOP_SEQ, stopSeq);
 
-        // Use insertWithOnConflict to insert or replace
-        long result = db.insertWithOnConflict(
-                Tables.CTB_ROUTE_STOPS.TABLE_NAME,
-                null,
-                values,
-                SQLiteDatabase.CONFLICT_REPLACE);
+            if (Objects.equals(route, "N182")) {
+                Log.e("DatabaseCTB", "N182 is being inserted with bound " + bound);
+                Log.d("DatabaseCTB", "Stop Seq: " + stopSeq + " Stop ID: " + stopId);
+            }
 
-        if (result == -1) {
-            // Handle error
-            Log.e("Database", "Insert or update failed");
-        } else {
-            // Successfully inserted or updated
-            Log.d("Database", "Record inserted or updated successfully");
+            db.insert(Tables.CTB_ROUTE_STOPS.TABLE_NAME, null, values);
+
+            db.setTransactionSuccessful();
+        } finally {
+            db.endTransaction();
         }
     }
 
-    public void updateCTBStops(String stopId, String nameEn, String nameTc, String nameSc, String latitude, String longitude) {
-        ContentValues values = new ContentValues();
-        values.put(Tables.CTB_STOPS.COLUMN_STOP_ID, stopId);
-        values.put(Tables.CTB_STOPS.COLUMN_NAME_EN, nameEn);
-        values.put(Tables.CTB_STOPS.COLUMN_NAME_TC, nameTc);
-        values.put(Tables.CTB_STOPS.COLUMN_NAME_SC, nameSc);
-        values.put(Tables.CTB_STOPS.COLUMN_LATITUDE, latitude);
-        values.put(Tables.CTB_STOPS.COLUMN_LONGITUDE, longitude);
 
-        // Use insertWithOnConflict to insert or replace
-        long result = db.insertWithOnConflict(
-                Tables.CTB_STOPS.TABLE_NAME,
-                null,
-                values,
-                SQLiteDatabase.CONFLICT_REPLACE);
+    public synchronized void updateCTBStops(String stopId, String nameEn, String nameTc, String nameSc, String latitude, String longitude) {
+        db.beginTransaction();
 
-        if (result == -1) {
-            // Handle error
-            Log.e("Database", "Insert or update failed");
-        } else {
-            // Successfully inserted or updated
-            Log.d("Database", "Record inserted or updated successfully");
+        try {
+            ContentValues values = new ContentValues();
+            values.put(Tables.CTB_STOPS.COLUMN_STOP_ID, stopId);
+            values.put(Tables.CTB_STOPS.COLUMN_NAME_EN, nameEn);
+            values.put(Tables.CTB_STOPS.COLUMN_NAME_TC, nameTc);
+            values.put(Tables.CTB_STOPS.COLUMN_NAME_SC, nameSc);
+            values.put(Tables.CTB_STOPS.COLUMN_LATITUDE, latitude);
+            values.put(Tables.CTB_STOPS.COLUMN_LONGITUDE, longitude);
+
+            // Use insertWithOnConflict to insert or replace
+            long result = db.insertWithOnConflict(
+                    Tables.CTB_STOPS.TABLE_NAME,
+                    null,
+                    values,
+                    SQLiteDatabase.CONFLICT_REPLACE);
+
+            if (result == -1) {
+                // Handle error
+                Log.e("Database", "Insert or update failed");
+            } else {
+                // Successfully inserted or updated
+                Log.d("Database", "Record inserted or updated successfully");
+                db.setTransactionSuccessful();
+            }
+        } finally {
+            db.endTransaction();
         }
     }
 

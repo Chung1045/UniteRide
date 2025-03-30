@@ -192,7 +192,11 @@ public class BusRouteStopItemAdapter extends RecyclerView.Adapter<BusRouteStopIt
             item.getRoute(), 
             item.getServiceType(), 
             item.getCompany(),
-            etaDataArray -> processEtaData(item, position, etaDataArray, startTime),
+            etaDataArray -> {
+                Log.d("ETARefresh", "ETA data received for position " + position);
+                Log.d("ETARefresh", "return value: "+ etaDataArray);
+                processEtaData(item, position, etaDataArray, startTime);
+            },
             error -> handleEtaError(item, position, error)
         );
     }
@@ -210,6 +214,7 @@ public class BusRouteStopItemAdapter extends RecyclerView.Adapter<BusRouteStopIt
 
                 for (int i = 0; i < Math.min(etaDataArray.length(), 3); i++) {
                     JSONObject etaData = etaDataArray.getJSONObject(i);
+                    Log.d("ETARefresh", "Processing ETA data: " + etaData);
                     if (item.getCompany().equals("kmb") && !etaData.getString("service_type").equals(item.getServiceType())) {
                         continue;
                     }

@@ -13,6 +13,7 @@ import com.chung.a9rushtobus.database.CTBDatabase;
 import com.chung.a9rushtobus.database.DatabaseHelper;
 import com.chung.a9rushtobus.elements.BusRoute;
 import com.chung.a9rushtobus.elements.RTHKTrafficEntry;
+import com.google.android.gms.common.api.Api;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -32,6 +33,8 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
+import java.util.Queue;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -84,25 +87,25 @@ public class DataFetcher {
                 final AtomicInteger tasksPending = new AtomicInteger(totalTasks);
                 final AtomicBoolean errorOccurred = new AtomicBoolean(false);
 
-                // Helper method to check if all tasks have completed
-                Runnable checkCompletion = () -> {
-                    if (tasksPending.decrementAndGet() == 0) {
-                        // All tasks are complete; log and show a toast message on the main thread
-                        if (errorOccurred.get()) {
-                            Log.e("DataFetcher", "Data fetch completed with errors");
-                            mainHandler.post(() -> Toast.makeText(context, "Data fetch completed with errors", Toast.LENGTH_LONG).show());
-                        } else {
-                            Log.d("DataFetcher", "All data fetched successfully");
-                            mainHandler.post(() -> Toast.makeText(context, "All data fetched successfully", Toast.LENGTH_LONG).show());
-                        }
-                    }
-                };
+////                 Helper method to check if all tasks have completed
+//                Runnable checkCompletion = () -> {
+//                    if (tasksPending.decrementAndGet() == 0) {
+//                        // All tasks are complete; log and show a toast message on the main thread
+//                        if (errorOccurred.get()) {
+//                            Log.e("DataFetcher", "Data fetch completed with errors");
+//                            mainHandler.post(() -> Toast.makeText(context, "Data fetch completed with errors", Toast.LENGTH_LONG).show());
+//                        } else {
+//                            Log.d("DataFetcher", "All data fetched successfully");
+//                            mainHandler.post(() -> Toast.makeText(context, "All data fetched successfully", Toast.LENGTH_LONG).show());
+//                        }
+//                    }
+//                };
 
                 // Fetch all bus routes
                 fetchAllBusRoutes(
                         routes -> {
                             Log.d("DataFetcher", "All bus routes fetched successfully");
-                            checkCompletion.run();
+//                            checkCompletion.run();
                         },
                         error -> {
                             if (!errorOccurred.get()) {
@@ -110,31 +113,31 @@ public class DataFetcher {
                                 Log.e("DataFetcher", "Error fetching bus routes: " + error);
                                 handleDataFetchFailure();
                             }
-                            checkCompletion.run();
+//                            checkCompletion.run();
                         }
                 );
 
-                // Fetch all KMB bus stops
-                fetchAllKMBBusStop(
-                        message -> {
-                            Log.d("DataFetcher", "All KMB bus stops fetched successfully, now processing");
-                            checkCompletion.run();
-                        },
-                        error -> {
-                            if (!errorOccurred.get()) {
-                                errorOccurred.set(true);
-                                Log.e("DataFetcher", "Error fetching KMB bus stops: " + error);
-                                handleDataFetchFailure();
-                            }
-                            checkCompletion.run();
-                        }
-                );
+//                // Fetch all KMB bus stops
+//                fetchAllKMBBusStop(
+//                        message -> {
+//                            Log.d("DataFetcher", "All KMB bus stops fetched successfully, now processing");
+//                            checkCompletion.run();
+//                        },
+//                        error -> {
+//                            if (!errorOccurred.get()) {
+//                                errorOccurred.set(true);
+//                                Log.e("DataFetcher", "Error fetching KMB bus stops: " + error);
+//                                handleDataFetchFailure();
+//                            }
+//                            checkCompletion.run();
+//                        }
+//                );
 
                 // Fetch all KMB route-stop data
                 fetchAllKMBRouteStop(
                         message -> {
                             Log.d("DataFetcher", "All KMB route-stop fetched successfully, now processing");
-                            checkCompletion.run();
+//                            checkCompletion.run();
                         },
                         error -> {
                             if (!errorOccurred.get()) {
@@ -142,7 +145,7 @@ public class DataFetcher {
                                 Log.e("DataFetcher", "Error fetching KMB route-stop: " + error);
                                 handleDataFetchFailure();
                             }
-                            checkCompletion.run();
+//                            checkCompletion.run();
                         }
                 );
 
@@ -150,7 +153,7 @@ public class DataFetcher {
                 fetchAllCTBRoutes(
                         message -> {
                             Log.d("DataFetcher", "All CTB routes fetched successfully");
-                            checkCompletion.run();
+//                            checkCompletion.run();
                         },
                         error -> {
                             if (!errorOccurred.get()) {
@@ -158,7 +161,7 @@ public class DataFetcher {
                                 Log.e("DataFetcher", "Error fetching CTB routes: " + error);
                                 // Optionally, you could call handleDataFetchFailure() here as well
                             }
-                            checkCompletion.run();
+//                            checkCompletion.run();
                         }
                 );
 
@@ -212,27 +215,81 @@ public class DataFetcher {
         });
     }
 
-    public void fetchAllKMBBusStop(Consumer<String> onSuccess, Consumer<String> onError) {
-        Request request = new Request.Builder()
-                .url(KMB_BASE_URL + "stop")
-                .header("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.36")
-                .build();
+//    public void fetchAllKMBBusStop(Consumer<String> onSuccess, Consumer<String> onError) {
+//        Request request = new Request.Builder()
+//                .url(KMB_BASE_URL + "stop")
+//                .header("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.36")
+//                .build();
+//
+//        client.newCall(request).enqueue(new Callback() {
+//            @Override
+//            public void onFailure(Call call, IOException e) {
+//                Log.e("FetchLog", "Error Fetching all kmb bus stops: " + e.getMessage());
+//                Log.d("DataFetcher", "Error Fetching all kmb bus stops: " + e.getMessage());
+//                onError.accept("Failed to fetch data: " + e.getMessage());
+//                return;
+//            }
+//
+//            @Override
+//            public void onResponse(Call call, Response response) {
+//                Log.e("FetchLog", "All KMB Stop Response: " + response);
+//                if (!response.isSuccessful()) {
+//                    mainHandler.post(() -> Log.e("DataFetchehKMB", "Error Fetching all kmb bus stops: " + response.code()));
+//                    Log.e("FetchLog", "Response is un-successful");
+//                    onError.accept("Error: " + response.code());
+//                    return;
+//                }
+//
+//                executorService.execute(() -> {
+//                    try {
+//                        String jsonData = response.body().string();
+//                        processAllKMBBusStop(jsonData);
+//                        onSuccess.accept("All kmb bus stops fetched successfully, now processing");
+//                    } catch (Exception e) {
+//                        Log.e("DataFetch", "Error Fetching all kmb bus stops: " + e.getMessage());
+//                        Log.e("DataFetchKMB", "Error Fetching all kmb bus stops: " + e.getMessage());
+//                        onError.accept("Error processing data: " + e.getMessage());
+//                    }
+//                });
+//            }
+//        });
+//    }
+//
+//    public void processAllKMBBusStop(String JSONData) {
+//        try {
+//            JSONObject jsonObject = new JSONObject(JSONData);
+//            JSONArray stopsArray = jsonObject.getJSONArray("data");
+//
+//            for (int i = 0; i < stopsArray.length(); i++) {
+//                JSONObject stop = stopsArray.getJSONObject(i);
+//                Log.d("DataFetchKMBSTOP", "Adding stop: " + stop.getString("stop"));
+//                databaseHelper.kmbDatabase.updateKMBStop(stop.getString("stop"), stop.getString("name_en"), stop.getString("name_tc"), stop.getString("name_sc"), stop.getString("lat"), stop.getString("long"));
+//            }
+//
+//        } catch (Exception e) {
+//            Log.e("DataFetchKMBSTOP", "Error: Unable to parse and save stop info to database:  " + e.getMessage());
+//        }
+//    }
 
+    public void fetchCTBStop(String stopID, Consumer<String> onSuccess, Consumer<String> onError) {
+        String url = CTB_BASE_URL + "stop/" + stopID ;
+        Request request = new Request.Builder().url(url).build();
+        Log.d("FetchLog", "Making request for stop " + stopID + " to URL: " + url);
         client.newCall(request).enqueue(new Callback() {
             @Override
             public void onFailure(Call call, IOException e) {
-                Log.e("FetchLog", "Error Fetching all kmb bus stops: " + e.getMessage());
-                Log.d("DataFetcher", "Error Fetching all kmb bus stops: " + e.getMessage());
+                Log.e("FetchLog", "Error CTB bus stop info: " + e.getMessage());
+                Log.d("DataFetcher", "Error Fetching CTB bus stop info: " + e.getMessage());
                 onError.accept("Failed to fetch data: " + e.getMessage());
-                return;
             }
 
             @Override
             public void onResponse(Call call, Response response) {
-                Log.e("FetchLog", "All KMB Stop Response: " + response);
+                Log.e("FetchLog", "CTB Stop Info Fetch Response: " + response);
                 if (!response.isSuccessful()) {
-                    mainHandler.post(() -> Log.e("DataFetchehKMB", "Error Fetching all kmb bus stops: " + response.code()));
+                    mainHandler.post(() -> Log.e("DataFetchCTB", "Error Fetching CTB stop info: " + response.code()));
                     Log.e("FetchLog", "Response is un-successful");
+                    response.close();
                     onError.accept("Error: " + response.code());
                     return;
                 }
@@ -240,98 +297,16 @@ public class DataFetcher {
                 executorService.execute(() -> {
                     try {
                         String jsonData = response.body().string();
-                        processAllKMBBusStop(jsonData);
-                        onSuccess.accept("All kmb bus stops fetched successfully, now processing");
+                        processCTBStop(jsonData);
+                        onSuccess.accept(jsonData);
+                        response.close();
                     } catch (Exception e) {
-                        Log.e("DataFetch", "Error Fetching all kmb bus stops: " + e.getMessage());
-                        Log.e("DataFetchKMB", "Error Fetching all kmb bus stops: " + e.getMessage());
+                        Log.e("DataFetch", "Error Fetching CTB bus stop info: " + e.getMessage());
+                        Log.e("DataFetchCTB", "Error Fetching CTB bus stop info: " + e.getMessage());
                         onError.accept("Error processing data: " + e.getMessage());
+                        response.close();
                     }
                 });
-            }
-        });
-    }
-
-    public void processAllKMBBusStop(String JSONData) {
-        try {
-            JSONObject jsonObject = new JSONObject(JSONData);
-            JSONArray stopsArray = jsonObject.getJSONArray("data");
-
-            for (int i = 0; i < stopsArray.length(); i++) {
-                JSONObject stop = stopsArray.getJSONObject(i);
-                Log.d("DataFetchKMBSTOP", "Adding stop: " + stop.getString("stop"));
-                databaseHelper.kmbDatabase.updateKMBStop(stop.getString("stop"), stop.getString("name_en"), stop.getString("name_tc"), stop.getString("name_sc"), stop.getString("lat"), stop.getString("long"));
-            }
-
-        } catch (Exception e) {
-            Log.e("DataFetchKMBSTOP", "Error: Unable to parse and save stop info to database:  " + e.getMessage());
-        }
-    }
-
-    private AtomicBoolean ctbStopsFetched = new AtomicBoolean(false);
-    private static final int BATCH_SIZE = 100;
-
-    private void fetchAllCTBStops() {
-        // Prevent duplicate fetching if this method is called multiple times
-        if (ctbStopsFetched.get()) {
-            Log.d("FetchLog", "CTB stops already fetched; skipping duplicate call.");
-            return;
-        }
-        ctbStopsFetched.set(true);
-
-        Log.d("FetchLog", "Starting fetchAllCTBStops");
-        SQLiteDatabase db = databaseHelper.getReadableDatabase();
-        Cursor cursor = db.rawQuery("SELECT DISTINCT stop_id FROM ctb_route_stops", null);
-        List<String> stopIds = new ArrayList<>();
-
-        while (cursor.moveToNext()) {
-            @SuppressLint("Range") String stopId = cursor.getString(cursor.getColumnIndex("stop_id"));
-            stopIds.add(stopId);
-        }
-        cursor.close();
-
-        Log.d("FetchLog", "Total stops to fetch: " + stopIds.size());
-
-        // Process stops in batches
-        for (int i = 0; i < stopIds.size(); i += BATCH_SIZE) {
-            List<String> batch = stopIds.subList(i, Math.min(i + BATCH_SIZE, stopIds.size()));
-            Log.d("FetchLog", "Processing Stop batch " + (i / BATCH_SIZE + 1) +
-                    " (stops " + i + " to " + Math.min(i + BATCH_SIZE, stopIds.size()) + ")");
-            processCTBStopBatch(batch);
-        }
-    }
-
-    private void processCTBStopBatch(List<String> stopIds) {
-        // For each stop in the batch, perform an asynchronous network call.
-        // This avoids holding up a background thread with synchronous calls.
-        for (String stopId : stopIds) {
-            fetchAndProcessSingleCTBStop(stopId);
-        }
-    }
-
-    private void fetchAndProcessSingleCTBStop(String stopId) {
-        String url = CTB_BASE_URL + "stop/" + stopId;
-        Request request = new Request.Builder().url(url).build();
-        Log.d("FetchLog", "Making request for stop " + stopId + " to URL: " + url);
-        client.newCall(request).enqueue(new Callback() {
-            @Override
-            public void onFailure(Call call, IOException e) {
-                Log.e("FetchLog", "Error fetching stop " + stopId + " - " + e.getMessage());
-            }
-            @Override
-            public void onResponse(Call call, Response response) throws IOException {
-                if (!response.isSuccessful()) {
-                    Log.e("FetchLog", "Error fetching stop " + stopId + " - " + response.code());
-                    return;
-                }
-                String jsonData = response.body().string();
-                Log.d("FetchLog", "Received data for stop " + stopId +
-                        ": " + jsonData.substring(0, Math.min(100, jsonData.length())) + "...");
-                try {
-                    processCTBStop(jsonData);
-                } catch (JSONException e) {
-                    Log.e("FetchLog", "Error processing stop " + stopId, e);
-                }
             }
         });
     }
@@ -353,6 +328,64 @@ public class DataFetcher {
         Log.d("FetchLog", "Saving stop: " + stop + " - " + nameEn);
         // Update the database. Ensure that updateCTBStops() is thread-safe.
         databaseHelper.ctbDatabase.updateCTBStops(stop, nameEn, nameTc, nameSc, lat, lng);
+    }
+
+    public void fetchKMBStop(String stopID, Consumer<String> onSuccess, Consumer<String> onError) {
+        String url = KMB_BASE_URL + "stop/" + stopID ;
+        Request request = new Request.Builder().url(url).build();
+        Log.d("FetchLog", "Making request for stop " + stopID + " to URL: " + url);
+        client.newCall(request).enqueue(new Callback() {
+            @Override
+            public void onFailure(Call call, IOException e) {
+                Log.e("FetchLog", "Error KMB bus stop info: " + e.getMessage());
+                Log.d("DataFetcher", "Error Fetching KMB bus stop info: " + e.getMessage());
+                onError.accept("Failed to fetch data: " + e.getMessage());
+            }
+
+            @Override
+            public void onResponse(Call call, Response response) {
+                Log.e("FetchLog", "KMB Stop Info Fetch Response: " + response);
+                if (!response.isSuccessful()) {
+                    mainHandler.post(() -> Log.e("DataFetchKMB", "Error Fetching KMB stop info: " + response.code()));
+                    Log.e("FetchLog", "Response is un-successful");
+                    response.close();
+                    onError.accept("Error: " + response.code());
+                    return;
+                }
+
+                executorService.execute(() -> {
+                    try {
+                        String jsonData = response.body().string();
+                        processKMBStop(jsonData);
+                        onSuccess.accept(jsonData);
+                        response.close();
+                    } catch (Exception e) {
+                        Log.e("DataFetch", "Error Fetching KMB bus stop info: " + e.getMessage());
+                        Log.e("DataFetchKMB", "Error Fetching KMB bus stop info: " + e.getMessage());
+                        onError.accept("Error processing data: " + e.getMessage());
+                        response.close();
+                    }
+                });
+            }
+        });
+    }
+
+    // Processes the JSON data for a CTB stop and updates the database immediately
+    private void processKMBStop(String jsonData) throws JSONException {
+        Log.d("FetchLog", "Processing KMB stop data");
+        JSONObject jsonObject = new JSONObject(jsonData);
+        JSONObject dataObject = jsonObject.getJSONObject("data");
+
+        String stop = dataObject.getString("stop");
+        String nameEn = dataObject.getString("name_en");
+        String nameTc = dataObject.getString("name_tc");
+        String nameSc = dataObject.getString("name_sc");
+        String lat = dataObject.getString("lat");
+        String lng = dataObject.getString("long");
+
+        Log.d("FetchLog", "Saving stop: " + stop + " - " + nameEn);
+        // Update the database. Ensure that updateCTBStops() is thread-safe.
+        databaseHelper.kmbDatabase.updateKMBStop(stop, nameEn, nameTc, nameSc, lat, lng);
     }
 
     public void fetchAllCTBRoutes(Consumer<String> onSuccess, Consumer<String> onError) {
@@ -413,23 +446,30 @@ public class DataFetcher {
         cursor.close();
 
         for (String routeId : routeIds) {
-            fetchSingleCTBRouteStops(routeId, "inbound");
-            fetchSingleCTBRouteStops(routeId, "outbound");
+            fetchSingleCTBRouteStops(routeId);
         }
     }
 
-    private void fetchSingleCTBRouteStops(String routeId, String bound) {
-        String url = CTB_BASE_URL + "route-stop/CTB/" + routeId + "/" + bound;
+    private synchronized void fetchSingleCTBRouteStops(String routeId) {
+        Log.d("DataFetcher", "Fetching route stops for " + routeId);
+
+        fetchRouteStops(routeId, "inbound");
+        fetchRouteStops(routeId, "outbound");
+    }
+
+    private void fetchRouteStops(String routeId, String direction) {
+        String url = CTB_BASE_URL + "route-stop/CTB/" + routeId + "/" + direction;
+        Log.d("DataFetcher", "Request URL: " + url);
         Request request = new Request.Builder().url(url).build();
 
         executorService.execute(() -> {
             try (Response response = client.newCall(request).execute()) {
                 if (!response.isSuccessful()) {
                     Log.e("FetchLog", "Error fetching route stops for " + routeId + " " + response.code());
-                    Log.e("DataFetcher", "Error fetching route stops for " + routeId);
                     return;
                 }
                 String jsonData = response.body().string();
+                Log.d("DataFetcher", "CTB " + routeId + " " + direction + " passing to processCTBRouteStops");
                 processCTBRouteStops(jsonData);
             } catch (IOException | JSONException e) {
                 Log.e("DataFetcher", "Error: " + e.getMessage());
@@ -437,14 +477,16 @@ public class DataFetcher {
         });
     }
 
+
     private void processCTBRouteStops(String jsonData) throws JSONException {
+        Log.d("DataFetchCTB", "Processing route stops");
         JSONObject jsonObject = new JSONObject(jsonData);
         JSONArray stopsArray = jsonObject.getJSONArray("data");
         for (int i = 0; i < stopsArray.length(); i++) {
             JSONObject routeStop = stopsArray.getJSONObject(i);
+            Log.d("DataFetchCTB", "Adding route stop: " + routeStop.getString("stop") + " " + routeStop.getString("route") + " " + routeStop.getString("dir") + " " + routeStop.getString("seq"));
             databaseHelper.ctbDatabase.updateCTBRouteStops(routeStop.getString("stop"), routeStop.getString("route"), routeStop.getString("dir"), routeStop.getString("seq"));
         }
-        fetchAllCTBStops();
     }
 
     public void fetchAllKMBRouteStop(Consumer<String> onSuccess, Consumer<String> onError) {
@@ -469,6 +511,7 @@ public class DataFetcher {
                 if (!response.isSuccessful()) {
                     mainHandler.post(() -> Log.e("DataFetcheh", "onResponse: Error Fetching all kmb route stops: " + response.code()));
                     onError.accept("Error: " + response.code());
+                    response.close();
                 }
 
                 executorService.execute(() -> {
@@ -476,9 +519,11 @@ public class DataFetcher {
                         String jsonData = response.body().string();
                         processAllKMBRouteStop(jsonData);
                         onSuccess.accept("Executor: All kmb route-stop fetched successfully, now processing");
+                        response.close();
                     } catch (Exception e) {
                         Log.e("DataFetch", "Executor: Error Fetching all kmb route stops: " + e.getMessage());
                         onError.accept("Error processing data: " + e.getMessage());
+                        response.close();
                     }
                 });
             }
@@ -500,6 +545,52 @@ public class DataFetcher {
         }
     }
 
+    public boolean isStopNumberMatch(Integer stopNumber, String route, String bound, String serviceType, String company) {
+        String url;
+
+        if (company.equalsIgnoreCase("kmb")) {
+            url = KMB_BASE_URL + "route-stop/" + route + "/" + bound + "/" + serviceType;
+        } else if (company.equalsIgnoreCase("ctb")) {
+            url = CTB_BASE_URL + "route-stop/CTB/" + route + "/" + bound;
+        } else {
+            Log.e("DataFetch", "ETA for other bus companies is coming soon");
+            return false;
+        }
+
+        Request request = new Request.Builder().url(url).build();
+
+        try (Response response = client.newCall(request).execute()) { // Synchronous request
+            if (!response.isSuccessful()) {
+                Log.e("DataFetcher", "Error fetching stops: " + response.code());
+                // Return true in case of network errors to avoid unnecessary refetches
+                return true; 
+            }
+
+            String jsonData = response.body().string();
+            JSONObject jsonObject = new JSONObject(jsonData);
+            
+            if (!jsonObject.has("data")) {
+                Log.e("DataFetch", "Invalid API response format");
+                return true; // Return true to use existing data
+            }
+            
+            JSONArray dataArray = jsonObject.getJSONArray("data");
+            
+            Log.d("DataFetch", "API reports " + dataArray.length() + " stops, database has " + stopNumber);
+            return dataArray.length() == stopNumber;
+        } catch (java.net.UnknownHostException | java.net.SocketTimeoutException | java.net.ConnectException e) {
+            // These are network connectivity issues
+            Log.e("DataFetch", "Network connectivity error: " + e.getMessage());
+            // When offline, trust the database and continue
+            return true;
+        } catch (Exception e) {
+            Log.e("DataFetch", "Error fetching stop data: " + e.getMessage());
+            // For other errors, better to trust the database than to have no data
+            return true;
+        }
+    }
+
+
     public void fetchStopETA(String stopID, String route, String serviceType, String company,
                              Consumer<JSONArray> onSuccess, Consumer<String> onError) {
         Log.d("DataFetch", "Fetching stop ETA information for company: " + company);
@@ -517,7 +608,7 @@ public class DataFetcher {
             return;
         }
 
-        Log.d("fetchStopETA", "Request URL: " + url);
+        Log.d("fetchStopETA", "ETA Request URL for " + company + " " + route + " : " + url);
         Request request = new Request.Builder().url(url).build();
 
         client.newCall(request).enqueue(new Callback() {
@@ -530,6 +621,7 @@ public class DataFetcher {
 
             @Override
             public void onResponse(Call call, Response response) throws IOException {
+                Log.d("DataFetch", "Response: " + response);
                 if (!response.isSuccessful()) {
                     String errMsg = "API error: " + response.code();
                     Log.e("DataFetch", errMsg);
