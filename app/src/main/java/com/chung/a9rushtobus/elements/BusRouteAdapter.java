@@ -42,11 +42,24 @@ public class BusRouteAdapter extends RecyclerView.Adapter<BusRouteAdapter.ViewHo
         holder.tvRouteName.setText(routeNumber);
         holder.tvDestination.setText(String.format("To %s", routeInfo.getDestEn()));
         holder.tvOrigin.setText(routeInfo.getOrigEn());
+        
+        // Debug log for each route being displayed
+        Log.d("BusRouteAdapter", "Displaying route: " + routeNumber + 
+              ", Company: " + routeInfo.getCompany() + 
+              ", Origin: " + routeInfo.getOrigEn() + 
+              ", Destination: " + routeInfo.getDestEn());
 
         if (routeInfo.getCompany().equals("kmb")) {
             holder.tvRouteBusCompany.setText("KMB");
         } else if (routeInfo.getCompany().equals("ctb")) {
             holder.tvRouteBusCompany.setText("CTB");
+        } else if (routeInfo.getCompany().equals("GMB")) {
+            holder.tvRouteBusCompany.setText("GMB");
+        } else if (routeInfo.getCompany().equals("HKI") || 
+                  routeInfo.getCompany().equals("KLN") || 
+                  routeInfo.getCompany().equals("NT")) {
+            // These are GMB regions
+            holder.tvRouteBusCompany.setText("GMB-" + routeInfo.getCompany());
         }
 
 

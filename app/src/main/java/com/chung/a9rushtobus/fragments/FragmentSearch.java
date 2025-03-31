@@ -1,14 +1,18 @@
 package com.chung.a9rushtobus.fragments;
 
 import android.content.Context;
+import java.util.regex.Pattern;
+import java.util.regex.Matcher;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.graphics.Rect;
 import android.os.Bundle;
+
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.Log;
@@ -48,7 +52,7 @@ public class FragmentSearch extends Fragment {
     private EditText searchEditText;
 
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
-                           Bundle savedInstanceState) {
+                             Bundle savedInstanceState) {
         return inflater.inflate(R.layout.fragment_search, container, false);
     }
 
@@ -70,7 +74,7 @@ public class FragmentSearch extends Fragment {
         recyclerView.setAdapter(adapter);
 
         listenerInit();
-        busRoutes.addAll(loadCachedKMBRoutes());
+        busRoutes.addAll(loadCachedRoutes());
         adapter.notifyDataSetChanged();
 //        fetchBusRoutes();
 
@@ -86,7 +90,8 @@ public class FragmentSearch extends Fragment {
     private void listenerInit() {
         searchEditText.addTextChangedListener(new TextWatcher() {
             @Override
-            public void beforeTextChanged(CharSequence s, int start, int count, int after) { }
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+            }
 
             @Override
             public void onTextChanged(CharSequence s, int start, int before, int count) {
@@ -94,12 +99,14 @@ public class FragmentSearch extends Fragment {
             }
 
             @Override
-            public void afterTextChanged(Editable s) { }
+            public void afterTextChanged(Editable s) {
+            }
         });
     }
 
-    private List<BusRoute> loadCachedKMBRoutes(){
+    private List<BusRoute> loadCachedRoutes() {
         List<BusRoute> routes = new ArrayList<>();
+        Log.d("FragmentSearch", "Loading cached routes...");
         try {
             SQLiteDatabase db = databaseHelper.getReadableDatabase();
 
@@ -141,14 +148,14 @@ public class FragmentSearch extends Fragment {
             }
             cursor.close();
 
-            String [] ctbRoutesProjection = {
-                CTBDatabase.Tables.CTB_ROUTES.COLUMN_ROUTE,
-                CTBDatabase.Tables.CTB_ROUTES.COLUMN_ORIGIN_EN,
-                CTBDatabase.Tables.CTB_ROUTES.COLUMN_ORIGIN_TC,
-                CTBDatabase.Tables.CTB_ROUTES.COLUMN_ORIGIN_SC,
-                CTBDatabase.Tables.CTB_ROUTES.COLUMN_DEST_EN,
-                CTBDatabase.Tables.CTB_ROUTES.COLUMN_DEST_TC,
-                CTBDatabase.Tables.CTB_ROUTES.COLUMN_DEST_SC
+            String[] ctbRoutesProjection = {
+                    CTBDatabase.Tables.CTB_ROUTES.COLUMN_ROUTE,
+                    CTBDatabase.Tables.CTB_ROUTES.COLUMN_ORIGIN_EN,
+                    CTBDatabase.Tables.CTB_ROUTES.COLUMN_ORIGIN_TC,
+                    CTBDatabase.Tables.CTB_ROUTES.COLUMN_ORIGIN_SC,
+                    CTBDatabase.Tables.CTB_ROUTES.COLUMN_DEST_EN,
+                    CTBDatabase.Tables.CTB_ROUTES.COLUMN_DEST_TC,
+                    CTBDatabase.Tables.CTB_ROUTES.COLUMN_DEST_SC
             };
 
             Cursor cursor2 = db.query(
@@ -178,68 +185,260 @@ public class FragmentSearch extends Fragment {
                 allRoutes.add(new BusRoute(route, "ctb", "inbound", null, destEn, destTc, destSc, originEn, originTc, originSc));
             }
 
-            Cursor cursor3 = db.rawQuery(GMBDatabase.Queries.QUERY_GET_ALL_ROUTES_INFO, null);
+            // Use rawQuery instead of query to have more control over the SQL
+            Cursor cursor3 = db.rawQuery(
+                "SELECT ri." + GMBDatabase.Tables.GMB_ROUTES_INFO.COLUMN_ROUTE_ID + ", " +
+                "r." + GMBDatabase.Tables.GMB_ROUTES.COLUMN_ROUTE_NUMBER + ", " +
+                "ri." + GMBDatabase.Tables.GMB_ROUTES_INFO.COLUMN_ROUTE_SEQ + ", " +
+                "ri." + GMBDatabase.Tables.GMB_ROUTES_INFO.COLUMN_ROUTE_ORIGIN_EN + ", " +
+                "ri." + GMBDatabase.Tables.GMB_ROUTES_INFO.COLUMN_ROUTE_ORIGIN_TC + ", " +
+                "ri." + GMBDatabase.Tables.GMB_ROUTES_INFO.COLUMN_ROUTE_ORIGIN_SC + ", " +
+                "ri." + GMBDatabase.Tables.GMB_ROUTES_INFO.COLUMN_ROUTE_DEST_EN + ", " +
+                "ri." + GMBDatabase.Tables.GMB_ROUTES_INFO.COLUMN_ROUTE_DEST_TC + ", " +
+                "ri." + GMBDatabase.Tables.GMB_ROUTES_INFO.COLUMN_ROUTE_DEST_SC + ", " +
+                "ri." + GMBDatabase.Tables.GMB_ROUTES_INFO.COLUMN_REMARKS_EN + ", " +
+                "ri." + GMBDatabase.Tables.GMB_ROUTES_INFO.COLUMN_REMARKS_TC + ", " +
+                "ri." + GMBDatabase.Tables.GMB_ROUTES_INFO.COLUMN_REMARKS_SC + ", " +
+                "ri." + GMBDatabase.Tables.GMB_ROUTES_INFO.COLUMN_ROUTE_REGION + " " +
+                "FROM " + GMBDatabase.Tables.GMB_ROUTES_INFO.TABLE_NAME + " ri " +
+                "JOIN " + GMBDatabase.Tables.GMB_ROUTES.TABLE_NAME + " r ON " +
+                "ri." + GMBDatabase.Tables.GMB_ROUTES_INFO.COLUMN_ROUTE_NUMBER + " = " +
+                "r." + GMBDatabase.Tables.GMB_ROUTES.COLUMN_ROUTE_NUMBER + " AND " +
+                "ri." + GMBDatabase.Tables.GMB_ROUTES_INFO.COLUMN_ROUTE_REGION + " = " +
+                "r." + GMBDatabase.Tables.GMB_ROUTES.COLUMN_ROUTE_REGION, 
+                null
+            );
 
             if (cursor3.getCount() > 0) {
-                while (cursor3.moveToNext()) {
-                    String route = cursor3.getString(cursor3.getColumnIndex(GMBDatabase.Tables.GMB_ROUTES.COLUMN_ROUTE_NUMBER));
-                    String originEn = cursor3.getString(cursor3.getColumnIndex(GMBDatabase.Tables.GMB_ROUTES_INFO.COLUMN_ROUTE_ORIGIN_EN));
-                    String destEn = cursor3.getString(cursor3.getColumnIndex(GMBDatabase.Tables.GMB_ROUTES_INFO.COLUMN_ROUTE_DEST_EN));
-                    String remarksEn = cursor3.getString(cursor3.getColumnIndex(GMBDatabase.Tables.GMB_ROUTES_INFO.COLUMN_REMARKS_EN));
-
-                    Log.d("GMB", "route: " + route + " origin: " + originEn + " dest: " + destEn + " remarks: " + remarksEn);
+                Log.d("GMB", "Found " + cursor3.getCount() + " GMB routes");
+                for (int i = 0; i < cursor3.getColumnCount(); i++) {
+                    Log.d("GMB", "Column " + i + ": " + cursor3.getColumnName(i));
                 }
+                while (cursor3.moveToNext()) {
+                    // Get column indices first to avoid repeated lookups
+                    int routeIdIndex = cursor3.getColumnIndex(GMBDatabase.Tables.GMB_ROUTES_INFO.COLUMN_ROUTE_ID);
+                    int routeNumberIndex = cursor3.getColumnIndex(GMBDatabase.Tables.GMB_ROUTES.COLUMN_ROUTE_NUMBER);
+                    int routeSeqIndex = cursor3.getColumnIndex(GMBDatabase.Tables.GMB_ROUTES_INFO.COLUMN_ROUTE_SEQ);
+                    int originEnIndex = cursor3.getColumnIndex(GMBDatabase.Tables.GMB_ROUTES_INFO.COLUMN_ROUTE_ORIGIN_EN);
+                    int originTcIndex = cursor3.getColumnIndex(GMBDatabase.Tables.GMB_ROUTES_INFO.COLUMN_ROUTE_ORIGIN_TC);
+                    int originScIndex = cursor3.getColumnIndex(GMBDatabase.Tables.GMB_ROUTES_INFO.COLUMN_ROUTE_ORIGIN_SC);
+                    int destEnIndex = cursor3.getColumnIndex(GMBDatabase.Tables.GMB_ROUTES_INFO.COLUMN_ROUTE_DEST_EN);
+                    int destTcIndex = cursor3.getColumnIndex(GMBDatabase.Tables.GMB_ROUTES_INFO.COLUMN_ROUTE_DEST_TC);
+                    int destScIndex = cursor3.getColumnIndex(GMBDatabase.Tables.GMB_ROUTES_INFO.COLUMN_ROUTE_DEST_SC);
+                    int remarksEnIndex = cursor3.getColumnIndex(GMBDatabase.Tables.GMB_ROUTES_INFO.COLUMN_REMARKS_EN);
+                    int remarksTcIndex = cursor3.getColumnIndex(GMBDatabase.Tables.GMB_ROUTES_INFO.COLUMN_REMARKS_TC);
+                    int remarksScIndex = cursor3.getColumnIndex(GMBDatabase.Tables.GMB_ROUTES_INFO.COLUMN_REMARKS_SC);
+                    
+                    // Log all column names for debugging
+                    for (int i = 0; i < cursor3.getColumnCount(); i++) {
+                        Log.d("GMB", "Column " + i + ": " + cursor3.getColumnName(i));
+                    }
+                    
+                    // Safely get values, using empty string as fallback if column not found
+                    String routeId = routeIdIndex >= 0? cursor3.getString(routeIdIndex) : "";
+                    String route = routeNumberIndex >= 0 ? cursor3.getString(routeNumberIndex) : "";
+                    String originEn = originEnIndex >= 0 ? cursor3.getString(originEnIndex) : "";
+                    String originTc = originTcIndex >= 0 ? cursor3.getString(originTcIndex) : "";
+                    String originSc = originScIndex >= 0 ? cursor3.getString(originScIndex) : "";
+                    String destEn = destEnIndex >= 0 ? cursor3.getString(destEnIndex) : "";
+                    String destTc = destTcIndex >= 0 ? cursor3.getString(destTcIndex) : "";
+                    String destSc = destScIndex >= 0 ? cursor3.getString(destScIndex) : "";
+                    String remarksEn = remarksEnIndex >= 0 ? cursor3.getString(remarksEnIndex) : "";
+                    String remarksTc = remarksTcIndex >= 0 ? cursor3.getString(remarksTcIndex) : "";
+                    String remarksSc = remarksScIndex >= 0 ? cursor3.getString(remarksScIndex) : "";
+                    
+                    // Get region from the cursor
+                    int regionIndex = cursor3.getColumnIndex(GMBDatabase.Tables.GMB_ROUTES_INFO.COLUMN_ROUTE_REGION);
+                    String region = regionIndex >= 0 ? cursor3.getString(regionIndex) : "";
+                    
+                    // For routeSeq, safely get it from the cursor
+                    String routeSeq = routeSeqIndex >= 0 ? cursor3.getString(routeSeqIndex) : "";
+                    
+                    Log.d("GMB", "route: " + route + " origin: " + originEn + " dest: " + destEn + " remarks: " + remarksEn + " region: " + region + " routeSeq: " + routeSeq);
+
+                    // Correctly create GMB BusRoute objects
+                    BusRoute gmbRoute = new BusRoute(
+                            route, region, routeSeq,
+                            originEn, originTc, originSc,
+                            destEn, destTc, destSc,
+                            remarksEn, remarksTc, remarksSc
+                    );
+
+                    // Add to both collections
+                    routes.add(gmbRoute);
+                    allRoutes.add(gmbRoute);
+                }
+                cursor3.close();
+            } else {
+                Log.d("GMB", "No GMB routes found in database");
             }
 
-            Collections.sort(routes, (route1, route2) -> {
-                String routeStr1 = route1.getRoute();
-                String routeStr2 = route2.getRoute();
-
-                // Regex to capture numeric and alphabetic parts
-                Pattern pattern = Pattern.compile("^([0-9]+)?([A-Za-z]*)$");
-                Matcher matcher1 = pattern.matcher(routeStr1);
-                Matcher matcher2 = pattern.matcher(routeStr2);
-
-                boolean match1 = matcher1.matches();
-                boolean match2 = matcher2.matches();
-
-                if (match1 && match2) {
-                    // Extract numeric parts (default to -1 if missing)
-                    int num1 = matcher1.group(1) != null ? Integer.parseInt(matcher1.group(1)) : -1;
-                    int num2 = matcher2.group(1) != null ? Integer.parseInt(matcher2.group(1)) : -1;
-
-                    // Compare numeric part first
-                    if (num1 != num2) {
-                        return Integer.compare(num1, num2);
+            // Sort routes using a safer comparator that sorts by route number first, then by company
+            try {
+                Comparator<BusRoute> routeComparator = new Comparator<BusRoute>() {
+                    @Override
+                    public int compare(BusRoute route1, BusRoute route2) {
+                        if (route1 == null && route2 == null) {
+                            return 0;
+                        } else if (route1 == null) {
+                            return -1;
+                        } else if (route2 == null) {
+                            return 1;
+                        }
+                        
+                        try {
+                            // First compare by route number
+                            int routeCompare = route1.compareRouteNumber(route2);
+                            
+                            // If route numbers are the same, compare by company as a secondary sort
+                            if (routeCompare == 0) {
+                                String company1 = route1.getCompany() != null ? route1.getCompany() : "";
+                                String company2 = route2.getCompany() != null ? route2.getCompany() : "";
+                                
+                                // If companies are the same, compare by bound/direction
+                                int companyCompare = company1.compareTo(company2);
+                                if (companyCompare == 0) {
+                                    String bound1 = route1.getBound() != null ? route1.getBound() : "";
+                                    String bound2 = route2.getBound() != null ? route2.getBound() : "";
+                                    return bound1.compareTo(bound2);
+                                }
+                                return companyCompare;
+                            }
+                            
+                            return routeCompare;
+                        } catch (Exception e) {
+                            // If comparison fails, fall back to string comparison of routes
+                            String r1 = route1.getRoute() != null ? route1.getRoute() : "";
+                            String r2 = route2.getRoute() != null ? route2.getRoute() : "";
+                            return r1.compareTo(r2);
+                        }
                     }
-
-                    // Extract alphabetic suffixes (default to empty string if missing)
-                    String suffix1 = matcher1.group(2) != null ? matcher1.group(2) : "";
-                    String suffix2 = matcher2.group(2) != null ? matcher2.group(2) : "";
-
-                    // Compare suffixes alphabetically
-                    return suffix1.compareTo(suffix2);
+                };
+                
+                // Sort both collections using the same comparator
+                Collections.sort(routes, routeComparator);
+                Collections.sort(allRoutes, routeComparator);
+                
+                // Log the first few routes to verify sorting
+                int logLimit = Math.min(10, routes.size());
+                Log.d("FragmentSearch", "First " + logLimit + " sorted routes:");
+                for (int i = 0; i < logLimit; i++) {
+                    BusRoute route = routes.get(i);
+                    Log.d("FragmentSearch", i + ": " + route.getRoute() + " (" + route.getCompany() + ")");
                 }
-
-                // If one of them doesn't match the expected format, compare as strings
-                return routeStr1.compareTo(routeStr2);
-            });
-
-
+                
+                // Log the count of each type of route for debugging
+                int kmbCount = 0, ctbCount = 0, gmbCount = 0;
+                for (BusRoute route : routes) {
+                    if (route.getCompany().equals("kmb")) kmbCount++;
+                    else if (route.getCompany().equals("ctb")) ctbCount++;
+                    else if (route.getCompany().equals("GMB")) gmbCount++;
+                }
+                
+                Log.d("FragmentSearch", "Loaded " + routes.size() + " total routes: " +
+                      kmbCount + " KMB, " + ctbCount + " CTB, " + gmbCount + " GMB routes");
+            } catch (Exception e) {
+                Log.e("FragmentSearch", "Error sorting routes", e);
+                // If sorting fails, try a simpler approach
+                sortRoutesByNumberOnly(routes);
+                sortRoutesByNumberOnly(allRoutes);
+            }
         } catch (Exception e) {
+            Log.e("FragmentSearch", "Error loading cached routes", e);
             Toast.makeText(requireContext(),
-                    "Error loading cached news: " + e.getMessage(),
+                    "Error loading cached routes: " + e.getMessage(),
                     Toast.LENGTH_SHORT).show();
         }
 
         return routes;
     }
+        
+    /**
+     * A simpler sorting method that focuses only on route numbers
+     * This is used as a fallback if the main sorting method fails
+     */
+    private void sortRoutesByNumberOnly(List<BusRoute> routes) {
+        try {
+            Collections.sort(routes, new Comparator<BusRoute>() {
+                @Override
+                public int compare(BusRoute r1, BusRoute r2) {
+                    if (r1 == null || r1.getRoute() == null) return -1;
+                    if (r2 == null || r2.getRoute() == null) return 1;
+                    
+                    String route1 = r1.getRoute().trim().toUpperCase();
+                    String route2 = r2.getRoute().trim().toUpperCase();
+                    
+                    // Pattern to match numeric prefix and alphabetic suffix
+                    Pattern pattern = Pattern.compile("^(\\d+)([A-Z]*)");
+                    Matcher matcher1 = pattern.matcher(route1);
+                    Matcher matcher2 = pattern.matcher(route2);
+                    
+                    boolean hasNumericPrefix1 = matcher1.find();
+                    boolean hasNumericPrefix2 = matcher2.find();
+                    
+                    // Case 1: Both have numeric prefixes (most common case)
+                    if (hasNumericPrefix1 && hasNumericPrefix2) {
+                        try {
+                            // Compare the numeric parts first
+                            int num1 = Integer.parseInt(matcher1.group(1));
+                            int num2 = Integer.parseInt(matcher2.group(1));
+                            
+                            if (num1 != num2) {
+                                return Integer.compare(num1, num2);
+                            }
+                            
+                            // If numeric parts are equal, compare the alphabetic suffixes
+                            String suffix1 = matcher1.group(2);
+                            String suffix2 = matcher2.group(2);
+                            
+                            // If one has no suffix and the other does, the one without comes first
+                            if (suffix1.isEmpty() && !suffix2.isEmpty()) {
+                                return -1;
+                            } else if (!suffix1.isEmpty() && suffix2.isEmpty()) {
+                                return 1;
+                            }
+                            
+                            // Both have suffixes, compare them alphabetically
+                            return suffix1.compareTo(suffix2);
+                        } catch (Exception e) {
+                            // If any parsing fails, fall back to string comparison
+                            return route1.compareTo(route2);
+                        }
+                    }
+                    // Case 2: Only the first has a numeric prefix
+                    else if (hasNumericPrefix1) {
+                        return -1; // Numeric prefixes come before non-numeric
+                    }
+                    // Case 3: Only the second has a numeric prefix
+                    else if (hasNumericPrefix2) {
+                        return 1; // Numeric prefixes come before non-numeric
+                    }
+                    // Case 4: Neither has a numeric prefix, compare as strings
+                    else {
+                        return route1.compareTo(route2);
+                    }
+                }
+            });
+            
+            Log.d("FragmentSearch", "Fallback sorting completed successfully");
+        } catch (Exception e) {
+            Log.e("FragmentSearch", "Even fallback sorting failed", e);
+            // At this point, we just leave the list as is
+        }
+    }
 
     private void filterRoutes(String query) {
         List<BusRoute> filteredList = new ArrayList<>();
+        String lowerCaseQuery = query.toLowerCase();
 
         for (BusRoute route : allRoutes) {
-            if (route.getRoute().toLowerCase().contains(query.toLowerCase())) {
+            // Check route number
+            if (route.getRoute().toLowerCase().contains(lowerCaseQuery)) {
+                filteredList.add(route);
+            } 
+            // Also check origin and destination for matching text
+            else if (route.getOrigEn().toLowerCase().contains(lowerCaseQuery) || 
+                     route.getDestEn().toLowerCase().contains(lowerCaseQuery)) {
                 filteredList.add(route);
             }
         }
@@ -247,6 +446,8 @@ public class FragmentSearch extends Fragment {
         busRoutes.clear();
         busRoutes.addAll(filteredList);
         adapter.notifyDataSetChanged();
+        
+        Log.d("FragmentSearch", "Filtered to " + filteredList.size() + " routes for query: " + query);
     }
 
     private boolean hideKeyboardOnOutsideTouch(MotionEvent event) {

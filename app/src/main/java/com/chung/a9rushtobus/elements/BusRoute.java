@@ -1,5 +1,8 @@
 package com.chung.a9rushtobus.elements;
 
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 public class BusRoute {
     private String company;
     private String route;
@@ -20,6 +23,38 @@ public class BusRoute {
         this.company = company;
         this.bound = bound;
         this.serviceType = serviceType;
+        this.origEn = origEn;
+        this.origTc = origTc;
+        this.origSc = origSc;
+        this.destEn = destEn;
+        this.destTc = destTc;
+        this.destSc = destSc;
+    }
+
+    // Constructor for Green mini buses
+    public BusRoute(String route, String region, String routeSeq,
+                   String origEn, String origTc, String origSc,
+                   String destEn, String destTc, String destSc,
+                   String remarksEn, String remarksTc, String remarksSc) {
+        this.route = route;
+        this.company = "GMB";
+        
+        // Convert route_sequence (1: inbound, 2: outbound) to direction bound
+        if (routeSeq != null) {
+            if (routeSeq.equals("1")) {
+                this.bound = "I";  // Inbound
+            } else if (routeSeq.equals("2")) {
+                this.bound = "O";  // Outbound
+            } else {
+                this.bound = routeSeq;  // If it's something else, just use the value
+            }
+        } else {
+            this.bound = "";
+        }
+        
+        // For GMB, we can use the region as service type or combine with remarks if needed
+        this.serviceType = region != null ? region : "";
+        
         this.origEn = origEn;
         this.origTc = origTc;
         this.origSc = origSc;
@@ -67,5 +102,94 @@ public class BusRoute {
 
     public String getDestSc() {
         return destSc;
+    }
+    
+    /**
+     * Compares two route numbers for natural sorting (1, 1A, 1B, 1X, 2, 2A, etc.)
+     * Ignores the company and sorts all routes together in ascending order.
+     * @param other The BusRoute to compare with
+     * @return Negative if this route should come before, positive if after
+     */
+    public int compareRouteNumber(BusRoute other) {
+        if (other == null) {
+            return 1; // null comes before any non-null value
+        }
+        
+        String routeStr1 = this.getRoute();
+        String routeStr2 = other.getRoute();
+        
+        // Handle null route strings
+        if (routeStr1 == null && routeStr2 == null) {
+            return 0;
+        } else if (routeStr1 == null) {
+            return -1;
+        } else if (routeStr2 == null) {
+            return 1;
+        }
+        
+        // Normalize route strings (remove spaces, convert to uppercase)
+        routeStr1 = routeStr1.trim().toUpperCase();
+        routeStr2 = routeStr2.trim().toUpperCase();
+        
+        // Pattern to match numeric prefix and alphabetic suffix
+        // This will handle routes like "1", "1A", "1B", "1X", "2", "2A", etc.
+        Pattern pattern = Pattern.compile("^(\\d+)([A-Z]*)");
+        Matcher matcher1 = pattern.matcher(routeStr1);
+        Matcher matcher2 = pattern.matcher(routeStr2);
+        
+        boolean hasNumericPrefix1 = matcher1.find();
+        boolean hasNumericPrefix2 = matcher2.find();
+        
+        // Case 1: Both have numeric prefixes (most common case)
+        if (hasNumericPrefix1 && hasNumericPrefix2) {
+            // Compare the numeric parts first
+            int num1 = Integer.parseInt(matcher1.group(1));
+            int num2 = Integer.parseInt(matcher2.group(1));
+            
+            if (num1 != num2) {
+                return Integer.compare(num1, num2);
+            }
+            
+            // If numeric parts are equal, compare the alphabetic suffixes
+            String suffix1 = matcher1.group(2);
+            String suffix2 = matcher2.group(2);
+            
+            // If one has no suffix and the other does, the one without comes first
+            if (suffix1.isEmpty() && !suffix2.isEmpty()) {
+                return -1;
+            } else if (!suffix1.isEmpty() && suffix2.isEmpty()) {
+                return 1;
+            }
+            
+            // Both have suffixes, compare them alphabetically
+            return suffix1.compareTo(suffix2);
+        }
+        // Case 2: Only the first has a numeric prefix
+        else if (hasNumericPrefix1) {
+            return -1; // Numeric prefixes come before non-numeric
+        }
+        // Case 3: Only the second has a numeric prefix
+        else if (hasNumericPrefix2) {
+            return 1; // Numeric prefixes come before non-numeric
+        }
+        // Case 4: Neither has a numeric prefix, compare as strings
+        else {
+            return routeStr1.compareTo(routeStr2);
+        }
+    }
+    
+    /**
+     * Helper method to extract leading digits from a string
+     */
+    private String extractLeadingDigits(String str) {
+        StringBuilder digits = new StringBuilder();
+        for (int i = 0; i < str.length(); i++) {
+            if (Character.isDigit(str.charAt(i))) {
+                digits.append(str.charAt(i));
+            } else {
+                break;
+            }
+        }
+        return digits.toString();
     }
 }

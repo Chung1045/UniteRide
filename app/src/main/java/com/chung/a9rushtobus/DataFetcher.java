@@ -88,68 +88,65 @@ public class DataFetcher {
                 final AtomicInteger tasksPending = new AtomicInteger(totalTasks);
                 final AtomicBoolean errorOccurred = new AtomicBoolean(false);
 
-////                 Helper method to check if all tasks have completed
-//                Runnable checkCompletion = () -> {
-//                    if (tasksPending.decrementAndGet() == 0) {
-//                        // All tasks are complete; log and show a toast message on the main thread
-//                        if (errorOccurred.get()) {
-//                            Log.e("DataFetcher", "Data fetch completed with errors");
-//                            mainHandler.post(() -> Toast.makeText(context, "Data fetch completed with errors", Toast.LENGTH_LONG).show());
-//                        } else {
-//                            Log.d("DataFetcher", "All data fetched successfully");
-//                            mainHandler.post(() -> Toast.makeText(context, "All data fetched successfully", Toast.LENGTH_LONG).show());
-//                        }
-//                    }
-//                };
+//                 Helper method to check if all tasks have completed
+                Runnable checkCompletion = () -> {
+                    if (tasksPending.decrementAndGet() == 0) {
+                        // All tasks are complete; log and show a toast message on the main thread
+                        if (errorOccurred.get()) {
+                            Log.e("DataFetcher", "Data fetch completed with errors");
+                            mainHandler.post(() -> Toast.makeText(context, "Data fetch completed with errors", Toast.LENGTH_LONG).show());
+                        } else {
+                            Log.d("DataFetcher", "All data fetched successfully");
+                            mainHandler.post(() -> Toast.makeText(context, "All data fetched successfully", Toast.LENGTH_LONG).show());
+                        }
+                    }
+                };
 
-                // Fetch all bus routes
-//                fetchAllBusRoutes(
-//                        routes -> {
-//                            Log.d("DataFetcher", "All bus routes fetched successfully");
-////                            checkCompletion.run();
-//                        },
-//                        error -> {
-//                            if (!errorOccurred.get()) {
-//                                errorOccurred.set(true);
-//                                Log.e("DataFetcher", "Error fetching bus routes: " + error);
-//                                handleDataFetchFailure();
-//                            }
-////                            checkCompletion.run();
-//                        }
-//                );
+                fetchAllBusRoutes(
+                        routes -> {
+                            Log.d("DataFetcher", "All bus routes fetched successfully");
+                            checkCompletion.run();
+                        },
+                        error -> {
+                            if (!errorOccurred.get()) {
+                                errorOccurred.set(true);
+                                Log.e("DataFetcher", "Error fetching bus routes: " + error);
+                                handleDataFetchFailure();
+                            }
+                            checkCompletion.run();
+                        }
+                );
 
+                fetchAllKMBRouteStop(
+                        message -> {
+                            Log.d("DataFetcher", "All KMB route-stop fetched successfully, now processing");
+                            checkCompletion.run();
+                        },
+                        error -> {
+                            if (!errorOccurred.get()) {
+                                errorOccurred.set(true);
+                                Log.e("DataFetcher", "Error fetching KMB route-stop: " + error);
+                                handleDataFetchFailure();
+                            }
+                            checkCompletion.run();
+                        }
+                );
 
-                // Fetch all KMB route-stop data
-//                fetchAllKMBRouteStop(
-//                        message -> {
-//                            Log.d("DataFetcher", "All KMB route-stop fetched successfully, now processing");
-////                            checkCompletion.run();
-//                        },
-//                        error -> {
-//                            if (!errorOccurred.get()) {
-//                                errorOccurred.set(true);
-//                                Log.e("DataFetcher", "Error fetching KMB route-stop: " + error);
-//                                handleDataFetchFailure();
-//                            }
-////                            checkCompletion.run();
-//                        }
-//                );
-
-                // Fetch all CTB routes (which internally triggers fetching of CTB route stops and stops)
-//                fetchAllCTBRoutes(
-//                        message -> {
-//                            Log.d("DataFetcher", "All CTB routes fetched successfully");
-////                            checkCompletion.run();
-//                        },
-//                        error -> {
-//                            if (!errorOccurred.get()) {
-//                                errorOccurred.set(true);
-//                                Log.e("DataFetcher", "Error fetching CTB routes: " + error);
-//                                // Optionally, you could call handleDataFetchFailure() here as well
-//                            }
-////                            checkCompletion.run();
-//                        }
-//                );
+//                 Fetch all CTB routes (which internally triggers fetching of CTB route stops and stops)
+                fetchAllCTBRoutes(
+                        message -> {
+                            Log.d("DataFetcher", "All CTB routes fetched successfully");
+                            checkCompletion.run();
+                        },
+                        error -> {
+                            if (!errorOccurred.get()) {
+                                errorOccurred.set(true);
+                                Log.e("DataFetcher", "Error fetching CTB routes: " + error);
+                                // Optionally, you could call handleDataFetchFailure() here as well
+                            }
+                            checkCompletion.run();
+                        }
+                );
 
                 fetchAllGMBRoutes();
 
