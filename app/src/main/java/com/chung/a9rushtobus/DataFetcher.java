@@ -53,6 +53,7 @@ import okhttp3.ResponseBody;
 public class DataFetcher {
     private static final String KMB_BASE_URL = "https://data.etabus.gov.hk/v1/transport/kmb/";
     private static final String CTB_BASE_URL = "https://rt.data.gov.hk/v2/transport/citybus/";
+    private static final String GMB_BASE_URL = "https://data.etagmb.gov.hk/";
     private static final String TRAFFIC_NEWS_URL = "https://programme.rthk.hk/channel/radio/trafficnews/index.php";
     private final ExecutorService executorService = Executors.newFixedThreadPool(4);
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
@@ -102,68 +103,55 @@ public class DataFetcher {
 //                };
 
                 // Fetch all bus routes
-                fetchAllBusRoutes(
-                        routes -> {
-                            Log.d("DataFetcher", "All bus routes fetched successfully");
-//                            checkCompletion.run();
-                        },
-                        error -> {
-                            if (!errorOccurred.get()) {
-                                errorOccurred.set(true);
-                                Log.e("DataFetcher", "Error fetching bus routes: " + error);
-                                handleDataFetchFailure();
-                            }
-//                            checkCompletion.run();
-                        }
-                );
-
-//                // Fetch all KMB bus stops
-//                fetchAllKMBBusStop(
-//                        message -> {
-//                            Log.d("DataFetcher", "All KMB bus stops fetched successfully, now processing");
-//                            checkCompletion.run();
+//                fetchAllBusRoutes(
+//                        routes -> {
+//                            Log.d("DataFetcher", "All bus routes fetched successfully");
+////                            checkCompletion.run();
 //                        },
 //                        error -> {
 //                            if (!errorOccurred.get()) {
 //                                errorOccurred.set(true);
-//                                Log.e("DataFetcher", "Error fetching KMB bus stops: " + error);
+//                                Log.e("DataFetcher", "Error fetching bus routes: " + error);
 //                                handleDataFetchFailure();
 //                            }
-//                            checkCompletion.run();
+////                            checkCompletion.run();
 //                        }
 //                );
 
+
                 // Fetch all KMB route-stop data
-                fetchAllKMBRouteStop(
-                        message -> {
-                            Log.d("DataFetcher", "All KMB route-stop fetched successfully, now processing");
-//                            checkCompletion.run();
-                        },
-                        error -> {
-                            if (!errorOccurred.get()) {
-                                errorOccurred.set(true);
-                                Log.e("DataFetcher", "Error fetching KMB route-stop: " + error);
-                                handleDataFetchFailure();
-                            }
-//                            checkCompletion.run();
-                        }
-                );
+//                fetchAllKMBRouteStop(
+//                        message -> {
+//                            Log.d("DataFetcher", "All KMB route-stop fetched successfully, now processing");
+////                            checkCompletion.run();
+//                        },
+//                        error -> {
+//                            if (!errorOccurred.get()) {
+//                                errorOccurred.set(true);
+//                                Log.e("DataFetcher", "Error fetching KMB route-stop: " + error);
+//                                handleDataFetchFailure();
+//                            }
+////                            checkCompletion.run();
+//                        }
+//                );
 
                 // Fetch all CTB routes (which internally triggers fetching of CTB route stops and stops)
-                fetchAllCTBRoutes(
-                        message -> {
-                            Log.d("DataFetcher", "All CTB routes fetched successfully");
-//                            checkCompletion.run();
-                        },
-                        error -> {
-                            if (!errorOccurred.get()) {
-                                errorOccurred.set(true);
-                                Log.e("DataFetcher", "Error fetching CTB routes: " + error);
-                                // Optionally, you could call handleDataFetchFailure() here as well
-                            }
-//                            checkCompletion.run();
-                        }
-                );
+//                fetchAllCTBRoutes(
+//                        message -> {
+//                            Log.d("DataFetcher", "All CTB routes fetched successfully");
+////                            checkCompletion.run();
+//                        },
+//                        error -> {
+//                            if (!errorOccurred.get()) {
+//                                errorOccurred.set(true);
+//                                Log.e("DataFetcher", "Error fetching CTB routes: " + error);
+//                                // Optionally, you could call handleDataFetchFailure() here as well
+//                            }
+////                            checkCompletion.run();
+//                        }
+//                );
+
+                fetchAllGMBRoutes();
 
             } else {
                 Log.e("DataFetcher", "Database backup failed");
@@ -214,62 +202,6 @@ public class DataFetcher {
             }
         });
     }
-
-//    public void fetchAllKMBBusStop(Consumer<String> onSuccess, Consumer<String> onError) {
-//        Request request = new Request.Builder()
-//                .url(KMB_BASE_URL + "stop")
-//                .header("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.36")
-//                .build();
-//
-//        client.newCall(request).enqueue(new Callback() {
-//            @Override
-//            public void onFailure(Call call, IOException e) {
-//                Log.e("FetchLog", "Error Fetching all kmb bus stops: " + e.getMessage());
-//                Log.d("DataFetcher", "Error Fetching all kmb bus stops: " + e.getMessage());
-//                onError.accept("Failed to fetch data: " + e.getMessage());
-//                return;
-//            }
-//
-//            @Override
-//            public void onResponse(Call call, Response response) {
-//                Log.e("FetchLog", "All KMB Stop Response: " + response);
-//                if (!response.isSuccessful()) {
-//                    mainHandler.post(() -> Log.e("DataFetchehKMB", "Error Fetching all kmb bus stops: " + response.code()));
-//                    Log.e("FetchLog", "Response is un-successful");
-//                    onError.accept("Error: " + response.code());
-//                    return;
-//                }
-//
-//                executorService.execute(() -> {
-//                    try {
-//                        String jsonData = response.body().string();
-//                        processAllKMBBusStop(jsonData);
-//                        onSuccess.accept("All kmb bus stops fetched successfully, now processing");
-//                    } catch (Exception e) {
-//                        Log.e("DataFetch", "Error Fetching all kmb bus stops: " + e.getMessage());
-//                        Log.e("DataFetchKMB", "Error Fetching all kmb bus stops: " + e.getMessage());
-//                        onError.accept("Error processing data: " + e.getMessage());
-//                    }
-//                });
-//            }
-//        });
-//    }
-//
-//    public void processAllKMBBusStop(String JSONData) {
-//        try {
-//            JSONObject jsonObject = new JSONObject(JSONData);
-//            JSONArray stopsArray = jsonObject.getJSONArray("data");
-//
-//            for (int i = 0; i < stopsArray.length(); i++) {
-//                JSONObject stop = stopsArray.getJSONObject(i);
-//                Log.d("DataFetchKMBSTOP", "Adding stop: " + stop.getString("stop"));
-//                databaseHelper.kmbDatabase.updateKMBStop(stop.getString("stop"), stop.getString("name_en"), stop.getString("name_tc"), stop.getString("name_sc"), stop.getString("lat"), stop.getString("long"));
-//            }
-//
-//        } catch (Exception e) {
-//            Log.e("DataFetchKMBSTOP", "Error: Unable to parse and save stop info to database:  " + e.getMessage());
-//        }
-//    }
 
     public void fetchCTBStop(String stopID, Consumer<String> onSuccess, Consumer<String> onError) {
         String url = CTB_BASE_URL + "stop/" + stopID ;
@@ -688,6 +620,137 @@ public class DataFetcher {
 
         return routes;
     }
+
+    public void fetchAllGMBRoutes() {
+        Log.d("DataFetch", "Attempt to fetch all GMB routes");
+        String url = GMB_BASE_URL + "route/";
+        Request request = new Request.Builder().url(url).build();
+
+        client.newCall(request).enqueue(new Callback() {
+            @Override
+            public void onFailure(Call call, IOException e) {
+                Log.e("FetchLog", "Error Fetching All GMB Route: " + e.getMessage());
+                Log.d("DataFetcher", "Error Fetching All GMB Route: " + e.getMessage());
+            }
+
+            @Override
+            public void onResponse(Call call, Response response) {
+                Log.e("FetchLog", "All GMB Route Fetch Response: " + response);
+                if (!response.isSuccessful()) {
+                    mainHandler.post(() -> Log.e("DataFetchGMB", "Error Fetching All GMB Route: " + response.code()));
+                    Log.e("FetchLog", "Response is un-successful");
+                    response.close();
+                    return;
+                }
+
+                executorService.execute(() -> {
+                    try {
+                        String jsonData = response.body().string();
+                        Log.d("DataFetchGMB", "Data for all GMB routes: " + jsonData);
+                        processAllGMBRoutes(jsonData);
+                        response.close();
+                    } catch (Exception e) {
+                        Log.e("DataFetch", "Error Fetching All GMB Route: " + e.getMessage());
+                        Log.e("DataFetchGMB", "Error Fetching All GMB Route: " + e.getMessage());
+                        response.close();
+                    }
+                });
+            }
+        });
+    }
+
+    public void processAllGMBRoutes(String jsonData) throws JSONException {
+        Log.d("DataFetchGMB", "Processing GMB route data");
+        JSONObject jsonObject = new JSONObject(jsonData);
+        JSONObject data = jsonObject.getJSONObject("data");
+        JSONObject routes = data.getJSONObject("routes");
+
+        databaseHelper.gmbDatabase.updateRoutes(routes, (routeNumber, routeRegion) -> {
+            Log.d("DataFetchGMB", "GMB route data updated successfully, now fetching detail information for the route");
+            fetchGMBRouteInfo(routeNumber, routeRegion);
+        }, onError -> Log.e("DataFetchGMB", "Error processing GMB route data: " + onError));
+    }
+
+    public void fetchGMBRouteInfo(String route, String region) {
+        Log.d("DataFetch", "Attempt to fetch Route " + route + " in " + region);
+        String url = GMB_BASE_URL + "route/" + region + "/" + route;
+        Request request = new Request.Builder().url(url).build();
+
+        client.newCall(request).enqueue(new Callback() {
+            @Override
+            public void onFailure(Call call, IOException e) {
+                Log.e("FetchLog", "Error Fetching GMB Route Info: " + e.getMessage());
+                Log.d("DataFetcher", "Error Fetching GMB Route Info: " + e.getMessage());
+            }
+
+            @Override
+            public void onResponse(Call call, Response response) {
+                Log.e("FetchLog", "GMB Route Info Fetch Response: " + response);
+                if (!response.isSuccessful()) {
+                    mainHandler.post(() -> Log.e("DataFetchGMB", "Error Fetching GMB Route Info: " + response.code()));
+                    Log.e("FetchLog", "Response is un-successful");
+                    response.close();
+                    return;
+                }
+
+                executorService.execute(() -> {
+                    try {
+                        String jsonData = response.body().string();
+                        Log.d("DataFetchGMB", "Data for GMB Route Info: " + jsonData);
+                        databaseHelper.gmbDatabase.updateRouteInfo(jsonData, (routeID, routeSeq) -> {
+                            response.close();
+                            Log.d("DataFetchGMB", "GMB route info updated successfully, now fetching stops for the route");
+                            fetchGMBRouteStops(routeID, routeSeq);
+                        });
+
+                    } catch (Exception e) {
+                        Log.e("DataFetch", "Error Fetching GMB Route Info: " + e.getMessage());
+                        Log.e("DataFetchGMB", "Error Fetching GMB Route Info: " + e.getMessage());
+                        response.close();
+                    }
+                });
+            }
+        });
+    }
+
+    public void fetchGMBRouteStops(Integer routeID, Integer routeSeq) {
+        String url = GMB_BASE_URL + "route-stop/" + routeID + "/" + routeSeq;
+        Request request = new Request.Builder().url(url).build();
+
+        client.newCall(request).enqueue(new Callback() {
+            @Override
+            public void onFailure(Call call, IOException e) {
+                Log.e("FetchLog", "Error Fetching GMB Route Stop Info: " + e.getMessage());
+                Log.d("DataFetcher", "Error Fetching GMB Route Stop Info: " + e.getMessage());
+            }
+
+            @Override
+            public void onResponse(Call call, Response response) {
+                Log.e("FetchLog", "GMB Route Info Fetch Response: " + response);
+                if (!response.isSuccessful()) {
+                    mainHandler.post(() -> Log.e("DataFetchGMB", "Error Fetching GMB Route Stop Info: " + response.code()));
+                    Log.e("FetchLog", "Response is un-successful");
+                    response.close();
+                    return;
+                }
+
+                executorService.execute(() -> {
+                    try {
+                        String jsonData = response.body().string();
+                        Log.d("DataFetchGMB", "Data for GMB Route Stop Info: " + jsonData);
+                        databaseHelper.gmbDatabase.updateRouteStops(jsonData);
+                    } catch (Exception e) {
+                        Log.e("DataFetch", "Error Fetching GMB Route Stop Info: " + e.getMessage());
+                        Log.e("DataFetchGMB", "Error Fetching GMB Route Stop Info: " + e.getMessage());
+                        response.close();
+                    }
+                });
+            }
+        });
+
+
+    }
+
 
     public Future<List<RTHKTrafficEntry>> fetchTrafficNews() {
         return executorService.submit(() -> {

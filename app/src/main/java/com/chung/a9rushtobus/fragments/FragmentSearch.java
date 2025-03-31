@@ -11,6 +11,7 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import android.text.Editable;
 import android.text.TextWatcher;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
@@ -24,6 +25,7 @@ import com.chung.a9rushtobus.DataFetcher;
 import com.chung.a9rushtobus.database.CTBDatabase;
 import com.chung.a9rushtobus.database.DatabaseHelper;
 import com.chung.a9rushtobus.R;
+import com.chung.a9rushtobus.database.GMBDatabase;
 import com.chung.a9rushtobus.database.KMBDatabase;
 import com.chung.a9rushtobus.elements.BusRoute;
 import com.chung.a9rushtobus.elements.BusRouteAdapter;
@@ -174,6 +176,19 @@ public class FragmentSearch extends Fragment {
                 // Flipped for inbound directions
                 routes.add(new BusRoute(route, "ctb", "inbound", null, destEn, destTc, destSc, originEn, originTc, originSc));
                 allRoutes.add(new BusRoute(route, "ctb", "inbound", null, destEn, destTc, destSc, originEn, originTc, originSc));
+            }
+
+            Cursor cursor3 = db.rawQuery(GMBDatabase.Queries.QUERY_GET_ALL_ROUTES_INFO, null);
+
+            if (cursor3.getCount() > 0) {
+                while (cursor3.moveToNext()) {
+                    String route = cursor3.getString(cursor3.getColumnIndex(GMBDatabase.Tables.GMB_ROUTES.COLUMN_ROUTE_NUMBER));
+                    String originEn = cursor3.getString(cursor3.getColumnIndex(GMBDatabase.Tables.GMB_ROUTES_INFO.COLUMN_ROUTE_ORIGIN_EN));
+                    String destEn = cursor3.getString(cursor3.getColumnIndex(GMBDatabase.Tables.GMB_ROUTES_INFO.COLUMN_ROUTE_DEST_EN));
+                    String remarksEn = cursor3.getString(cursor3.getColumnIndex(GMBDatabase.Tables.GMB_ROUTES_INFO.COLUMN_REMARKS_EN));
+
+                    Log.d("GMB", "route: " + route + " origin: " + originEn + " dest: " + destEn + " remarks: " + remarksEn);
+                }
             }
 
             Collections.sort(routes, (route1, route2) -> {

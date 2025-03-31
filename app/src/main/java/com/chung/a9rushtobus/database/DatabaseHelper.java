@@ -13,6 +13,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     public static final String DATABASE_NAME = "MyAppDatabase.db";
     public KMBDatabase kmbDatabase = new KMBDatabase(this);
     public CTBDatabase ctbDatabase = new CTBDatabase(this);
+    public GMBDatabase gmbDatabase = new GMBDatabase(this);
 
     // Table creation constants
 
@@ -47,8 +48,6 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 
     public void removeAllValues() {
         SQLiteDatabase db = this.getWritableDatabase();
-        Log.d("DatabaseHelper", "Attempting to remove all values");
-        db.execSQL("DELETE FROM " + KMBDatabase.Tables.KMB_STOPS.TABLE_NAME);
         Log.d("DatabaseHelper", "Attempting to remove all values 1");
         db.execSQL("DELETE FROM " + KMBDatabase.Tables.KMB_ROUTES.TABLE_NAME);
         Log.d("DatabaseHelper", "Attempting to remove all values 2");
@@ -57,6 +56,10 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         db.execSQL("DELETE FROM " + CTBDatabase.Tables.CTB_ROUTES.TABLE_NAME);
         Log.d("DatabaseHelper", "Attempting to remove all values 4");
         db.execSQL("DELETE FROM " + CTBDatabase.Tables.CTB_ROUTE_STOPS.TABLE_NAME);
+        Log.d("DatabaseHelper", "Attempting to remove all values 5");
+        db.execSQL("DELETE FROM " + GMBDatabase.Tables.GMB_ROUTES.TABLE_NAME);
+        Log.d("DatabaseHelper", "Attempting to remove all values 6");
+        db.execSQL("DELETE FROM " + GMBDatabase.Tables.GMB_ROUTES_INFO.TABLE_NAME);
         Log.d("DatabaseHelper", "All values removed");
     }
 
@@ -97,6 +100,8 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         db.execSQL(CTBDatabase.SQL_CREATE_CTB_ROUTES_TABLE);
         db.execSQL(CTBDatabase.SQL_CREATE_CTB_ROUTE_STOPS_TABLE);
         db.execSQL(CTBDatabase.SQL_CREATE_CTB_STOPS_TABLE);
+        db.execSQL(GMBDatabase.SQL_CREATE_GMB_ROUTES_TABLES);
+        db.execSQL(GMBDatabase.SQL_CREATE_GMB_ROUTES_INFO_TABLE);
         db.execSQL(SQL_CREATE_RTHK_NEWS_TABLE);
     }
 
@@ -110,6 +115,8 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         db.execSQL(CTBDatabase.SQL_DELETE_CTB_ROUTES_TABLE);
         db.execSQL(CTBDatabase.SQL_DELETE_CTB_ROUTE_STOPS_TABLE);
         db.execSQL(CTBDatabase.SQL_DELETE_CTB_STOPS_TABLE);
+        db.execSQL(GMBDatabase.SQL_DELETE_GMB_ROUTES_TABLES);
+        db.execSQL(GMBDatabase.SQL_DELETE_GMB_ROUTES_INFO_TABLE);
         db.execSQL(SQL_DELETE_RTHK_NEWS_TABLE);
 
         // Recreate tables
