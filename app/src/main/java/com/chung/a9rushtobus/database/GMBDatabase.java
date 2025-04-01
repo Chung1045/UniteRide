@@ -47,9 +47,6 @@ public class GMBDatabase {
     public static final String SQL_CREATE_GMB_ROUTE_STOPS_TABLE =
             "CREATE TABLE IF NOT EXISTS " + Tables.GMB_ROUTE_STOPS.TABLE_NAME + " (" +
                     Tables.GMB_ROUTE_STOPS.COLUMN_ROUTE_ID + " INTEGER NOT NULL, " +
-                    Tables.GMB_ROUTE_STOPS.COLUMN_ROUTE_NUMBER + " TEXT NOT NULL, " +
-                    Tables.GMB_ROUTE_STOPS.COLUMN_ROUTE_REGION + " TEXT NOT NULL CHECK (" +
-                    Tables.GMB_ROUTE_STOPS.COLUMN_ROUTE_REGION + " IN ('HKI', 'KLN', 'NT')), " +
                     Tables.GMB_ROUTE_STOPS.COLUMN_ROUTE_SEQ + " INTEGER NOT NULL, " +
                     Tables.GMB_ROUTE_STOPS.COLUMN_STOP_ID + " INTEGER NOT NULL, " +
                     Tables.GMB_ROUTE_STOPS.STOP_NAME_EN + " TEXT, " +
@@ -65,7 +62,7 @@ public class GMBDatabase {
                     Tables.GMB_STOP_LOCATIONS.COLUMN_STOP_ID + " INTEGER NOT NULL, " +
                     Tables.GMB_STOP_LOCATIONS.COLUMN_LATITUDE + " TEXT NOT NULL, " +
                     Tables.GMB_STOP_LOCATIONS.COLUMN_LONGITUDE + " TEXT NOT NULL, " +
-                    "PRIMARY KEY (" + Tables.GMB_STOP_LOCATIONS.COLUMN_STOP_ID + ")";
+                    "PRIMARY KEY (" + Tables.GMB_STOP_LOCATIONS.COLUMN_STOP_ID + "))";
 
 
     public static String SQL_DELETE_GMB_ROUTES_TABLES = "DROP TABLE IF EXISTS " + Tables.GMB_ROUTES.TABLE_NAME;
@@ -109,8 +106,6 @@ public class GMBDatabase {
         public static class GMB_ROUTE_STOPS implements android.provider.BaseColumns {
             public static final String TABLE_NAME = "gmb_route_stops";
             public static final String COLUMN_ROUTE_ID = "route_id";
-            public static final String COLUMN_ROUTE_NUMBER = "route_number";
-            public static final String COLUMN_ROUTE_REGION = "route_region";
             public static final String COLUMN_ROUTE_SEQ = "route_sequence";
             public static final String COLUMN_STOP_ID = "stop_id";
             public static final String STOP_NAME_EN = "stop_name_en";
@@ -166,15 +161,21 @@ public class GMBDatabase {
                         "r." + Tables.GMB_ROUTES.COLUMN_ROUTE_REGION;
 
         public static final String QUERY_STOPS_BY_ROUTE_ID =
-                "SELECT " + Tables.GMB_ROUTE_STOPS.COLUMN_ROUTE_ID + ", " +
-                        Tables.GMB_ROUTE_STOPS.COLUMN_ROUTE_SEQ + ", " +
-                        Tables.GMB_ROUTE_STOPS.STOP_NAME_EN + ", " +
-                        Tables.GMB_ROUTE_STOPS.STOP_NAME_TC + ", " +
-                        Tables.GMB_ROUTE_STOPS.STOP_NAME_SC + " " +
-                        "FROM " + Tables.GMB_ROUTE_STOPS.TABLE_NAME + " " +
-                        "WHERE " + Tables.GMB_ROUTE_STOPS.COLUMN_ROUTE_ID + " =? " +
-                        Tables.GMB_ROUTE_STOPS.COLUMN_ROUTE_SEQ + " =? " +
-                        "ORDER BY " + Tables.GMB_ROUTE_STOPS.COLUMN_STOP_SEQ;
+                "SELECT rs." + Tables.GMB_ROUTE_STOPS.COLUMN_ROUTE_ID + ", " +
+                        "rs." + Tables.GMB_ROUTE_STOPS.COLUMN_ROUTE_SEQ + ", " +
+                        "rs." + Tables.GMB_ROUTE_STOPS.COLUMN_STOP_ID + ", " +
+                        "rs." + Tables.GMB_ROUTE_STOPS.STOP_NAME_EN + ", " +
+                        "rs." + Tables.GMB_ROUTE_STOPS.STOP_NAME_TC + ", " +
+                        "rs." + Tables.GMB_ROUTE_STOPS.STOP_NAME_SC + ", " +
+                        "rs." + Tables.GMB_ROUTE_STOPS.COLUMN_STOP_SEQ + ", " +
+                        "sl." + Tables.GMB_STOP_LOCATIONS.COLUMN_LATITUDE + ", " +
+                        "sl." + Tables.GMB_STOP_LOCATIONS.COLUMN_LONGITUDE + " " +
+                        "FROM " + Tables.GMB_ROUTE_STOPS.TABLE_NAME + " rs " +
+                        "LEFT JOIN " + Tables.GMB_STOP_LOCATIONS.TABLE_NAME + " sl " +
+                        "ON rs." + Tables.GMB_ROUTE_STOPS.COLUMN_STOP_ID + " = sl." + Tables.GMB_STOP_LOCATIONS.COLUMN_STOP_ID + " " +
+                        "WHERE rs." + Tables.GMB_ROUTE_STOPS.COLUMN_ROUTE_ID + " =? " +
+                        "AND rs." + Tables.GMB_ROUTE_STOPS.COLUMN_ROUTE_SEQ + " =? " +
+                        "ORDER BY rs." + Tables.GMB_ROUTE_STOPS.COLUMN_STOP_SEQ;
     }
 
     public void updateRoutes(JSONObject routesJson, BiConsumer<String, String> onSuccess, Consumer<String> onError) {
@@ -219,6 +220,7 @@ public class GMBDatabase {
         // Convert jsonData (String) into a JSONObject
         JSONObject jsonObject = new JSONObject(jsonData);
         JSONArray dataArray = jsonObject.getJSONArray("data");
+        Log.d("GMBDatabase", "RouteInfo dataArray: " + dataArray);
 
         // Loop through all routes
         for (int i = 0; i < dataArray.length(); i++) {
@@ -312,12 +314,14 @@ public class GMBDatabase {
         }
     }
 
-    public void updateRouteStops(String jsonData) throws JSONException {
+    public void updateRouteStops(String jsonData, Integer routeID, Integer routeSeq) throws JSONException {
         Log.d("GMBDatabase", "updateRouteStops");
 
         // Convert jsonData (String) into a JSONObject
         JSONObject jsonObject = new JSONObject(jsonData);
         JSONObject data = jsonObject.getJSONObject("data"); // Get "data" object
+        Log.d("GMBDatabase", "data: " + data);
+        
         JSONArray routeStops = data.getJSONArray("route_stops"); // Get "route_stops" array
 
         for (int i = 0; i < routeStops.length(); i++) {
@@ -329,8 +333,33 @@ public class GMBDatabase {
             String nameSc = stop.getString("name_sc");
             String nameEn = stop.getString("name_en");
 
-            // Log or process the stop data
-            Log.d("GMBDatabase", "Stop " + stopSeq + ": " + nameEn + " (ID: " + stopId + ")");
+            Log.d("GMBDatabase", "Saving stop " + stopSeq + ": " + nameEn + " (ID: " + stopId + ")");
+            
+            // Save the stop data to the database
+            ContentValues values = new ContentValues();
+            values.put(Tables.GMB_ROUTE_STOPS.COLUMN_ROUTE_ID, routeID);
+            values.put(Tables.GMB_ROUTE_STOPS.COLUMN_ROUTE_SEQ, routeSeq);
+            values.put(Tables.GMB_ROUTE_STOPS.COLUMN_STOP_ID, stopId);
+            values.put(Tables.GMB_ROUTE_STOPS.STOP_NAME_EN, nameEn);
+            values.put(Tables.GMB_ROUTE_STOPS.STOP_NAME_TC, nameTc);
+            values.put(Tables.GMB_ROUTE_STOPS.STOP_NAME_SC, nameSc);
+            values.put(Tables.GMB_ROUTE_STOPS.COLUMN_STOP_SEQ, stopSeq);
+            
+            try {
+                db.beginTransaction();
+                db.insertWithOnConflict(
+                    Tables.GMB_ROUTE_STOPS.TABLE_NAME,
+                    null,
+                    values,
+                    SQLiteDatabase.CONFLICT_REPLACE
+                );
+                db.setTransactionSuccessful();
+                Log.d("GMBDatabase", "Successfully saved stop " + stopId);
+            } catch (Exception e) {
+                Log.e("GMBDatabase", "Error inserting stop data for stop " + stopId, e);
+            } finally {
+                db.endTransaction();
+            }
         }
     }
 
@@ -339,23 +368,30 @@ public class GMBDatabase {
 
         JSONObject jsonObject = new JSONObject(jsonData);
         JSONObject data = jsonObject.getJSONObject("data");
-        JSONObject loaction = data.getJSONObject("coordinates");
-
-        JSONObject coordinates = loaction.getJSONObject("wgs84");
+        
+        // Get the stop ID
+        int stopId = data.getInt("stop_id");
+        
+        JSONObject location = data.getJSONObject("coordinates");
+        JSONObject coordinates = location.getJSONObject("wgs84");
 
         String lat = coordinates.getString("latitude");
         String lng = coordinates.getString("longitude");
 
+        Log.d("GMBDatabase", "Adding location for stop " + stopId + ": lat=" + lat + ", lng=" + lng);
+
         ContentValues values = new ContentValues();
+        values.put(Tables.GMB_STOP_LOCATIONS.COLUMN_STOP_ID, stopId);
         values.put(Tables.GMB_STOP_LOCATIONS.COLUMN_LATITUDE, lat);
         values.put(Tables.GMB_STOP_LOCATIONS.COLUMN_LONGITUDE, lng);
 
         try {
             db.beginTransaction();
-            db.insertWithOnConflict(Tables.GMB_STOP_LOCATIONS.TABLE_NAME, null, values, SQLiteDatabase.CONFLICT_IGNORE);
+            db.insertWithOnConflict(Tables.GMB_STOP_LOCATIONS.TABLE_NAME, null, values, SQLiteDatabase.CONFLICT_REPLACE);
             db.setTransactionSuccessful();
+            Log.d("GMBDatabase", "Successfully saved location for stop " + stopId);
         } catch (Exception e) {
-            Log.e("GMBDatabase", "Error inserting stop locations", e);
+            Log.e("GMBDatabase", "Error inserting stop location for stop " + stopId, e);
         } finally {
             db.endTransaction();
         }

@@ -59,12 +59,12 @@ public class BusRouteAdapter extends RecyclerView.Adapter<BusRouteAdapter.ViewHo
             holder.tvRouteBusCompany.setText("GMB");
             holder.tvRouteBusCompany.setText("GMB-" + routeInfo.getGmbRouteRegion());
             Log.d("BusRouteAdapter", "GMB Route Description: " + routeInfo.getDescriptionEn());
-            if (!routeInfo.getDescriptionEn().equals("Normal Route") || !routeInfo.getDescriptionEn().equals("Normal Departure")) {
+            if (routeInfo.getDescriptionEn().equals("Normal Route") || routeInfo.getDescriptionEn().equals("Normal Departure")) {
                 // TODO: Add multi language support
+                holder.tvRouteRemarks.setVisibility(View.GONE);
+            } else {
                 holder.tvRouteRemarks.setVisibility(View.VISIBLE);
                 holder.tvRouteRemarks.setText(routeInfo.getDescriptionEn());
-            } else {
-                holder.tvRouteRemarks.setVisibility(View.GONE);
             }
 
         }
@@ -130,10 +130,15 @@ public class BusRouteAdapter extends RecyclerView.Adapter<BusRouteAdapter.ViewHo
                 intent.putExtra("bound", routeInfo.getBound());
                 intent.putExtra("serviceType", routeInfo.getServiceType());
                 intent.putExtra("company", routeInfo.getCompany());
+                intent.putExtra("description", routeInfo.getDescriptionEn());
 
-                if (routeInfo.getCompany().equals("gmb")) {
+                if (routeInfo.getCompany().equals("GMB")) {
                     intent.putExtra("gmbRouteID", routeInfo.getGmbRouteID());
                     intent.putExtra("gmbRouteSeq", routeInfo.getBound());
+
+                    Log.d("BusRouteAdapter", "GMB Route ID: " + routeInfo.getGmbRouteID());
+                    Log.d("BusRouteAdapter", "GMB Route Seq: " + routeInfo.getBound());
+
                 }
 
 

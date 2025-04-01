@@ -696,8 +696,6 @@ public class DataFetcher {
                         Log.d("DataFetchGMB", "Data for GMB Route Info: " + jsonData);
                         databaseHelper.gmbDatabase.updateRouteInfo(jsonData, (routeID, routeSeq) -> {
                             response.close();
-                            Log.d("DataFetchGMB", "GMB route info updated successfully, now fetching stops for the route");
-                            fetchGMBRouteStops(routeID, routeSeq);
                         });
 
                     } catch (Exception e) {
@@ -710,23 +708,35 @@ public class DataFetcher {
         });
     }
 
-    public void fetchGMBRouteStops(Integer routeID, Integer routeSeq) {
+    /**
+     * Fetches GMB route stops from the API
+     * @param routeID The GMB route ID
+     * @param routeSeq The sequence number (1 for inbound, 2 for outbound)
+     * @param onSuccess Callback for successful fetch with JSON response
+     */
+    public void fetchGMBRouteStops(Integer routeID, Integer routeSeq, Consumer<String> onSuccess) {
         String url = GMB_BASE_URL + "route-stop/" + routeID + "/" + routeSeq;
         Request request = new Request.Builder().url(url).build();
+        
+        Log.d("DataFetchGMB", "Fetching GMB route stops for route ID: " + routeID + ", seq: " + routeSeq);
+        Log.d("DataFetchGMB", "Request URL: " + url);
 
         client.newCall(request).enqueue(new Callback() {
             @Override
             public void onFailure(Call call, IOException e) {
                 Log.e("FetchLog", "Error Fetching GMB Route Stop Info: " + e.getMessage());
                 Log.d("DataFetcher", "Error Fetching GMB Route Stop Info: " + e.getMessage());
+                mainHandler.post(() -> onSuccess.accept(null)); // Callback with null to indicate failure
             }
 
             @Override
             public void onResponse(Call call, Response response) {
-                Log.e("FetchLog", "GMB Route Info Fetch Response: " + response);
+                Log.d("FetchLog", "GMB Route Info Fetch Response Code: " + response.code());
                 if (!response.isSuccessful()) {
-                    mainHandler.post(() -> Log.e("DataFetchGMB", "Error Fetching GMB Route Stop Info: " + response.code()));
-                    Log.e("FetchLog", "Response is un-successful");
+                    mainHandler.post(() -> {
+                        Log.e("DataFetchGMB", "Error Fetching GMB Route Stop Info: " + response.code());
+                        onSuccess.accept(null); // Callback with null to indicate failure
+                    });
                     response.close();
                     return;
                 }
@@ -734,23 +744,36 @@ public class DataFetcher {
                 executorService.execute(() -> {
                     try {
                         String jsonData = response.body().string();
-                        Log.d("DataFetchGMB", "Data for GMB Route Stop Info: " + jsonData);
-                        databaseHelper.gmbDatabase.updateRouteStops(jsonData);
+                        Log.d("DataFetchGMB", "Data for GMB Route Stop Info received, length: " + jsonData.length());
+                        
+                        // Update the database with the fetched data
+                        databaseHelper.gmbDatabase.updateRouteStops(jsonData, routeID, routeSeq);
+                        
+                        // Pass the data to the callback
+                        mainHandler.post(() -> onSuccess.accept(jsonData));
+                        
                     } catch (Exception e) {
-                        Log.e("DataFetch", "Error Fetching GMB Route Stop Info: " + e.getMessage());
-                        Log.e("DataFetchGMB", "Error Fetching GMB Route Stop Info: " + e.getMessage());
+                        Log.e("DataFetch", "Error Processing GMB Route Stop Info: " + e.getMessage());
+                        Log.e("DataFetchGMB", "Error Processing GMB Route Stop Info: " + e.getMessage());
+                        mainHandler.post(() -> onSuccess.accept(null)); // Callback with null to indicate failure
+                    } finally {
                         response.close();
                     }
                 });
             }
         });
-
-
     }
 
+    /**
+     * Fetches location data for a GMB stop from the API and updates the database
+     * @param stopID The GMB stop ID
+     */
     public void fetchGMBStopLocation(String stopID) {
         String url = GMB_BASE_URL + "stop/" + stopID;
         Request request = new Request.Builder().url(url).build();
+        
+        Log.d("DataFetchGMB", "Fetching GMB stop location for stop ID: " + stopID);
+        Log.d("DataFetchGMB", "Request URL: " + url);
 
         client.newCall(request).enqueue(new Callback() {
             @Override
@@ -761,7 +784,7 @@ public class DataFetcher {
 
             @Override
             public void onResponse(Call call, Response response) {
-                Log.e("FetchLog", "GMB Route Info Fetch Response: " + response);
+                Log.d("FetchLog", "GMB Stop Location Fetch Response: " + response.code());
                 if (!response.isSuccessful()) {
                     mainHandler.post(() -> Log.e("DataFetchGMB", "Error Fetching GMB Stop Location: " + response.code()));
                     Log.e("FetchLog", "Response is un-successful");
@@ -772,17 +795,87 @@ public class DataFetcher {
                 executorService.execute(() -> {
                     try {
                         String jsonData = response.body().string();
-                        Log.d("DataFetchGMB", "Data for GMB Stop Location: " + jsonData);
+                        Log.d("DataFetchGMB", "Data for GMB Stop Location received, length: " + jsonData.length());
+                        
+                        // Parse to verify it's a valid response
+                        JSONObject jsonObject = new JSONObject(jsonData);
+                        if (jsonObject.has("data") && !jsonObject.isNull("data")) {
+                            JSONObject data = jsonObject.getJSONObject("data");
+                            String lat = data.optString("lat");
+                            String lng = data.optString("long");
+                            
+                            if (lat != null && !lat.isEmpty() && lng != null && !lng.isEmpty()) {
+                                Log.d("DataFetchGMB", "Valid location data found for GMB stop " + stopID + 
+                                      ": lat=" + lat + ", lng=" + lng);
+                            } else {
+                                Log.w("DataFetchGMB", "No coordinates in GMB stop data for " + stopID);
+                            }
+                        }
+                        
+                        // Update the database even if coordinates are missing
                         databaseHelper.gmbDatabase.updateStopLocation(jsonData);
+                        response.close();
                     } catch (Exception e) {
-                        Log.e("DataFetch", "Error Fetching GMB Stop Location: " + e.getMessage());
-                        Log.e("DataFetchGMB", "Error Fetching GMB Stop Location: " + e.getMessage());
+                        Log.e("DataFetch", "Error Processing GMB Stop Location: " + e.getMessage());
+                        Log.e("DataFetchGMB", "Error Processing GMB Stop Location: " + e.getMessage());
                         response.close();
                     }
                 });
             }
         });
+    }
+    
+    /**
+     * Fetches location data for a GMB stop from the API with callbacks
+     * @param stopID The GMB stop ID
+     * @param onSuccess Callback for successful fetch with JSON response
+     * @param onError Callback for error with error message
+     */
+    public void fetchGMBStopLocation(String stopID, Consumer<String> onSuccess, Consumer<String> onError) {
+        String url = GMB_BASE_URL + "stop/" + stopID;
+        Request request = new Request.Builder().url(url).build();
+        
+        Log.d("DataFetchGMB", "Fetching GMB stop location with callback for stop ID: " + stopID);
 
+        client.newCall(request).enqueue(new Callback() {
+            @Override
+            public void onFailure(Call call, IOException e) {
+                Log.e("FetchLog", "Error Fetching GMB Stop Location: " + e.getMessage());
+                mainHandler.post(() -> onError.accept("Failed to fetch data: " + e.getMessage()));
+            }
+
+            @Override
+            public void onResponse(Call call, Response response) {
+                if (!response.isSuccessful()) {
+                    mainHandler.post(() -> {
+                        Log.e("DataFetchGMB", "Error Fetching GMB Stop Location: " + response.code());
+                        onError.accept("Error: " + response.code());
+                    });
+                    response.close();
+                    return;
+                }
+
+                executorService.execute(() -> {
+                    try {
+                        String jsonData = response.body().string();
+                        
+                        // Update the database
+                        databaseHelper.gmbDatabase.updateStopLocation(jsonData);
+                        
+                        // Pass the data to the callback
+                        mainHandler.post(() -> onSuccess.accept(jsonData));
+                        
+                    } catch (Exception e) {
+                        mainHandler.post(() -> {
+                            Log.e("DataFetchGMB", "Error Processing GMB Stop Location: " + e.getMessage());
+                            onError.accept("Error processing data: " + e.getMessage());
+                        });
+                    } finally {
+                        response.close();
+                    }
+                });
+            }
+        });
     }
 
 

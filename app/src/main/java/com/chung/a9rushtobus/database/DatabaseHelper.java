@@ -103,6 +103,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         db.execSQL(GMBDatabase.SQL_CREATE_GMB_ROUTES_TABLES);
         db.execSQL(GMBDatabase.SQL_CREATE_GMB_ROUTES_INFO_TABLE);
         db.execSQL(GMBDatabase.SQL_CREATE_GMB_ROUTE_STOPS_TABLE);
+        db.execSQL(GMBDatabase.SQL_CREATE_GMB_STOP_LOCATIONS_TABLE);
         db.execSQL(SQL_CREATE_RTHK_NEWS_TABLE);
     }
 
@@ -119,6 +120,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         db.execSQL(GMBDatabase.SQL_DELETE_GMB_ROUTES_TABLES);
         db.execSQL(GMBDatabase.SQL_DELETE_GMB_ROUTES_INFO_TABLE);
         db.execSQL(GMBDatabase.SQL_DELETE_GMB_ROUTE_STOPS_TABLE);
+        db.execSQL(GMBDatabase.SQL_DELETE_GMB_STOP_LOCATIONS_TABLE);
         db.execSQL(SQL_DELETE_RTHK_NEWS_TABLE);
 
         // Recreate tables
