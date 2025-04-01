@@ -31,7 +31,7 @@
                 android:id="@+id/tvRouteBusSpecialIndicator"
                 android:layout_width="70dp"
                 android:layout_height="wrap_content"
-                android:layout_marginEnd="16dp"
+                android:layout_marginEnd="10dp"
                 android:text="SPECIAL"
                 android:textAlignment="center"
                 android:textSize="12sp" />
@@ -40,7 +40,7 @@
                 android:id="@+id/tvRouteName"
                 android:layout_width="70dp"
                 android:layout_height="wrap_content"
-                android:layout_marginEnd="16dp"
+                android:layout_marginEnd="10dp"
                 android:text="83K"
                 android:textAlignment="center"
                 android:textSize="24sp" />
@@ -77,11 +77,29 @@
 
             <TextView
                 android:id="@+id/tvRouteOrigin"
-
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
+                android:ellipsize="marquee"
+                android:marqueeRepeatLimit="marquee_forever"
+                android:singleLine="true"
+                android:scrollHorizontally="true"
+                android:focusable="true"
                 android:text="WONG NAI TAU"
+                android:textSize="12sp" />
+
+            <TextView
+                android:id="@+id/tvRouteRemarks"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:layout_marginTop="5dp"
+                android:ellipsize="marquee"
+                android:marqueeRepeatLimit="marquee_forever"
+                android:singleLine="true"
+                android:scrollHorizontally="true"
+                android:focusable="true"
+                android:text="This is a remark"
                 android:textSize="12sp" />
 
         </LinearLayout>

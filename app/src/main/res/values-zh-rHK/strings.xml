@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">UniteRide</string>
+    <string name="region_nt_name">新界</string>
+    <string name="region_kln_name">九龍</string>
+    <string name="region_hki_name">香港島</string>
+    <string name="bottomNav_saved_tabName">收藏</string>
+    <string name="bottomNav_nearby_tabName">附近</string>
+    <string name="bottomNav_search_tabName">搜尋</string>
+    <string name="bottomNav_news_tabName">快訊</string>
+</resources>

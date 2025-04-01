@@ -199,7 +199,10 @@ public class FragmentSearch extends Fragment {
                 "ri." + GMBDatabase.Tables.GMB_ROUTES_INFO.COLUMN_REMARKS_EN + ", " +
                 "ri." + GMBDatabase.Tables.GMB_ROUTES_INFO.COLUMN_REMARKS_TC + ", " +
                 "ri." + GMBDatabase.Tables.GMB_ROUTES_INFO.COLUMN_REMARKS_SC + ", " +
-                "ri." + GMBDatabase.Tables.GMB_ROUTES_INFO.COLUMN_ROUTE_REGION + " " +
+                "ri." + GMBDatabase.Tables.GMB_ROUTES_INFO.COLUMN_ROUTE_REGION + ", " +
+                "ri." + GMBDatabase.Tables.GMB_ROUTES_INFO.COLUMN_DESCRIPTION_EN + ", " +
+                "ri." + GMBDatabase.Tables.GMB_ROUTES_INFO.COLUMN_DESCRIPTION_TC + ", " +
+                "ri." + GMBDatabase.Tables.GMB_ROUTES_INFO.COLUMN_DESCRIPTION_SC + " " +
                 "FROM " + GMBDatabase.Tables.GMB_ROUTES_INFO.TABLE_NAME + " ri " +
                 "JOIN " + GMBDatabase.Tables.GMB_ROUTES.TABLE_NAME + " r ON " +
                 "ri." + GMBDatabase.Tables.GMB_ROUTES_INFO.COLUMN_ROUTE_NUMBER + " = " +
@@ -225,9 +228,13 @@ public class FragmentSearch extends Fragment {
                     int destEnIndex = cursor3.getColumnIndex(GMBDatabase.Tables.GMB_ROUTES_INFO.COLUMN_ROUTE_DEST_EN);
                     int destTcIndex = cursor3.getColumnIndex(GMBDatabase.Tables.GMB_ROUTES_INFO.COLUMN_ROUTE_DEST_TC);
                     int destScIndex = cursor3.getColumnIndex(GMBDatabase.Tables.GMB_ROUTES_INFO.COLUMN_ROUTE_DEST_SC);
+                    int regionIndex = cursor3.getColumnIndex(GMBDatabase.Tables.GMB_ROUTES_INFO.COLUMN_ROUTE_REGION);
                     int remarksEnIndex = cursor3.getColumnIndex(GMBDatabase.Tables.GMB_ROUTES_INFO.COLUMN_REMARKS_EN);
                     int remarksTcIndex = cursor3.getColumnIndex(GMBDatabase.Tables.GMB_ROUTES_INFO.COLUMN_REMARKS_TC);
                     int remarksScIndex = cursor3.getColumnIndex(GMBDatabase.Tables.GMB_ROUTES_INFO.COLUMN_REMARKS_SC);
+                    int descriptionEnIndex = cursor3.getColumnIndex(GMBDatabase.Tables.GMB_ROUTES_INFO.COLUMN_DESCRIPTION_EN);
+                    int descriptionTcIndex = cursor3.getColumnIndex(GMBDatabase.Tables.GMB_ROUTES_INFO.COLUMN_DESCRIPTION_TC);
+                    int descriptionScIndex = cursor3.getColumnIndex(GMBDatabase.Tables.GMB_ROUTES_INFO.COLUMN_DESCRIPTION_SC);
                     
                     // Log all column names for debugging
                     for (int i = 0; i < cursor3.getColumnCount(); i++) {
@@ -237,31 +244,29 @@ public class FragmentSearch extends Fragment {
                     // Safely get values, using empty string as fallback if column not found
                     String routeId = routeIdIndex >= 0? cursor3.getString(routeIdIndex) : "";
                     String route = routeNumberIndex >= 0 ? cursor3.getString(routeNumberIndex) : "";
+                    String routeSeq = routeSeqIndex >= 0? cursor3.getString(routeSeqIndex) : "";
                     String originEn = originEnIndex >= 0 ? cursor3.getString(originEnIndex) : "";
                     String originTc = originTcIndex >= 0 ? cursor3.getString(originTcIndex) : "";
                     String originSc = originScIndex >= 0 ? cursor3.getString(originScIndex) : "";
                     String destEn = destEnIndex >= 0 ? cursor3.getString(destEnIndex) : "";
                     String destTc = destTcIndex >= 0 ? cursor3.getString(destTcIndex) : "";
                     String destSc = destScIndex >= 0 ? cursor3.getString(destScIndex) : "";
+                    String region = regionIndex >= 0 ? cursor3.getString(regionIndex) : "";
                     String remarksEn = remarksEnIndex >= 0 ? cursor3.getString(remarksEnIndex) : "";
                     String remarksTc = remarksTcIndex >= 0 ? cursor3.getString(remarksTcIndex) : "";
                     String remarksSc = remarksScIndex >= 0 ? cursor3.getString(remarksScIndex) : "";
-                    
-                    // Get region from the cursor
-                    int regionIndex = cursor3.getColumnIndex(GMBDatabase.Tables.GMB_ROUTES_INFO.COLUMN_ROUTE_REGION);
-                    String region = regionIndex >= 0 ? cursor3.getString(regionIndex) : "";
-                    
-                    // For routeSeq, safely get it from the cursor
-                    String routeSeq = routeSeqIndex >= 0 ? cursor3.getString(routeSeqIndex) : "";
+                    String descriptionEn = descriptionEnIndex >= 0 ? cursor3.getString(descriptionEnIndex) : "";
+                    String descriptionTc = descriptionTcIndex >= 0 ? cursor3.getString(descriptionTcIndex) : "";
+                    String descriptionSc = descriptionScIndex >= 0 ? cursor3.getString(descriptionScIndex) : "";
                     
                     Log.d("GMB", "route: " + route + " origin: " + originEn + " dest: " + destEn + " remarks: " + remarksEn + " region: " + region + " routeSeq: " + routeSeq);
 
                     // Correctly create GMB BusRoute objects
                     BusRoute gmbRoute = new BusRoute(
-                            route, region, routeSeq,
+                            routeId, route, region, routeSeq,
                             originEn, originTc, originSc,
                             destEn, destTc, destSc,
-                            remarksEn, remarksTc, remarksSc
+                            remarksEn, remarksTc, remarksSc, descriptionEn, descriptionTc, descriptionSc
                     );
 
                     // Add to both collections

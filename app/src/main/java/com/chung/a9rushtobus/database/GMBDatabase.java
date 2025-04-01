@@ -38,11 +38,32 @@ public class GMBDatabase {
                     Tables.GMB_ROUTES_INFO.COLUMN_REMARKS_TC + " TEXT, " +
                     Tables.GMB_ROUTES_INFO.COLUMN_REMARKS_SC + " TEXT, " +
                     Tables.GMB_ROUTES_INFO.COLUMN_ROUTE_SEQ + " INTEGER NOT NULL, " +
+                    Tables.GMB_ROUTES_INFO.COLUMN_DESCRIPTION_EN + " TEXT, " +
+                    Tables.GMB_ROUTES_INFO.COLUMN_DESCRIPTION_TC + " TEXT, " +
+                    Tables.GMB_ROUTES_INFO.COLUMN_DESCRIPTION_SC + " TEXT, " +
                     "UNIQUE (" + Tables.GMB_ROUTES_INFO.COLUMN_ROUTE_ID + ", " + Tables.GMB_ROUTES_INFO.COLUMN_ROUTE_SEQ + ")" +
                     ");";
 
+    public static final String SQL_CREATE_GMB_ROUTE_STOPS_TABLE =
+            "CREATE TABLE IF NOT EXISTS " + Tables.GMB_ROUTE_STOPS.TABLE_NAME + " (" +
+                    Tables.GMB_ROUTE_STOPS.COLUMN_ROUTE_ID + " INTEGER NOT NULL, " +
+                    Tables.GMB_ROUTE_STOPS.COLUMN_ROUTE_NUMBER + " TEXT NOT NULL, " +
+                    Tables.GMB_ROUTE_STOPS.COLUMN_ROUTE_REGION + " TEXT NOT NULL CHECK (" +
+                    Tables.GMB_ROUTE_STOPS.COLUMN_ROUTE_REGION + " IN ('HKI', 'KLN', 'NT')), " +
+                    Tables.GMB_ROUTE_STOPS.COLUMN_ROUTE_SEQ + " INTEGER NOT NULL, " +
+                    Tables.GMB_ROUTE_STOPS.COLUMN_STOP_ID + " INTEGER NOT NULL, " +
+                    Tables.GMB_ROUTE_STOPS.STOP_NAME_EN + " TEXT, " +
+                    Tables.GMB_ROUTE_STOPS.STOP_NAME_TC + " TEXT, " +
+                    Tables.GMB_ROUTE_STOPS.STOP_NAME_SC + " TEXT, " +
+                    Tables.GMB_ROUTE_STOPS.COLUMN_STOP_SEQ + " INTEGER NOT NULL, " +
+                    "PRIMARY KEY (" + Tables.GMB_ROUTE_STOPS.COLUMN_ROUTE_ID + ", " +
+                    Tables.GMB_ROUTE_STOPS.COLUMN_STOP_SEQ + ")" +
+                    ");";
+
+
     public static String SQL_DELETE_GMB_ROUTES_TABLES = "DROP TABLE IF EXISTS " + Tables.GMB_ROUTES.TABLE_NAME;
     public static String SQL_DELETE_GMB_ROUTES_INFO_TABLE = "DROP TABLE IF EXISTS " + Tables.GMB_ROUTES_INFO.TABLE_NAME;
+    public static String SQL_DELETE_GMB_ROUTE_STOPS_TABLE = "DROP TABLE IF EXISTS " + Tables.GMB_ROUTE_STOPS.TABLE_NAME;
 
     public GMBDatabase(SQLiteOpenHelper helper) {
         db = helper.getWritableDatabase();
@@ -72,6 +93,9 @@ public class GMBDatabase {
             public static final String COLUMN_REMARKS_TC = "remarks_tc";
             public static final String COLUMN_REMARKS_SC = "remarks_sc";
             public static final String COLUMN_ROUTE_SEQ = "route_sequence"; // 1 : inbound, 2 : outbound
+            public static final String COLUMN_DESCRIPTION_EN = "description_en";
+            public static final String COLUMN_DESCRIPTION_TC = "description_tc";
+            public static final String COLUMN_DESCRIPTION_SC = "description_sc";
         }
 
         public static class GMB_ROUTE_STOPS implements android.provider.BaseColumns {
@@ -81,9 +105,18 @@ public class GMBDatabase {
             public static final String COLUMN_ROUTE_REGION = "route_region";
             public static final String COLUMN_ROUTE_SEQ = "route_sequence";
             public static final String COLUMN_STOP_ID = "stop_id";
+            public static final String STOP_NAME_EN = "stop_name_en";
+            public static final String STOP_NAME_TC = "stop_name_tc";
+            public static final String STOP_NAME_SC = "stop_name_sc";
+            public static final String COLUMN_STOP_SEQ = "stop_seq";
+
+        }
+
+        public static class GMB_STOP_LOCATIONS implements android.provider.BaseColumns {
+            public static final String TABLE_NAME = "gmb_stop_locations";
+            public static final String COLUMN_STOP_ID = "stop_id";
             public static final String COLUMN_LATITUDE = "lat";
             public static final String COLUMN_LONGITUDE = "lng";
-
         }
 
         public static String[] PROJECTION_GET_ALL_ROUTES_INFO = new String[]{
@@ -122,7 +155,18 @@ public class GMBDatabase {
                         "ri." + Tables.GMB_ROUTES_INFO.COLUMN_ROUTE_NUMBER + " = " +
                         "r." + Tables.GMB_ROUTES.COLUMN_ROUTE_NUMBER + " AND " +
                         "ri." + Tables.GMB_ROUTES_INFO.COLUMN_ROUTE_REGION + " = " +
-                        "r." + Tables.GMB_ROUTES.COLUMN_ROUTE_REGION ;
+                        "r." + Tables.GMB_ROUTES.COLUMN_ROUTE_REGION;
+
+        public static final String QUERY_STOPS_BY_ROUTE_ID =
+                "SELECT " + Tables.GMB_ROUTE_STOPS.COLUMN_ROUTE_ID + ", " +
+                        Tables.GMB_ROUTE_STOPS.COLUMN_ROUTE_SEQ + ", " +
+                        Tables.GMB_ROUTE_STOPS.STOP_NAME_EN + ", " +
+                        Tables.GMB_ROUTE_STOPS.STOP_NAME_TC + ", " +
+                        Tables.GMB_ROUTE_STOPS.STOP_NAME_SC + " " +
+                        "FROM " + Tables.GMB_ROUTE_STOPS.TABLE_NAME + " " +
+                        "WHERE " + Tables.GMB_ROUTE_STOPS.COLUMN_ROUTE_ID + " =? " +
+                        Tables.GMB_ROUTE_STOPS.COLUMN_ROUTE_SEQ + " =? " +
+                        "ORDER BY " + Tables.GMB_ROUTE_STOPS.COLUMN_STOP_SEQ;
     }
 
     public void updateRoutes(JSONObject routesJson, BiConsumer<String, String> onSuccess, Consumer<String> onError) {
@@ -176,13 +220,14 @@ public class GMBDatabase {
             String region = firstRoute.getString("region");
             String routeCode = firstRoute.getString("route_code");
             int routeId = firstRoute.getInt("route_id");
-            String description = firstRoute.getString("description_en");
+            String descriptionEn = firstRoute.getString("description_en");
             String descriptionTC = firstRoute.getString("description_tc");
+            String descriptionSC = firstRoute.getString("description_sc");
 
             Log.d("GMBDatabase", "region: " + region);
             Log.d("GMBDatabase", "routeCode: " + routeCode);
             Log.d("GMBDatabase", "routeId: " + routeId);
-            Log.d("GMBDatabase", "description: " + description + " " + descriptionTC);
+            Log.d("GMBDatabase", "description: " + descriptionEn + " " + descriptionTC);
 
             // Get directions array
             JSONArray directionsArray = firstRoute.getJSONArray("directions");
@@ -217,7 +262,11 @@ public class GMBDatabase {
                     values.put(Tables.GMB_ROUTES_INFO.COLUMN_ROUTE_ID, routeId);
                     values.put(Tables.GMB_ROUTES_INFO.COLUMN_ROUTE_NUMBER, routeCode);
                     values.put(Tables.GMB_ROUTES_INFO.COLUMN_ROUTE_REGION, region);
-                    values.put(Tables.GMB_ROUTES_INFO.COLUMN_ROUTE_TYPE, "Placeholder");
+                    if (!descriptionEn.equals("Normal Departure")) {
+                        values.put(Tables.GMB_ROUTES_INFO.COLUMN_ROUTE_TYPE, "special");
+                    } else {
+                        values.put(Tables.GMB_ROUTES_INFO.COLUMN_ROUTE_TYPE, "normal");
+                    }
                     values.put(Tables.GMB_ROUTES_INFO.COLUMN_ROUTE_ORIGIN_EN, origEn);
                     values.put(Tables.GMB_ROUTES_INFO.COLUMN_ROUTE_ORIGIN_TC, origTC);
                     values.put(Tables.GMB_ROUTES_INFO.COLUMN_ROUTE_ORIGIN_SC, origSC);
@@ -228,6 +277,9 @@ public class GMBDatabase {
                     values.put(Tables.GMB_ROUTES_INFO.COLUMN_REMARKS_TC, remarksTC);
                     values.put(Tables.GMB_ROUTES_INFO.COLUMN_REMARKS_SC, remarksSC);
                     values.put(Tables.GMB_ROUTES_INFO.COLUMN_ROUTE_SEQ, routeSeq);
+                    values.put(Tables.GMB_ROUTES_INFO.COLUMN_DESCRIPTION_EN, descriptionEn);
+                    values.put(Tables.GMB_ROUTES_INFO.COLUMN_DESCRIPTION_TC, descriptionTC);
+                    values.put(Tables.GMB_ROUTES_INFO.COLUMN_DESCRIPTION_SC, descriptionSC);
 
                     try {
                         db.beginTransaction();

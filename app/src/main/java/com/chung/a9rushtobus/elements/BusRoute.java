@@ -14,6 +14,12 @@ public class BusRoute {
     private String destEn;
     private String destTc;
     private String destSc;
+    private String gmbRouteID;
+    private String gmbRouteRegion;
+    private String remarksEn;
+    private String remarksTc;
+    private String remarksSc;
+    private String descriptionEn, descriptionTc, descriptionSc;
 
 
     public BusRoute(String route, String company, String bound, String serviceType,
@@ -32,10 +38,10 @@ public class BusRoute {
     }
 
     // Constructor for Green mini buses
-    public BusRoute(String route, String region, String routeSeq,
+    public BusRoute(String routeID, String route, String region, String routeSeq,
                    String origEn, String origTc, String origSc,
                    String destEn, String destTc, String destSc,
-                   String remarksEn, String remarksTc, String remarksSc) {
+                   String remarksEn, String remarksTc, String remarksSc, String descriptionEn, String descriptionTc, String descriptionSc) {
         this.route = route;
         this.company = "GMB";
         
@@ -61,6 +67,15 @@ public class BusRoute {
         this.destEn = destEn;
         this.destTc = destTc;
         this.destSc = destSc;
+        this.remarksEn = remarksEn;
+        this.remarksTc = remarksTc;
+        this.remarksSc = remarksSc;
+        this.gmbRouteRegion = region;
+        this.gmbRouteID = routeID;
+        this.descriptionEn = descriptionEn;
+        this.descriptionTc = descriptionTc;
+        this.descriptionSc = descriptionSc;
+
     }
 
     // All getters
@@ -102,6 +117,45 @@ public class BusRoute {
 
     public String getDestSc() {
         return destSc;
+    }
+
+    public String getRemarksEn() {
+        return remarksEn;
+    }
+
+    public String getRemarksTc() {
+        return remarksTc;
+    }
+
+    public String getRemarksSc() {
+        return remarksSc;
+    }
+
+    public String getGmbRouteID() {
+        return gmbRouteID;
+    }
+
+    public String getGmbRouteRegion() {
+        return gmbRouteRegion;
+    }
+
+    public String getDescriptionEn() {
+        return descriptionEn;
+    }
+
+    public String getDescriptionTc() {
+        return descriptionTc;
+    }
+
+    public String getDescriptionSc() {
+        return descriptionSc;
+    }
+
+
+    /**
+     * Compares two BusRoute objects for equality.
+     * @param other The BusRoute to compare with
+     * @return True if the
     }
     
     /**

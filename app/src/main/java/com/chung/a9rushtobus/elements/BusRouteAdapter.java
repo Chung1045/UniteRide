@@ -51,28 +51,37 @@ public class BusRouteAdapter extends RecyclerView.Adapter<BusRouteAdapter.ViewHo
 
         if (routeInfo.getCompany().equals("kmb")) {
             holder.tvRouteBusCompany.setText("KMB");
+            holder.tvRouteRemarks.setVisibility(View.GONE);
         } else if (routeInfo.getCompany().equals("ctb")) {
             holder.tvRouteBusCompany.setText("CTB");
+            holder.tvRouteRemarks.setVisibility(View.GONE);
         } else if (routeInfo.getCompany().equals("GMB")) {
             holder.tvRouteBusCompany.setText("GMB");
-        } else if (routeInfo.getCompany().equals("HKI") || 
-                  routeInfo.getCompany().equals("KLN") || 
-                  routeInfo.getCompany().equals("NT")) {
-            // These are GMB regions
-            holder.tvRouteBusCompany.setText("GMB-" + routeInfo.getCompany());
+            holder.tvRouteBusCompany.setText("GMB-" + routeInfo.getGmbRouteRegion());
+            Log.d("BusRouteAdapter", "GMB Route Description: " + routeInfo.getDescriptionEn());
+            if (!routeInfo.getDescriptionEn().equals("Normal Route") || !routeInfo.getDescriptionEn().equals("Normal Departure")) {
+                // TODO: Add multi language support
+                holder.tvRouteRemarks.setVisibility(View.VISIBLE);
+                holder.tvRouteRemarks.setText(routeInfo.getDescriptionEn());
+            } else {
+                holder.tvRouteRemarks.setVisibility(View.GONE);
+            }
+
         }
 
 
         holder.bind(routeInfo);
 
-        if (!Objects.equals(routeInfo.getServiceType(), "1")){
+        if (routeInfo.getCompany().equals("kmb") && !Objects.equals(routeInfo.getServiceType(), "1")){
             holder.routeSpecialIndicator.setVisibility(View.VISIBLE);
         } else {
             holder.routeSpecialIndicator.setVisibility(View.GONE);
         }
 
         // Background and text color logic
-        setTextColorAndBackground(holder.tvRouteName, routeNumber);
+        if (routeInfo.getCompany().equals("kmb") || routeInfo.getCompany().equals("ctb")) {
+            setTextColorAndBackground(holder.tvRouteName, routeNumber);
+        }
     }
 
     private void setTextColorAndBackground(TextView textView, String routeNumber) {
@@ -97,7 +106,7 @@ public class BusRouteAdapter extends RecyclerView.Adapter<BusRouteAdapter.ViewHo
     }
 
     public static class ViewHolder extends RecyclerView.ViewHolder {
-        TextView tvRouteName, tvOrigin, tvDestination, tvRouteBusCompany, routeSpecialIndicator;
+        TextView tvRouteName, tvOrigin, tvDestination, tvRouteBusCompany, routeSpecialIndicator, tvRouteRemarks;
         LinearLayout busRouteItemView;
         private BusRoute routeInfo;
 
@@ -109,8 +118,9 @@ public class BusRouteAdapter extends RecyclerView.Adapter<BusRouteAdapter.ViewHo
             tvOrigin = itemView.findViewById(R.id.tvRouteOrigin);
             tvRouteBusCompany = itemView.findViewById(R.id.tvRouteBusCompany);
             routeSpecialIndicator = itemView.findViewById(R.id.tvRouteBusSpecialIndicator);
-
+            tvRouteRemarks = itemView.findViewById(R.id.tvRouteRemarks);
             tvDestination.setSelected(true);
+            tvOrigin.setSelected(true);
 
             busRouteItemView.setOnClickListener(view -> {
                 Log.d("BusRouteAdapter", "Item clicked: " + tvRouteName.getText());
@@ -120,6 +130,13 @@ public class BusRouteAdapter extends RecyclerView.Adapter<BusRouteAdapter.ViewHo
                 intent.putExtra("bound", routeInfo.getBound());
                 intent.putExtra("serviceType", routeInfo.getServiceType());
                 intent.putExtra("company", routeInfo.getCompany());
+
+                if (routeInfo.getCompany().equals("gmb")) {
+                    intent.putExtra("region", routeInfo.getGmbRouteRegion());
+                    intent.putExtra("gmbRouteID", routeInfo.getGmbRouteID());
+                }
+
+
                 Log.e("BusRouteAdapter", "Item clicked: " + "Route " + routeInfo.getRoute() + " Destination " + routeInfo.getDestEn() + " Bound " + routeInfo.getBound() + " ServiceType " + routeInfo.getServiceType() + " Company " + routeInfo.getCompany());
                 Log.e("BusRouteAdapter", "Attempting to start new BusRouteDetailViewActivity");
                 startActivity(view.getContext(), intent, null);

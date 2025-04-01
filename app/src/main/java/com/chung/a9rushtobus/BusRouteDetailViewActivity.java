@@ -25,6 +25,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.chung.a9rushtobus.database.CTBDatabase;
 import com.chung.a9rushtobus.database.DatabaseHelper;
+import com.chung.a9rushtobus.database.GMBDatabase;
 import com.chung.a9rushtobus.database.KMBDatabase;
 import com.chung.a9rushtobus.elements.BusRouteStopItem;
 import com.chung.a9rushtobus.elements.BusRouteStopItemAdapter;
@@ -65,7 +66,7 @@ public class BusRouteDetailViewActivity extends AppCompatActivity implements OnM
     private BusRouteStopItemAdapter adapter;
     private RecyclerView busRouteStopRecyclerView;
     private List<BusRouteStopItem> busRouteStopItems;
-    private String routeNumber, routeDestination, routeBound, routeServiceType, busCompany;
+    private String routeNumber, routeDestination, gmbRouteID, routeBound, routeServiceType, busCompany, remarks;
     private Integer initialStopSeqView = 0;
     private Utils utils;
     private DataFetcher dataFetcher;
@@ -94,6 +95,17 @@ public class BusRouteDetailViewActivity extends AppCompatActivity implements OnM
         routeDestination = getIntent().getStringExtra("destination");
         initialStopSeqView = getIntent().getIntExtra("initialStopSeqView", 0);
         busCompany = getIntent().getStringExtra("company");
+
+        assert busCompany != null;
+        if (busCompany.equals("gmb")) {
+            gmbRouteID = getIntent().getStringExtra("gmbRouteID");
+        }
+
+
+        String remarks = getIntent().getStringExtra("remarks");
+        if (remarks == null || remarks.isEmpty()) {
+            remarks = "Normal Route";
+        }
         // Determine the correct bound value for later queries ("O" for outbound, "I" for inbound)
         String boundExtra = getIntent().getStringExtra("bound");
         Log.e("BusRouteDetailView", "routeBound For Intent Extra: " + boundExtra);
@@ -152,6 +164,8 @@ public class BusRouteDetailViewActivity extends AppCompatActivity implements OnM
 
         TextView busRouteNumber = findViewById(R.id.bus_detail_activity_route_number);
         TextView busRouteDestination = findViewById(R.id.bus_detail_activity_route_dest);
+        TextView busRouteRemarks = findViewById(R.id.bus_detail_activity_route_remarks);
+
         busRouteDestination.setSingleLine(true);
         busRouteDestination.setMarqueeRepeatLimit(-1);
         busRouteDestination.setScroller(new Scroller(this));
@@ -162,6 +176,8 @@ public class BusRouteDetailViewActivity extends AppCompatActivity implements OnM
         busRouteDestination.setText(routeDestination);
         Log.d("LogBusRouteDetailView", "Route: " + routeNumber + " Destination: " + routeDestination +
                 " Bound: " + routeBound + " Service Type: " + routeServiceType);
+
+        busRouteRemarks.setText(remarks);
 
         // Initialize the RecyclerView with an empty list
         busRouteStopItems = new ArrayList<>();
@@ -455,12 +471,13 @@ public class BusRouteDetailViewActivity extends AppCompatActivity implements OnM
     // This is a simplified version of the fallbackToApiForStops method
     private void fallbackToApiForStops(SQLiteDatabase db, String adjustedBound) {
         String stopIDQuery;
-        String[] stopIDSelectionArgs;
+        String[] stopIDSelectionArgs = null;
         Log.e(TAG, "No matched data from database, fetching from API instead");
 
         // Set up the query based on bus company
         boolean isCTB = busCompany.equalsIgnoreCase("ctb");
         boolean isKMB = busCompany.equalsIgnoreCase("kmb");
+        boolean isGMB = busCompany.equalsIgnoreCase("gmb");
 
         if (isCTB) {
             stopIDQuery = CTBDatabase.Queries.QUERY_GET_STOPID_FROM_ROUTEBOUND;
@@ -468,6 +485,9 @@ public class BusRouteDetailViewActivity extends AppCompatActivity implements OnM
         } else if (isKMB) {
             stopIDQuery = KMBDatabase.Queries.QUERY_GET_STOPID_FROM_ROUTEBOUND;
             stopIDSelectionArgs = new String[]{routeNumber, adjustedBound};
+        } else if (isGMB) {
+            stopIDQuery = GMBDatabase.Queries.QUERY_STOPS_BY_ROUTE_ID;
+
         } else {
             Log.e(TAG, "Unknown bus company: Are you from other world? :" + busCompany);
             return;

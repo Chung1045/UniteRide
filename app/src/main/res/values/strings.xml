@@ -28,6 +28,21 @@ start your journey now!</string>
     <string name="onboarding_5_5_content">You are now ready to dive in and start using our bus app to plan your trips with ease and confidence</string>
     <string name="onboarding_5_5_button_content">Get Started</string>
 
+    <string name="bus_company_kmb_name">KMB</string>
+    <string name="bus_company_LWB_name">LWB</string>
+    <string name="bus_company_ctb_name">CTB</string>
+    <string name="bus_company_gmb_name">GMB</string>
+
+    <string name="region_nt_name">New Territories</string>
+    <string name="region_kln_name">Kowloon</string>
+    <string name="region_hki_name">Hong Kong Island</string>
+
+    <string name="bottomNav_saved_tabName">Saved</string>
+    <string name="bottomNav_nearby_tabName">Nearby</string>
+    <string name="bottomNav_search_tabName">Search</string>
+    <string name="bottomNav_news_tabName">News</string>
+    <string name="bottomNav_settings_tabName">Settings</string>
+
     <string-array name="options_application_theme">
         <item name="light_theme">Light</item>
         <item name="dark_theme">Dark</item>
