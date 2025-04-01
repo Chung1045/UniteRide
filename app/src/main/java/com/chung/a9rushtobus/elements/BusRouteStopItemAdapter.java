@@ -71,7 +71,7 @@ public class BusRouteStopItemAdapter extends RecyclerView.Adapter<BusRouteStopIt
 
         // Clear previous ETA views
         holder.etaLayout.removeAllViews();
-        
+
         // Get ETA data
         List<String> etaDataFull = item.getEtaDataFull();
         String etaData = item.getClosestETA();
@@ -154,7 +154,7 @@ public class BusRouteStopItemAdapter extends RecyclerView.Adapter<BusRouteStopIt
             updateHandler.postDelayed(this::startPeriodicUpdates, 3000);
             return;
         }
-        
+
         isUpdating = true;
         updateHandler.post(updateRunnable);
         Log.d("ETARefresh", "Started periodic ETA updates");
@@ -187,18 +187,30 @@ public class BusRouteStopItemAdapter extends RecyclerView.Adapter<BusRouteStopIt
     }
 
     private void fetchEtaForStop(BusRouteStopItem item, int position, long startTime) {
-        dataFetcher.fetchStopETA(
-            item.getStopID(), 
-            item.getRoute(), 
-            item.getServiceType(), 
-            item.getCompany(),
-            etaDataArray -> {
-                Log.d("ETARefresh", "ETA data received for position " + position);
-                Log.d("ETARefresh", "return value: "+ etaDataArray);
-                processEtaData(item, position, etaDataArray, startTime);
-            },
-            error -> handleEtaError(item, position, error)
-        );
+
+        if (item.getCompany().equals("kmb") || item.getCompany().equals("ctb")) {
+            dataFetcher.fetchStopETA(
+                    item.getStopID(),
+                    item.getRoute(),
+                    item.getServiceType(),
+                    item.getCompany(),
+                    etaDataArray -> {
+                        Log.d("ETARefresh", "ETA data received for position " + position);
+                        Log.d("ETARefresh", "return value: " + etaDataArray);
+                        processEtaData(item, position, etaDataArray, startTime);
+                    },
+                    error -> handleEtaError(item, position, error)
+            );
+        } else {
+            Log.d("ETARefresh", "Refreshing ETA for GMB " + position);
+            dataFetcher.fetchGMBStopETA(item.getStopID(), item.getGmbRouteID(), item.getGmbRouteSeq(),
+                    etaDataArray -> {
+                        Log.d("ETARefresh", "ETA data received for position " + position);
+                        Log.d("ETARefresh", "return value: " + etaDataArray);
+//                processEtaData(item, position, etaDataArray, startTime);
+                    }, error -> handleEtaError(item, position, error)
+            );
+        }
     }
 
     private void processEtaData(BusRouteStopItem item, int position, JSONArray etaDataArray, long startTime) {

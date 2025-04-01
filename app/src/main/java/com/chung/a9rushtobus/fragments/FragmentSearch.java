@@ -214,9 +214,6 @@ public class FragmentSearch extends Fragment {
 
             if (cursor3.getCount() > 0) {
                 Log.d("GMB", "Found " + cursor3.getCount() + " GMB routes");
-                for (int i = 0; i < cursor3.getColumnCount(); i++) {
-                    Log.d("GMB", "Column " + i + ": " + cursor3.getColumnName(i));
-                }
                 while (cursor3.moveToNext()) {
                     // Get column indices first to avoid repeated lookups
                     int routeIdIndex = cursor3.getColumnIndex(GMBDatabase.Tables.GMB_ROUTES_INFO.COLUMN_ROUTE_ID);

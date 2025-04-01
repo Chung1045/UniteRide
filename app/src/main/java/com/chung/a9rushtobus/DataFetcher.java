@@ -519,6 +519,62 @@ public class DataFetcher {
         }
     }
 
+    public void fetchGMBStopETA(String stopID, String routeID, String routeSeq, Consumer<JSONArray> onSuccess, Consumer<String> onError) {
+        Log.d("DataFetch", "Fetching GMB stop ETA information");
+
+        String url = GMB_BASE_URL + "eta/route-stop/" + routeID + "/" + routeSeq + "/" + stopID;
+        Request request = new Request.Builder().url(url).build();
+
+        client.newCall(request).enqueue(new Callback() {
+            @Override
+            public void onFailure(Call call, IOException e) {
+                String errMsg = "Network error: " + e.getMessage();
+                Log.e("DataFetch", errMsg);
+                mainHandler.post(() -> onError.accept(errMsg));
+            }
+
+            @Override
+            public void onResponse(Call call, Response response) throws IOException {
+                Log.d("DataFetch", "Response: " + response);
+                if (!response.isSuccessful()) {
+                    String errMsg = "API error: " + response.code();
+                    Log.e("DataFetch", errMsg);
+                    mainHandler.post(() -> onError.accept(errMsg));
+                    return;
+                }
+
+                // Ensure the response body is closed after use
+                try (ResponseBody responseBody = response.body()) {
+                    if (responseBody == null) {
+                        String errMsg = "Empty response";
+                        Log.e("DataFetch", errMsg);
+                        mainHandler.post(() -> onError.accept(errMsg));
+                        return;
+                    }
+
+                    String jsonData = responseBody.string();
+                    Log.d("DataFetch", "Data for stopID " + stopID + ": " + jsonData);
+
+                    try {
+                        JSONObject jsonObject = new JSONObject(jsonData);
+                        JSONArray dataArray = jsonObject.getJSONArray("data");
+                        mainHandler.post(() -> onSuccess.accept(dataArray));
+                    } catch (JSONException e) {
+                        String errMsg = "JSON parsing error: " + e.getMessage();
+                        Log.e("DataFetch", errMsg);
+                        mainHandler.post(() -> onError.accept(errMsg));
+                    }
+                } catch (Exception e) {
+                    String errMsg = "Error processing response: " + e.getMessage();
+                    Log.e("DataFetch", errMsg);
+                    mainHandler.post(() -> onError.accept(errMsg));
+                }
+            }
+        });
+
+
+    }
+
 
     public void fetchStopETA(String stopID, String route, String serviceType, String company,
                              Consumer<JSONArray> onSuccess, Consumer<String> onError) {

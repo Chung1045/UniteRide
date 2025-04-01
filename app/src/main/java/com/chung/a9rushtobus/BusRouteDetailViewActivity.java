@@ -499,7 +499,7 @@ public class BusRouteDetailViewActivity extends AppCompatActivity implements OnM
                 stopNameSc = cursor.getString(cursor.getColumnIndexOrThrow(CTBDatabase.Tables.CTB_STOPS.COLUMN_NAME_SC));
                 latitude = cursor.getString(cursor.getColumnIndexOrThrow(CTBDatabase.Tables.CTB_STOPS.COLUMN_LATITUDE));
                 longitude = cursor.getString(cursor.getColumnIndexOrThrow(CTBDatabase.Tables.CTB_STOPS.COLUMN_LONGITUDE));
-            } else if (busCompany.equals("gmb")){
+            } else if (busCompany.equals("GMB")){
                 try {
                     stopId = cursor.getString(cursor.getColumnIndexOrThrow(GMBDatabase.Tables.GMB_ROUTE_STOPS.COLUMN_STOP_ID));
                     stopNameEn = cursor.getString(cursor.getColumnIndexOrThrow(GMBDatabase.Tables.GMB_ROUTE_STOPS.STOP_NAME_EN));
@@ -614,7 +614,7 @@ public class BusRouteDetailViewActivity extends AppCompatActivity implements OnM
                                     
                                     BusRouteStopItem item = new BusRouteStopItem(
                                         routeNumber, adjustedBound, routeServiceType,
-                                        stopNameEn, stopNameTc, stopNameSc, stopId, busCompany);
+                                        stopNameEn, stopNameTc, stopNameSc, stopId, String.valueOf(routeId), String.valueOf(routeSeq));
                                     freshStops.add(item);
                                     
                                     // Try to get location data for the stop
