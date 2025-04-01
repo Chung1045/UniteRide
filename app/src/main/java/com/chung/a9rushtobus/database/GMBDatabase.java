@@ -60,10 +60,18 @@ public class GMBDatabase {
                     Tables.GMB_ROUTE_STOPS.COLUMN_STOP_SEQ + ")" +
                     ");";
 
+    public static final String SQL_CREATE_GMB_STOP_LOCATIONS_TABLE =
+            "CREATE TABLE IF NOT EXISTS " + Tables.GMB_STOP_LOCATIONS.TABLE_NAME + " (" +
+                    Tables.GMB_STOP_LOCATIONS.COLUMN_STOP_ID + " INTEGER NOT NULL, " +
+                    Tables.GMB_STOP_LOCATIONS.COLUMN_LATITUDE + " TEXT NOT NULL, " +
+                    Tables.GMB_STOP_LOCATIONS.COLUMN_LONGITUDE + " TEXT NOT NULL, " +
+                    "PRIMARY KEY (" + Tables.GMB_STOP_LOCATIONS.COLUMN_STOP_ID + ")";
+
 
     public static String SQL_DELETE_GMB_ROUTES_TABLES = "DROP TABLE IF EXISTS " + Tables.GMB_ROUTES.TABLE_NAME;
     public static String SQL_DELETE_GMB_ROUTES_INFO_TABLE = "DROP TABLE IF EXISTS " + Tables.GMB_ROUTES_INFO.TABLE_NAME;
     public static String SQL_DELETE_GMB_ROUTE_STOPS_TABLE = "DROP TABLE IF EXISTS " + Tables.GMB_ROUTE_STOPS.TABLE_NAME;
+    public static String SQL_DELETE_GMB_STOP_LOCATIONS_TABLE = "DROP TABLE IF EXISTS " + Tables.GMB_STOP_LOCATIONS.TABLE_NAME;
 
     public GMBDatabase(SQLiteOpenHelper helper) {
         db = helper.getWritableDatabase();
@@ -326,5 +334,30 @@ public class GMBDatabase {
         }
     }
 
+    public void updateStopLocation(String jsonData) throws JSONException {
+        Log.d("GMBDatabase", "updateStopLocations");
 
+        JSONObject jsonObject = new JSONObject(jsonData);
+        JSONObject data = jsonObject.getJSONObject("data");
+        JSONObject loaction = data.getJSONObject("coordinates");
+
+        JSONObject coordinates = loaction.getJSONObject("wgs84");
+
+        String lat = coordinates.getString("latitude");
+        String lng = coordinates.getString("longitude");
+
+        ContentValues values = new ContentValues();
+        values.put(Tables.GMB_STOP_LOCATIONS.COLUMN_LATITUDE, lat);
+        values.put(Tables.GMB_STOP_LOCATIONS.COLUMN_LONGITUDE, lng);
+
+        try {
+            db.beginTransaction();
+            db.insertWithOnConflict(Tables.GMB_STOP_LOCATIONS.TABLE_NAME, null, values, SQLiteDatabase.CONFLICT_IGNORE);
+            db.setTransactionSuccessful();
+        } catch (Exception e) {
+            Log.e("GMBDatabase", "Error inserting stop locations", e);
+        } finally {
+            db.endTransaction();
+        }
+    }
 }

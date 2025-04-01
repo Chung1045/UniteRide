@@ -228,6 +228,10 @@ public class BusRouteDetailViewActivity extends AppCompatActivity implements OnM
                     query = CTBDatabase.Queries.QUERY_GET_STOP_FROM_ROUTE;
                     selectionArgs = new String[]{routeNumber, adjustedBound};
                     Log.d(TAG, "Using CTB query with route: " + routeNumber + ", bound: " + adjustedBound);
+                } else if (Objects.equals(busCompany, "gmb")) {
+                    query = GMBDatabase.Queries.QUERY_STOPS_BY_ROUTE_ID;
+                    selectionArgs = new String[]{routeNumber, routeBound};
+                    Log.d(TAG, "Using GMB query with route: " + routeNumber + ", bound: " +  routeBound);
                 } else {
                     Log.e(TAG, "Unknown bus company: " + busCompany);
                     handler.post(() -> Toast.makeText(BusRouteDetailViewActivity.this, 
@@ -254,7 +258,9 @@ public class BusRouteDetailViewActivity extends AppCompatActivity implements OnM
 
                         boolean isMatchOrOffline;
                         try {
-                            isMatchOrOffline = dataFetcher.isStopNumberMatch(cursor.getCount(), routeNumber, routeBound, routeServiceType, busCompany);
+                            if (busCompany.equalsIgnoreCase("kmb") || busCompany.equalsIgnoreCase("ctb")) {
+                                isMatchOrOffline = dataFetcher.isStopNumberMatch(cursor.getCount(), routeNumber, routeBound, routeServiceType, busCompany);
+                            }
                         } catch (Exception e) {
                             // Handle any exceptions during the check and proceed with local data
                             Log.e(TAG, "Error checking stop count match: " + e.getMessage());
@@ -427,13 +433,21 @@ public class BusRouteDetailViewActivity extends AppCompatActivity implements OnM
                 stopNameSc = cursor.getString(cursor.getColumnIndexOrThrow(KMBDatabase.Tables.KMB_STOPS.COLUMN_STOP_NAME_SC));
                 latitude = cursor.getString(cursor.getColumnIndexOrThrow(KMBDatabase.Tables.KMB_STOPS.COLUMN_LATITUDE));
                 longitude = cursor.getString(cursor.getColumnIndexOrThrow(KMBDatabase.Tables.KMB_STOPS.COLUMN_LONGITUDE));
-            } else { // "ctb" branch
+            } else if (busCompany.equalsIgnoreCase("ctb")){ // "ctb" branch
                 stopId = cursor.getString(cursor.getColumnIndexOrThrow(CTBDatabase.Tables.CTB_ROUTE_STOPS.COLUMN_STOP_ID));
                 stopNameEn = cursor.getString(cursor.getColumnIndexOrThrow(CTBDatabase.Tables.CTB_STOPS.COLUMN_NAME_EN));
                 stopNameTc = cursor.getString(cursor.getColumnIndexOrThrow(CTBDatabase.Tables.CTB_STOPS.COLUMN_NAME_TC));
                 stopNameSc = cursor.getString(cursor.getColumnIndexOrThrow(CTBDatabase.Tables.CTB_STOPS.COLUMN_NAME_SC));
                 latitude = cursor.getString(cursor.getColumnIndexOrThrow(CTBDatabase.Tables.CTB_STOPS.COLUMN_LATITUDE));
                 longitude = cursor.getString(cursor.getColumnIndexOrThrow(CTBDatabase.Tables.CTB_STOPS.COLUMN_LONGITUDE));
+            } else if (busCompany.equals("gmb")){
+                stopId = cursor.getString(cursor.getColumnIndexOrThrow(GMBDatabase.Tables.GMB_ROUTE_STOPS.COLUMN_STOP_ID));
+                stopNameEn = cursor.getString(cursor.getColumnIndexOrThrow(GMBDatabase.Tables.GMB_ROUTE_STOPS.STOP_NAME_EN));
+                stopNameTc = cursor.getString(cursor.getColumnIndexOrThrow(GMBDatabase.Tables.GMB_ROUTE_STOPS.STOP_NAME_TC));
+                stopNameSc = cursor.getString(cursor.getColumnIndexOrThrow(GMBDatabase.Tables.GMB_ROUTE_STOPS.STOP_NAME_SC));
+
+                // location at another table GMB_STOP_LOCATIONS
+
             }
 
             Log.d(TAG, "Processing stop " + index + ": ID=" + stopId + ", Name=" + stopNameEn);
@@ -442,29 +456,35 @@ public class BusRouteDetailViewActivity extends AppCompatActivity implements OnM
             String adjustedBound = (routeBound.equalsIgnoreCase("outbound") || routeBound.equalsIgnoreCase("O")) ? "O" : "I";
             Log.d(TAG, "Stop " + index + " using bound: " + routeBound + " (adjusted to: " + adjustedBound + ")");
 
-            stops.add(new BusRouteStopItem(
-                    routeNumber, adjustedBound, routeServiceType,
-                    stopNameEn, stopNameTc, stopNameSc, stopId, busCompany));
+            if (busCompany.equalsIgnoreCase("kmb") || busCompany.equalsIgnoreCase("ctb")) {
+                stops.add(new BusRouteStopItem(
+                        routeNumber, adjustedBound, routeServiceType,
+                        stopNameEn, stopNameTc, stopNameSc, stopId, busCompany));
 
-            // Process coordinates if available
-            if (latitude != null && !latitude.isEmpty() && longitude != null && !longitude.isEmpty()) {
-                try {
-                    double lat = Double.parseDouble(latitude);
-                    double lng = Double.parseDouble(longitude);
-                    LatLng stopPosition = new LatLng(lat, lng);
-                    stopPositions.add(stopPosition);
+                // Process coordinates if available
+                if (latitude != null && !latitude.isEmpty() && longitude != null && !longitude.isEmpty()) {
+                    try {
+                        double lat = Double.parseDouble(latitude);
+                        double lng = Double.parseDouble(longitude);
+                        LatLng stopPosition = new LatLng(lat, lng);
+                        stopPositions.add(stopPosition);
 
-                    // Create marker for later addition to map
-                    float markerHue = (index == 0) ? BitmapDescriptorFactory.HUE_BLUE : BitmapDescriptorFactory.HUE_RED;
-                    markers.add(new MarkerOptions()
-                            .position(stopPosition)
-                            .title(stopNameEn)
-                            .icon(BitmapDescriptorFactory.defaultMarker(markerHue)));
-                } catch (NumberFormatException e) {
-                    Log.e(TAG, "Invalid coordinates for stop " + stopId + ": " + e.getMessage());
+                        // Create marker for later addition to map
+                        float markerHue = (index == 0) ? BitmapDescriptorFactory.HUE_BLUE : BitmapDescriptorFactory.HUE_RED;
+                        markers.add(new MarkerOptions()
+                                .position(stopPosition)
+                                .title(stopNameEn)
+                                .icon(BitmapDescriptorFactory.defaultMarker(markerHue)));
+                    } catch (NumberFormatException e) {
+                        Log.e(TAG, "Invalid coordinates for stop " + stopId + ": " + e.getMessage());
+                    }
                 }
+                index++;
+            } else if (busCompany.equals("gmb")) {
+                stops.add(new BusRouteStopItem(
+                        routeNumber, adjustedBound, routeServiceType,
+                        stopNameEn, stopNameTc, stopNameSc, stopId, busCompany));
             }
-            index++;
         }
     }
 

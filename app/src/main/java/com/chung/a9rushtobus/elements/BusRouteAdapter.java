@@ -132,8 +132,8 @@ public class BusRouteAdapter extends RecyclerView.Adapter<BusRouteAdapter.ViewHo
                 intent.putExtra("company", routeInfo.getCompany());
 
                 if (routeInfo.getCompany().equals("gmb")) {
-                    intent.putExtra("region", routeInfo.getGmbRouteRegion());
                     intent.putExtra("gmbRouteID", routeInfo.getGmbRouteID());
+                    intent.putExtra("gmbRouteSeq", routeInfo.getBound());
                 }
 
 

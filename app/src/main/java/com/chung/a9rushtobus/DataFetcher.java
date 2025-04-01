@@ -748,6 +748,43 @@ public class DataFetcher {
 
     }
 
+    public void fetchGMBStopLocation(String stopID) {
+        String url = GMB_BASE_URL + "stop/" + stopID;
+        Request request = new Request.Builder().url(url).build();
+
+        client.newCall(request).enqueue(new Callback() {
+            @Override
+            public void onFailure(Call call, IOException e) {
+                Log.e("FetchLog", "Error Fetching GMB Stop Location: " + e.getMessage());
+                Log.d("DataFetcher", "Error Fetching GMB Stop Location: " + e.getMessage());
+            }
+
+            @Override
+            public void onResponse(Call call, Response response) {
+                Log.e("FetchLog", "GMB Route Info Fetch Response: " + response);
+                if (!response.isSuccessful()) {
+                    mainHandler.post(() -> Log.e("DataFetchGMB", "Error Fetching GMB Stop Location: " + response.code()));
+                    Log.e("FetchLog", "Response is un-successful");
+                    response.close();
+                    return;
+                }
+
+                executorService.execute(() -> {
+                    try {
+                        String jsonData = response.body().string();
+                        Log.d("DataFetchGMB", "Data for GMB Stop Location: " + jsonData);
+                        databaseHelper.gmbDatabase.updateStopLocation(jsonData);
+                    } catch (Exception e) {
+                        Log.e("DataFetch", "Error Fetching GMB Stop Location: " + e.getMessage());
+                        Log.e("DataFetchGMB", "Error Fetching GMB Stop Location: " + e.getMessage());
+                        response.close();
+                    }
+                });
+            }
+        });
+
+    }
+
 
     public Future<List<RTHKTrafficEntry>> fetchTrafficNews() {
         return executorService.submit(() -> {
