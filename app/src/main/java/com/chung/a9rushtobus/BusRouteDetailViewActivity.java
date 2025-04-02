@@ -118,7 +118,14 @@ public class BusRouteDetailViewActivity extends AppCompatActivity implements OnM
             gmbRouteID = getIntent().getStringExtra("gmbRouteID");
             gmbRouteSeq = getIntent().getStringExtra("gmbRouteSeq");
             Log.d(TAG, "GMB Route ID: " + gmbRouteID);
-            Log.d(TAG, "GMB Route Seq: " + gmbRouteSeq);
+            Log.d(TAG, "GMB Route Seq from intent: " + gmbRouteSeq);
+            
+            // Normalize route sequence based on the route bound
+            // GMB uses "1" for inbound and "2" for outbound
+            if (gmbRouteSeq == null || gmbRouteSeq.isEmpty()) {
+                Log.d(TAG, "GMB Route Seq not provided in intent, will derive from bound");
+                // Will be set later after bound is determined
+            }
 
             if (gmbRouteID == null || gmbRouteID.isEmpty()) {
                 Log.e(TAG, "WARNING: GMB Route ID is missing in the intent!");
@@ -138,6 +145,24 @@ public class BusRouteDetailViewActivity extends AppCompatActivity implements OnM
         } else {
             routeBound = "inbound";
         }
+        
+        // For GMB, set or validate the route sequence based on bound
+        if (busCompany.equals("GMB")) {
+            // GMB uses "1" for inbound and "2" for outbound
+            String derivedGmbRouteSeq = routeBound.equalsIgnoreCase("inbound") ? "1" : "2";
+            
+            if (gmbRouteSeq == null || gmbRouteSeq.isEmpty()) {
+                // If no sequence provided in the intent, use our derived value
+                gmbRouteSeq = derivedGmbRouteSeq;
+                Log.d(TAG, "Setting GMB Route Seq to " + gmbRouteSeq + " based on bound: " + routeBound);
+            } else if (!gmbRouteSeq.equals(derivedGmbRouteSeq)) {
+                // If provided sequence doesn't match derived value, log a warning but use the provided one
+                Log.w(TAG, "Warning: GMB Route Seq from intent (" + gmbRouteSeq + 
+                      ") doesn't match expected value (" + derivedGmbRouteSeq + 
+                      ") for bound: " + routeBound);
+            }
+        }
+        
         routeServiceType = getIntent().getStringExtra("serviceType");
 
         dataFetcher = new DataFetcher(this);
@@ -148,12 +173,81 @@ public class BusRouteDetailViewActivity extends AppCompatActivity implements OnM
     }
 
     @Override
+    protected void onPause() {
+        Log.d(TAG, "onPause: Pausing ETA updates");
+        
+        // Pause ETA updates when the activity is not visible
+        if (adapter != null) {
+            // Signal the adapter to pause ETA updates
+            adapter.pauseETAUpdates();
+            Log.d(TAG, "Paused ETA updates in adapter");
+        }
+        
+        // Also remove any pending handler operations
+        if (handler != null) {
+            handler.removeCallbacksAndMessages(null);
+        }
+        
+        super.onPause();
+    }
+    
+    @Override
+    protected void onResume() {
+        super.onResume();
+        Log.d(TAG, "onResume: Resuming ETA updates");
+        
+        // Resume ETA updates when the activity becomes visible again
+        if (adapter != null) {
+            // Signal the adapter to resume ETA updates
+            adapter.resumeETAUpdates();
+            Log.d(TAG, "Resumed ETA updates in adapter");
+        }
+    }
+
+    @Override
     protected void onDestroy() {
-        super.onDestroy();
-        // Stop ETA updates
+        Log.d(TAG, "onDestroy: Cleaning up resources");
+        
+        // Cancel any pending operations on the handler
+        if (handler != null) {
+            handler.removeCallbacksAndMessages(null);
+            Log.d(TAG, "Removed all pending handler callbacks");
+        }
+        
+        // Stop ETA updates and cancel any ongoing network requests
         if (dataFetcher != null) {
             dataFetcher.shutdown();
+            Log.d(TAG, "DataFetcher shutdown completed");
         }
+        
+        // Close the database helper if needed
+        if (databaseHelper != null) {
+            // No need to close the helper here as it's managed by Android's lifecycle
+            // But we can null it out to allow garbage collection
+            databaseHelper = null;
+        }
+        
+        // Clear any adapter references to prevent memory leaks
+        if (busRouteStopRecyclerView != null) {
+            busRouteStopRecyclerView.setAdapter(null);
+            Log.d(TAG, "Cleared RecyclerView adapter reference");
+        }
+        
+        // Remove map callbacks if needed
+        if (mMap != null) {
+            // Google Maps doesn't require explicit cleanup, 
+            // but we can null the reference to help with garbage collection
+            mMap = null;
+            Log.d(TAG, "Cleared Google Map reference");
+        }
+        
+        // Clear other collections to assist garbage collection
+        if (busRouteStopItems != null) {
+            busRouteStopItems.clear();
+        }
+        
+        // Always call super.onDestroy() last
+        super.onDestroy();
     }
 
     @Override
@@ -256,11 +350,9 @@ public class BusRouteDetailViewActivity extends AppCompatActivity implements OnM
                     Log.d(TAG, "Using CTB query with route: " + routeNumber + ", bound: " + adjustedBound);
                 } else if (Objects.equals(busCompany, "GMB")) { // should be in upper case for gmb
                     query = GMBDatabase.Queries.QUERY_STOPS_BY_ROUTE_ID;
-                    // Convert bound from "inbound"/"outbound" to "1"/"2" for GMB database
-                    String gmbSeq = routeBound.equalsIgnoreCase("inbound") ? "1" : "2";
-                    selectionArgs = new String[]{gmbRouteID, gmbSeq};
-                    Log.d(TAG, "Using GMB query with route: " + routeNumber + ", seq: " + gmbSeq);
-                    Log.d(TAG, "Using GMB query with route: " + routeNumber + ", bound: " +  routeBound);
+                    selectionArgs = new String[]{gmbRouteID, gmbRouteSeq};
+                    Log.d(TAG, "Using GMB query with route: " + routeNumber + ", routeID: " + gmbRouteID + 
+                          ", seq: " + gmbRouteSeq + " (1=inbound, 2=outbound)");
                 } else {
                     Log.e(TAG, "Unknown bus company: " + busCompany);
                     handler.post(() -> Toast.makeText(BusRouteDetailViewActivity.this,
@@ -398,8 +490,9 @@ public class BusRouteDetailViewActivity extends AppCompatActivity implements OnM
                     if (busCompany.equalsIgnoreCase("gmb") && stops.isEmpty()) {
                         Log.d(TAG, "No GMB stops found in database, trying direct API fallback");
 
-                        // Convert bound from "outbound"/"inbound" to "2"/"1" for GMB API
-                        String gmbRouteSeq = routeBound.equalsIgnoreCase("inbound") ? "1" : "2";
+                        // Use the already normalized gmbRouteSeq from before
+                        // This ensures we use the same sequence value consistently
+                        Log.d(TAG, "Using normalized GMB Route Seq: " + gmbRouteSeq + " for fallback");
 
                         // Ensure we have the gmbRouteID from intent
                         if (gmbRouteID == null || gmbRouteID.isEmpty()) {
@@ -445,7 +538,24 @@ public class BusRouteDetailViewActivity extends AppCompatActivity implements OnM
                         debugGMBStopLocations(db);
                     }
 
-                    busRouteStopItems.addAll(stops);
+                    // Clear first, then add each stop checking for duplicates
+                    busRouteStopItems.clear();
+                    
+                    // Add each stop checking for duplicates
+                    for (BusRouteStopItem stop : stops) {
+                        boolean isDuplicate = false;
+                        for (BusRouteStopItem existingStop : busRouteStopItems) {
+                            if (existingStop.getStopID().equals(stop.getStopID())) {
+                                isDuplicate = true;
+                                Log.d(TAG, "Found duplicate stop: " + stop.getStopID() + " - " + stop.getStopEn());
+                                break;
+                            }
+                        }
+                        if (!isDuplicate) {
+                            busRouteStopItems.add(stop);
+                        }
+                    }
+                    
                     adapter.notifyDataSetChanged();
 
                     // Add all markers to map at once
@@ -501,6 +611,24 @@ public class BusRouteDetailViewActivity extends AppCompatActivity implements OnM
         });
     }
 
+    /**
+     * Helper method to check if a stop is already in the list to prevent duplicates
+     * @param stopId The stop ID to check
+     * @param stopsList The list to check against
+     * @return true if the stop is already in the list
+     */
+    private boolean isStopDuplicate(String stopId, List<BusRouteStopItem> stopsList) {
+        if (stopId == null) return false;
+        
+        for (BusRouteStopItem item : stopsList) {
+            if (stopId.equals(item.getStopID())) {
+                Log.d(TAG, "Found duplicate stop: " + stopId);
+                return true;
+            }
+        }
+        return false;
+    }
+    
     // Helper method to process stops from cursor
     /**
      * Helper method to fetch GMB stop location from the database
@@ -532,6 +660,11 @@ public class BusRouteDetailViewActivity extends AppCompatActivity implements OnM
     
     private void processStopsFromCursor(Cursor cursor, List<BusRouteStopItem> stops,
                                         List<LatLng> stopPositions, List<MarkerOptions> markers, int startIndex) {
+        // Debug log to track cursor position and count
+        Log.d(TAG, "Processing cursor with " + cursor.getCount() + " stops, starting at index " + startIndex);
+        
+        // Clear list to prevent duplication
+        stops.clear();
         int index = startIndex;
         while (cursor.moveToNext()) {
             String stopId = null, stopNameEn = null, stopNameTc = null, stopNameSc = null, latitude = null, longitude = null;
@@ -596,6 +729,12 @@ public class BusRouteDetailViewActivity extends AppCompatActivity implements OnM
 
             Log.d(TAG, "Processing stop " + index + ": ID=" + stopId + ", Name=" + stopNameEn);
 
+            // Check if this stop is already in the list
+            if (isStopDuplicate(stopId, stops)) {
+                Log.d(TAG, "Skipping duplicate stop: " + stopId + " - " + stopNameEn);
+                continue;
+            }
+
             // Create the stop item
             String adjustedBound = (routeBound.equalsIgnoreCase("outbound") || routeBound.equalsIgnoreCase("O")) ? "O" : "I";
             Log.d(TAG, "Stop " + index + " using bound: " + routeBound + " (adjusted to: " + adjustedBound + ")");
@@ -640,7 +779,16 @@ public class BusRouteDetailViewActivity extends AppCompatActivity implements OnM
 
     // API fallback for GMB
     private void fallbackForGMB(SQLiteDatabase db, String gmbRouteID, String gmbRouteSeq) {
-        Log.d(TAG, "Performing API fallback for GMB route ID: " + gmbRouteID + ", sequence: " + gmbRouteSeq);
+        Log.d(TAG, "Performing API fallback for GMB route ID: " + gmbRouteID + 
+              ", sequence: " + gmbRouteSeq + " (1=inbound, 2=outbound)");
+        
+        // Validate and normalize the sequence value if needed
+        if (gmbRouteSeq == null || gmbRouteSeq.isEmpty() || (!gmbRouteSeq.equals("1") && !gmbRouteSeq.equals("2"))) {
+            // If sequence is invalid, derive it from route bound
+            String derivedSeq = routeBound.equalsIgnoreCase("inbound") ? "1" : "2";
+            Log.w(TAG, "Invalid GMB sequence: " + gmbRouteSeq + ", using derived value: " + derivedSeq);
+            gmbRouteSeq = derivedSeq;
+        }
 
         // Double-check that we have valid route ID
         if (gmbRouteID == null || gmbRouteID.isEmpty()) {
@@ -665,6 +813,7 @@ public class BusRouteDetailViewActivity extends AppCompatActivity implements OnM
             final List<LatLng> stopPositions = Collections.synchronizedList(new ArrayList<>());
 
             // Create a custom callback handler for the API call
+            String finalGmbRouteSeq = gmbRouteSeq;
             Consumer<String> onSuccess = jsonData -> {
                 try {
                     Log.d(TAG, "GMB API response received: " + (jsonData != null ? "data available" : "no data"));
@@ -692,11 +841,11 @@ public class BusRouteDetailViewActivity extends AppCompatActivity implements OnM
                                     String adjustedBound = (routeBound.equalsIgnoreCase("outbound") ||
                                                          routeBound.equalsIgnoreCase("O")) ? "O" : "I";
 
-                                    Log.d(TAG, "Before insert to database, gmbRouteID: " + gmbRouteID + ", gmbRouteSeq: " + gmbRouteSeq);
+                                    Log.d(TAG, "Before insert to database, gmbRouteID: " + gmbRouteID + ", gmbRouteSeq: " + finalGmbRouteSeq);
 
                                     BusRouteStopItem item = new BusRouteStopItem(
                                         routeNumber, adjustedBound, routeServiceType,
-                                        stopNameEn, stopNameTc, stopNameSc, stopId, gmbRouteID, String.valueOf(gmbRouteSeq));
+                                        stopNameEn, stopNameTc, stopNameSc, stopId, gmbRouteID, finalGmbRouteSeq);
                                     freshStops.add(item);
 
                                     // Try to get location data for the stop
@@ -720,6 +869,8 @@ public class BusRouteDetailViewActivity extends AppCompatActivity implements OnM
             };
 
             // Make the API call
+            Log.d(TAG, "Calling API for GMB route - ID: " + gmbRouteID + ", Seq: " + gmbRouteSeq + 
+                  " (1=inbound, 2=outbound)");
             dataFetcher.fetchGMBRouteStops(Integer.parseInt(gmbRouteID), Integer.parseInt(gmbRouteSeq), onSuccess);
 
             // Wait for the API response with a timeout
@@ -738,9 +889,23 @@ public class BusRouteDetailViewActivity extends AppCompatActivity implements OnM
                 if (apiSuccess.get() && !freshStops.isEmpty()) {
                     Log.d(TAG, "Updating UI with " + freshStops.size() + " GMB stops from API");
 
-                    // Clear existing items
+                    // Clear existing items and ensure we only add each stop once
                     busRouteStopItems.clear();
-                    busRouteStopItems.addAll(freshStops);
+                    
+                    // Add each stop checking for duplicates
+                    for (BusRouteStopItem stop : freshStops) {
+                        boolean isDuplicate = false;
+                        for (BusRouteStopItem existingStop : busRouteStopItems) {
+                            if (existingStop.getStopID().equals(stop.getStopID())) {
+                                isDuplicate = true;
+                                break;
+                            }
+                        }
+                        if (!isDuplicate) {
+                            busRouteStopItems.add(stop);
+                        }
+                    }
+                    
                     adapter.notifyDataSetChanged();
 
                     // Update map with any stop positions we gathered
@@ -750,6 +915,13 @@ public class BusRouteDetailViewActivity extends AppCompatActivity implements OnM
                         // Add markers for each stop
                         for (int i = 0; i < stopPositions.size(); i++) {
                             LatLng stopPosition = stopPositions.get(i);
+                            
+                            // Skip null positions to prevent crash
+                            if (stopPosition == null) {
+                                Log.w(TAG, "Skipping null position at index " + i);
+                                continue;
+                            }
+                            
                             float markerHue = (i == 0) ? BitmapDescriptorFactory.HUE_BLUE : BitmapDescriptorFactory.HUE_RED;
 
                             // Get the correct stop from freshStops if indices match
@@ -759,20 +931,39 @@ public class BusRouteDetailViewActivity extends AppCompatActivity implements OnM
                                 // Use the English name of the stop
                                 stopTitle = stop.getStopEn();
                             }
-
-                            mMap.addMarker(new MarkerOptions()
-                                .position(stopPosition)
-                                .title(stopTitle)
-                                .icon(BitmapDescriptorFactory.defaultMarker(markerHue)));
+                            if (!stopTitle.isEmpty()) {
+                                mMap.addMarker(new MarkerOptions()
+                                        .position(stopPosition)
+                                        .title(stopTitle)
+                                        .icon(BitmapDescriptorFactory.defaultMarker(markerHue)));
+                            }
                         }
 
-                        // Draw route line if we have multiple stops
+                        // Draw route line if we have multiple valid stops
                         if (stopPositions.size() >= 2) {
-                            connectPointsOnMap(stopPositions);
+                            // Filter out null positions before drawing the route
+                            List<LatLng> validPositions = new ArrayList<>();
+                            for (LatLng pos : stopPositions) {
+                                if (pos != null) {
+                                    validPositions.add(pos);
+                                }
+                            }
+                            
+                            if (validPositions.size() >= 2) {
+                                connectPointsOnMap(validPositions);
+                            } else {
+                                Log.w(TAG, "Not enough valid positions to draw route: " + 
+                                      validPositions.size() + " valid out of " + stopPositions.size() + " total");
+                            }
                         }
 
-                        // Center map on first stop
-                        mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(stopPositions.get(0), 15f));
+                        // Center map on first valid stop
+                        for (LatLng firstValidPosition : stopPositions) {
+                            if (firstValidPosition != null) {
+                                mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(firstValidPosition, 15f));
+                                break;
+                            }
+                        }
                     } else {
                         Log.d(TAG, "No stop positions available for GMB route");
                         // Use a default Hong Kong location
@@ -958,8 +1149,9 @@ public class BusRouteDetailViewActivity extends AppCompatActivity implements OnM
             // For GMB, use the specialized GMB fallback method
             Log.d(TAG, "Using specialized GMB fallback method");
 
-            // Convert bound from "I"/"O" to "1"/"2" for GMB API
-            String gmbRouteSeq = adjustedBound.equalsIgnoreCase("I") ? "1" : "2";
+            // Use the already normalized gmbRouteSeq from the class field
+            // This ensures we use the same sequence value consistently
+            Log.d(TAG, "Using normalized GMB Route Seq: " + gmbRouteSeq + " for fallback API");
 
             // Ensure we have the gmbRouteID from intent
             if (gmbRouteID == null || gmbRouteID.isEmpty()) {
@@ -1046,7 +1238,21 @@ public class BusRouteDetailViewActivity extends AppCompatActivity implements OnM
 
                         // Clear existing items before adding new ones to prevent duplication
                         busRouteStopItems.clear();
-                        busRouteStopItems.addAll(sortedStops);
+                        
+                        // Add each stop checking for duplicates
+                        for (BusRouteStopItem stop : sortedStops) {
+                            boolean isDuplicate = false;
+                            for (BusRouteStopItem existingStop : busRouteStopItems) {
+                                if (existingStop.getStopID().equals(stop.getStopID())) {
+                                    isDuplicate = true;
+                                    break;
+                                }
+                            }
+                            if (!isDuplicate) {
+                                busRouteStopItems.add(stop);
+                            }
+                        }
+                        
                         adapter.notifyDataSetChanged();
 
                         // Clear existing markers from map before adding new ones
@@ -1213,14 +1419,27 @@ public class BusRouteDetailViewActivity extends AppCompatActivity implements OnM
             return;
         }
 
-        // If the map is not yet ready, store positions for later use
-        if (mMap == null) {
-            Log.d(TAG, "Map not ready, storing positions for later");
-            pendingStopPositions = new ArrayList<>(stopPositions);
+        // Filter out any null positions
+        List<LatLng> validPositions = new ArrayList<>();
+        for (LatLng pos : stopPositions) {
+            if (pos != null) {
+                validPositions.add(pos);
+            }
+        }
+        
+        if (validPositions.isEmpty()) {
+            Log.e(TAG, "No valid stop positions to connect after filtering nulls");
             return;
         }
 
-        runOnUiThread(() -> drawRouteOnMap(stopPositions));
+        // If the map is not yet ready, store positions for later use
+        if (mMap == null) {
+            Log.d(TAG, "Map not ready, storing positions for later");
+            pendingStopPositions = new ArrayList<>(validPositions);
+            return;
+        }
+
+        runOnUiThread(() -> drawRouteOnMap(validPositions));
     }
 
     private void drawRouteOnMap(List<LatLng> stopPositions) {
@@ -1229,6 +1448,14 @@ public class BusRouteDetailViewActivity extends AppCompatActivity implements OnM
         if (stopPositions.size() < 2) {
             Log.e(TAG, "At least two points are needed to draw a route.");
             return;
+        }
+        
+        // Double-check all positions are non-null
+        for (int i = 0; i < stopPositions.size(); i++) {
+            if (stopPositions.get(i) == null) {
+                Log.e(TAG, "Found null position at index " + i + ". This should not happen after filtering.");
+                return;
+            }
         }
 
         try {

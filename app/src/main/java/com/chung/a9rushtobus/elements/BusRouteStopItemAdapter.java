@@ -168,6 +168,24 @@ public class BusRouteStopItemAdapter extends RecyclerView.Adapter<BusRouteStopIt
             Log.d("ETARefresh", "Stopped periodic ETA updates");
         }
     }
+    
+    /**
+     * Pauses ETA updates - called from activity's onPause
+     */
+    public void pauseETAUpdates() {
+        Log.d("ETARefresh", "Pausing ETA updates from activity");
+        stopPeriodicUpdates();
+        // Also cancel any pending refetch tasks
+        refetchHandler.removeCallbacksAndMessages(null);
+    }
+    
+    /**
+     * Resumes ETA updates - called from activity's onResume
+     */
+    public void resumeETAUpdates() {
+        Log.d("ETARefresh", "Resuming ETA updates from activity");
+        startPeriodicUpdates();
+    }
 
     // Method to refresh all visible ETA data
     private void refreshAllEtaData() {
@@ -315,7 +333,24 @@ public class BusRouteStopItemAdapter extends RecyclerView.Adapter<BusRouteStopIt
     }
 
     private void updateUi(int position) {
-        new Handler(Looper.getMainLooper()).post(() -> notifyItemChanged(position));
+        // Check if we're still attached to a valid context and the adapter is still active
+        if (context == null || items == null || position >= items.size()) {
+            Log.d(TAG, "Skipping UI update for position " + position + " as context is invalid or adapter is detached");
+            return;
+        }
+        
+        try {
+            new Handler(Looper.getMainLooper()).post(() -> {
+                // Double-check that the adapter is still valid before notifying
+                if (!isUpdating || items == null || position >= items.size()) {
+                    Log.d(TAG, "Skipping UI update as adapter is no longer active");
+                    return;
+                }
+                notifyItemChanged(position);
+            });
+        } catch (Exception e) {
+            Log.e(TAG, "Error updating UI for position " + position + ": " + e.getMessage());
+        }
     }
 
     public static class ViewHolder extends RecyclerView.ViewHolder {

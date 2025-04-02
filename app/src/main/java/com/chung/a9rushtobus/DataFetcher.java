@@ -976,8 +976,50 @@ public class DataFetcher {
         return entries;
     }
 
+    /**
+     * Shuts down all active operations and releases resources.
+     * Call this method when the activity is being destroyed to prevent memory leaks and
+     * background operations continuing after the activity is gone.
+     */
     public void shutdown() {
-        executorService.shutdown();
+        Log.d("DataFetcher", "Shutting down DataFetcher");
+        
+        // Cancel all active network requests
+        if (client != null && client.dispatcher() != null) {
+            client.dispatcher().cancelAll();
+            Log.d("DataFetcher", "Canceled all OkHttp requests");
+        }
+        
+        // Remove any pending main thread callbacks
+        if (mainHandler != null) {
+            mainHandler.removeCallbacksAndMessages(null);
+            Log.d("DataFetcher", "Removed all pending handler callbacks");
+        }
+        
+        // Shut down the executor service
+        if (executorService != null && !executorService.isShutdown()) {
+            executorService.shutdownNow(); // Force shutdown including active tasks
+            try {
+                // Wait a moment for tasks to respond to shutdown
+                if (!executorService.awaitTermination(500, TimeUnit.MILLISECONDS)) {
+                    Log.w("DataFetcher", "Executor did not terminate in the allowed time");
+                }
+            } catch (InterruptedException e) {
+                Log.w("DataFetcher", "Executor shutdown interrupted", e);
+                Thread.currentThread().interrupt();
+            }
+            Log.d("DataFetcher", "Executor service shut down");
+        }
+        
+        // Clear context reference to prevent memory leaks
+        context = null;
+        
+        // Close database connections if needed
+        // Note: We don't close databaseHelper here because it's managed by the Android system
+        // and might be used by other components, but we null the reference
+        databaseHelper = null;
+        
+        Log.d("DataFetcher", "DataFetcher resources fully released");
     }
 
     /**
