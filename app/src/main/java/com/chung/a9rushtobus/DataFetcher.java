@@ -873,7 +873,7 @@ public class DataFetcher {
                         }
                         
                         // Update the database even if coordinates are missing
-                        databaseHelper.gmbDatabase.updateStopLocation(jsonData);
+                        databaseHelper.gmbDatabase.updateStopLocation(jsonData, stopID);
                         response.close();
                     } catch (Exception e) {
                         Log.e("DataFetch", "Error Processing GMB Stop Location: " + e.getMessage());
@@ -920,7 +920,7 @@ public class DataFetcher {
                         String jsonData = response.body().string();
                         
                         // Update the database
-                        databaseHelper.gmbDatabase.updateStopLocation(jsonData);
+                        databaseHelper.gmbDatabase.updateStopLocation(jsonData, stopID);
                         
                         // Pass the data to the callback
                         mainHandler.post(() -> onSuccess.accept(jsonData));

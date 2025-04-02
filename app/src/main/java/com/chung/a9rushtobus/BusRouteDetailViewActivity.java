@@ -119,7 +119,7 @@ public class BusRouteDetailViewActivity extends AppCompatActivity implements OnM
             gmbRouteSeq = getIntent().getStringExtra("gmbRouteSeq");
             Log.d(TAG, "GMB Route ID: " + gmbRouteID);
             Log.d(TAG, "GMB Route Seq: " + gmbRouteSeq);
-            
+
             if (gmbRouteID == null || gmbRouteID.isEmpty()) {
                 Log.e(TAG, "WARNING: GMB Route ID is missing in the intent!");
             }
@@ -218,14 +218,14 @@ public class BusRouteDetailViewActivity extends AppCompatActivity implements OnM
         ImageView backBtn = findViewById(R.id.bus_detail_activity_back_button);
         backBtn.setOnClickListener(v -> finish());
     }
-    
+
     public void loadBusRouteStopData() {
         Log.d(TAG, "Loading bus route stops");
         busRouteStopItems.clear();
         final List<LatLng> stopPositions = new ArrayList<>();
         final String adjustedBound = routeBound.equalsIgnoreCase("outbound") ? "O" : "I";
         Log.d(TAG, "Using bound: " + routeBound + " (adjusted to: " + adjustedBound + ")");
-        
+
         // Show loading indicator
         handler.post(() -> {
             // Add a loading indicator if available in your layout
@@ -310,8 +310,7 @@ public class BusRouteDetailViewActivity extends AppCompatActivity implements OnM
 
                             processStopsFromCursor(cursor, stops, stopPositions, markers, index);
                             latch.countDown(); // Signal that processing is complete
-                        } else {
-                            // Stop count didn't match, need to refetch
+                        } else {// Stop count didn't match, need to refetch
                             Log.d(TAG, "Stop count mismatch detected. API reports different number of stops than database. Refetching from API...");
                             usesFallback.set(true);
 
@@ -394,20 +393,20 @@ public class BusRouteDetailViewActivity extends AppCompatActivity implements OnM
                     if (!completed) {
                         Log.w(TAG, "Timeout waiting for stop data to load completely");
                     }
-                    
+
                     // Special case for GMB with no results - try direct API fallback
                     if (busCompany.equalsIgnoreCase("gmb") && stops.isEmpty()) {
                         Log.d(TAG, "No GMB stops found in database, trying direct API fallback");
-                        
+
                         // Convert bound from "outbound"/"inbound" to "2"/"1" for GMB API
                         String gmbRouteSeq = routeBound.equalsIgnoreCase("inbound") ? "1" : "2";
-                        
+
                         // Ensure we have the gmbRouteID from intent
                         if (gmbRouteID == null || gmbRouteID.isEmpty()) {
                             gmbRouteID = getIntent().getStringExtra("gmbRouteID");
                             Log.d(TAG, "Re-fetched GMB Route ID from intent: " + gmbRouteID);
                         }
-                        
+
                         if (gmbRouteID != null && !gmbRouteID.isEmpty()) {
                             fallbackForGMB(db, gmbRouteID, gmbRouteSeq);
                             // Skip the rest of the processing since fallbackForGMB handles UI updates
@@ -503,59 +502,96 @@ public class BusRouteDetailViewActivity extends AppCompatActivity implements OnM
     }
 
     // Helper method to process stops from cursor
+    /**
+     * Helper method to fetch GMB stop location from the database
+     * @param stopId The GMB stop ID
+     * @return String array with [latitude, longitude], may be null or empty strings
+     */
+    private String[] fetchGMBStopLocationFromDatabase(String stopId) {
+        String[] result = new String[2]; // [latitude, longitude]
+        
+        String query = "SELECT * FROM " + GMBDatabase.Tables.GMB_STOP_LOCATIONS.TABLE_NAME +
+                " WHERE " + GMBDatabase.Tables.GMB_STOP_LOCATIONS.COLUMN_STOP_ID + " = ?";
+        
+        try (Cursor locationCursor = databaseHelper.getReadableDatabase().rawQuery(query, new String[]{stopId})) {
+            if (locationCursor != null && locationCursor.moveToFirst()) {
+                result[0] = locationCursor.getString(
+                        locationCursor.getColumnIndexOrThrow(GMBDatabase.Tables.GMB_STOP_LOCATIONS.COLUMN_LATITUDE));
+                result[1] = locationCursor.getString(
+                        locationCursor.getColumnIndexOrThrow(GMBDatabase.Tables.GMB_STOP_LOCATIONS.COLUMN_LONGITUDE));
+                Log.d(TAG, "Found GMB stop location in database: lat=" + result[0] + ", lng=" + result[1]);
+            } else {
+                Log.d(TAG, "No location data found in database for GMB stop " + stopId);
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "Error fetching GMB stop location from database: " + e.getMessage());
+        }
+        
+        return result;
+    }
+    
     private void processStopsFromCursor(Cursor cursor, List<BusRouteStopItem> stops,
                                         List<LatLng> stopPositions, List<MarkerOptions> markers, int startIndex) {
         int index = startIndex;
         while (cursor.moveToNext()) {
-            String stopId = null, stopNameEn = null, stopNameTc = null , stopNameSc = null , latitude = null, longitude = null;
+            String stopId = null, stopNameEn = null, stopNameTc = null, stopNameSc = null, latitude = null, longitude = null;
 
-            // Extract data based on bus company
-            if (Objects.equals(busCompany, "kmb")) {
-                stopId = cursor.getString(cursor.getColumnIndexOrThrow(KMBDatabase.Tables.KMB_ROUTE_STOPS.COLUMN_STOP_ID));
-                stopNameEn = cursor.getString(cursor.getColumnIndexOrThrow(KMBDatabase.Tables.KMB_STOPS.COLUMN_STOP_NAME_EN));
-                stopNameTc = cursor.getString(cursor.getColumnIndexOrThrow(KMBDatabase.Tables.KMB_STOPS.COLUMN_STOP_NAME_TC));
-                stopNameSc = cursor.getString(cursor.getColumnIndexOrThrow(KMBDatabase.Tables.KMB_STOPS.COLUMN_STOP_NAME_SC));
-                latitude = cursor.getString(cursor.getColumnIndexOrThrow(KMBDatabase.Tables.KMB_STOPS.COLUMN_LATITUDE));
-                longitude = cursor.getString(cursor.getColumnIndexOrThrow(KMBDatabase.Tables.KMB_STOPS.COLUMN_LONGITUDE));
-            } else if (busCompany.equalsIgnoreCase("ctb")){ // "ctb" branch
-                stopId = cursor.getString(cursor.getColumnIndexOrThrow(CTBDatabase.Tables.CTB_ROUTE_STOPS.COLUMN_STOP_ID));
-                stopNameEn = cursor.getString(cursor.getColumnIndexOrThrow(CTBDatabase.Tables.CTB_STOPS.COLUMN_NAME_EN));
-                stopNameTc = cursor.getString(cursor.getColumnIndexOrThrow(CTBDatabase.Tables.CTB_STOPS.COLUMN_NAME_TC));
-                stopNameSc = cursor.getString(cursor.getColumnIndexOrThrow(CTBDatabase.Tables.CTB_STOPS.COLUMN_NAME_SC));
-                latitude = cursor.getString(cursor.getColumnIndexOrThrow(CTBDatabase.Tables.CTB_STOPS.COLUMN_LATITUDE));
-                longitude = cursor.getString(cursor.getColumnIndexOrThrow(CTBDatabase.Tables.CTB_STOPS.COLUMN_LONGITUDE));
-            } else if (busCompany.equals("GMB")){
-                try {
+            try {
+                // Extract data based on bus company
+                if (Objects.equals(busCompany, "kmb")) {
+                    stopId = cursor.getString(cursor.getColumnIndexOrThrow(KMBDatabase.Tables.KMB_ROUTE_STOPS.COLUMN_STOP_ID));
+                    stopNameEn = cursor.getString(cursor.getColumnIndexOrThrow(KMBDatabase.Tables.KMB_STOPS.COLUMN_STOP_NAME_EN));
+                    stopNameTc = cursor.getString(cursor.getColumnIndexOrThrow(KMBDatabase.Tables.KMB_STOPS.COLUMN_STOP_NAME_TC));
+                    stopNameSc = cursor.getString(cursor.getColumnIndexOrThrow(KMBDatabase.Tables.KMB_STOPS.COLUMN_STOP_NAME_SC));
+                    latitude = cursor.getString(cursor.getColumnIndexOrThrow(KMBDatabase.Tables.KMB_STOPS.COLUMN_LATITUDE));
+                    longitude = cursor.getString(cursor.getColumnIndexOrThrow(KMBDatabase.Tables.KMB_STOPS.COLUMN_LONGITUDE));
+                } else if (busCompany.equalsIgnoreCase("ctb")) {
+                    stopId = cursor.getString(cursor.getColumnIndexOrThrow(CTBDatabase.Tables.CTB_ROUTE_STOPS.COLUMN_STOP_ID));
+                    stopNameEn = cursor.getString(cursor.getColumnIndexOrThrow(CTBDatabase.Tables.CTB_STOPS.COLUMN_NAME_EN));
+                    stopNameTc = cursor.getString(cursor.getColumnIndexOrThrow(CTBDatabase.Tables.CTB_STOPS.COLUMN_NAME_TC));
+                    stopNameSc = cursor.getString(cursor.getColumnIndexOrThrow(CTBDatabase.Tables.CTB_STOPS.COLUMN_NAME_SC));
+                    latitude = cursor.getString(cursor.getColumnIndexOrThrow(CTBDatabase.Tables.CTB_STOPS.COLUMN_LATITUDE));
+                    longitude = cursor.getString(cursor.getColumnIndexOrThrow(CTBDatabase.Tables.CTB_STOPS.COLUMN_LONGITUDE));
+                } else if (busCompany.equals("GMB")) {
                     stopId = cursor.getString(cursor.getColumnIndexOrThrow(GMBDatabase.Tables.GMB_ROUTE_STOPS.COLUMN_STOP_ID));
                     stopNameEn = cursor.getString(cursor.getColumnIndexOrThrow(GMBDatabase.Tables.GMB_ROUTE_STOPS.STOP_NAME_EN));
                     stopNameTc = cursor.getString(cursor.getColumnIndexOrThrow(GMBDatabase.Tables.GMB_ROUTE_STOPS.STOP_NAME_TC));
                     stopNameSc = cursor.getString(cursor.getColumnIndexOrThrow(GMBDatabase.Tables.GMB_ROUTE_STOPS.STOP_NAME_SC));
-
-                    // Log all column names to help debug
-                    String[] columnNames = cursor.getColumnNames();
-                    Log.d(TAG, "GMB cursor columns: " + Arrays.toString(columnNames));
-
+                    
+                    // Try to get location data from the joined query first
                     try {
-                        // Get location data from the join with GMB_STOP_LOCATIONS
                         latitude = cursor.getString(cursor.getColumnIndexOrThrow(GMBDatabase.Tables.GMB_STOP_LOCATIONS.COLUMN_LATITUDE));
                         longitude = cursor.getString(cursor.getColumnIndexOrThrow(GMBDatabase.Tables.GMB_STOP_LOCATIONS.COLUMN_LONGITUDE));
-                        Log.d(TAG, "Found GMB stop location data: lat=" + latitude + ", lng=" + longitude);
+                        Log.d(TAG, "Found GMB stop location data in cursor: lat=" + latitude + ", lng=" + longitude);
                     } catch (Exception e) {
-                        // Handle case where location data might be missing
-                        Log.e(TAG, "Missing location data for GMB stop " + stopId + ": " + e.getMessage());
-                        latitude = null;
-                        longitude = null;
+                        Log.d(TAG, "Location data not in cursor for GMB stop " + stopId + ", checking database");
+                        // If not in the cursor, try to get from the database directly
+                        String[] locationData = fetchGMBStopLocationFromDatabase(stopId);
+                        latitude = locationData[0];
+                        longitude = locationData[1];
                     }
-                } catch (Exception e) {
-                    Log.e(TAG, "Error processing GMB stop data: " + e.getMessage());
-                    // Set default values to prevent null pointer exceptions
-                    stopId = "unknown";
-                    stopNameEn = "Unknown Stop";
-                    stopNameTc = "未知站";
-                    stopNameSc = "未知站";
-                    latitude = null;
-                    longitude = null;
+                    
+                    // If location data is still missing, schedule an API fetch
+                    if (latitude == null || latitude.isEmpty() || longitude == null || longitude.isEmpty()) {
+                        Log.d(TAG, "Missing location data for GMB stop " + stopId + ", scheduling API fetch");
+                        final String finalStopId = stopId;
+                        dataFetcher.fetchGMBStopLocation(stopId, 
+                            jsonData -> {
+                                Log.d(TAG, "Successfully fetched location for GMB stop " + finalStopId);
+                                // Location will be saved to database by DataFetcher
+                            }, 
+                            error -> {
+                                Log.e(TAG, "Failed to fetch location for GMB stop " + finalStopId + ": " + error);
+                            });
+                    }
                 }
+            } catch (Exception e) {
+                Log.e(TAG, "Error processing stop data: " + e.getMessage());
+                // Set default values to prevent null pointer exceptions
+                if (stopId == null) stopId = "unknown";
+                if (stopNameEn == null) stopNameEn = "Unknown Stop";
+                if (stopNameTc == null) stopNameTc = "未知站";
+                if (stopNameSc == null) stopNameSc = "未知站";
             }
 
             Log.d(TAG, "Processing stop " + index + ": ID=" + stopId + ", Name=" + stopNameEn);
@@ -564,12 +600,12 @@ public class BusRouteDetailViewActivity extends AppCompatActivity implements OnM
             String adjustedBound = (routeBound.equalsIgnoreCase("outbound") || routeBound.equalsIgnoreCase("O")) ? "O" : "I";
             Log.d(TAG, "Stop " + index + " using bound: " + routeBound + " (adjusted to: " + adjustedBound + ")");
 
+            // Create and add the stop item based on bus company
             if (busCompany.equalsIgnoreCase("kmb") || busCompany.equalsIgnoreCase("ctb")) {
                 stops.add(new BusRouteStopItem(
                         routeNumber, adjustedBound, routeServiceType,
                         stopNameEn, stopNameTc, stopNameSc, stopId, busCompany));
             } else {
-
                 Log.d("LogBusRouteDetailView", "Bus Company: " + busCompany);
                 Log.d("LogBusRouteDetailView", "GMB Route ID: " + gmbRouteID);
                 Log.d("LogBusRouteDetailView", "GMB Route Seq: " + gmbRouteSeq);
@@ -580,31 +616,32 @@ public class BusRouteDetailViewActivity extends AppCompatActivity implements OnM
                         gmbRouteID, gmbRouteSeq));
             }
 
-                // Process coordinates if available
-                if (latitude != null && !latitude.isEmpty() && longitude != null && !longitude.isEmpty()) {
-                    try {
-                        double lat = Double.parseDouble(latitude);
-                        double lng = Double.parseDouble(longitude);
-                        LatLng stopPosition = new LatLng(lat, lng);
-                        stopPositions.add(stopPosition);
+            // Process coordinates if available
+            if (latitude != null && !latitude.isEmpty() && longitude != null && !longitude.isEmpty()) {
+                try {
+                    double lat = Double.parseDouble(latitude);
+                    double lng = Double.parseDouble(longitude);
+                    LatLng stopPosition = new LatLng(lat, lng);
+                    stopPositions.add(stopPosition);
 
-                        // Create marker for later addition to map
-                        float markerHue = (index == 0) ? BitmapDescriptorFactory.HUE_BLUE : BitmapDescriptorFactory.HUE_RED;
-                        markers.add(new MarkerOptions()
-                                .position(stopPosition)
-                                .title(stopNameEn)
-                                .icon(BitmapDescriptorFactory.defaultMarker(markerHue)));
-                    } catch (NumberFormatException e) {
-                        Log.e(TAG, "Invalid coordinates for stop " + stopId + ": " + e.getMessage());
-                    }
+                    // Create marker for later addition to map
+                    float markerHue = (index == 0) ? BitmapDescriptorFactory.HUE_BLUE : BitmapDescriptorFactory.HUE_RED;
+                    markers.add(new MarkerOptions()
+                            .position(stopPosition)
+                            .title(stopNameEn)
+                            .icon(BitmapDescriptorFactory.defaultMarker(markerHue)));
+                } catch (NumberFormatException e) {
+                    Log.e(TAG, "Invalid coordinates for stop " + stopId + ": " + e.getMessage());
                 }
-                index++;
+            }
+            index++;
         }
     }
 
+    // API fallback for GMB
     private void fallbackForGMB(SQLiteDatabase db, String gmbRouteID, String gmbRouteSeq) {
         Log.d(TAG, "Performing API fallback for GMB route ID: " + gmbRouteID + ", sequence: " + gmbRouteSeq);
-        
+
         // Double-check that we have valid route ID
         if (gmbRouteID == null || gmbRouteID.isEmpty()) {
             Log.e(TAG, "GMB Route ID is null or empty in fallbackForGMB method!");
@@ -612,47 +649,47 @@ public class BusRouteDetailViewActivity extends AppCompatActivity implements OnM
                 "Error: Missing GMB route information", Toast.LENGTH_SHORT).show());
             return;
         }
-        
+
         try {
-            
+
             // Show loading toast on main thread
             runOnUiThread(() -> Toast.makeText(
-                BusRouteDetailViewActivity.this, 
-                "Loading GMB stops from API...", 
+                BusRouteDetailViewActivity.this,
+                "Loading GMB stops from API...",
                 Toast.LENGTH_SHORT).show());
-            
+
             // Using a CountDownLatch to block until API response is processed
             final CountDownLatch latch = new CountDownLatch(1);
             final AtomicBoolean apiSuccess = new AtomicBoolean(false);
             final List<BusRouteStopItem> freshStops = Collections.synchronizedList(new ArrayList<>());
             final List<LatLng> stopPositions = Collections.synchronizedList(new ArrayList<>());
-            
+
             // Create a custom callback handler for the API call
             Consumer<String> onSuccess = jsonData -> {
                 try {
                     Log.d(TAG, "GMB API response received: " + (jsonData != null ? "data available" : "no data"));
-                    
+
                     if (jsonData != null && !jsonData.isEmpty()) {
                         JSONObject jsonObject = new JSONObject(jsonData);
-                        
+
                         if (jsonObject.has("data") && !jsonObject.isNull("data")) {
                             JSONObject data = jsonObject.getJSONObject("data");
-                            
+
                             if (data.has("route_stops")) {
                                 JSONArray routeStops = data.getJSONArray("route_stops");
                                 Log.d(TAG, "Found " + routeStops.length() + " GMB stops from API");
-                                
+
                                 // Process each stop
                                 for (int i = 0; i < routeStops.length(); i++) {
                                     JSONObject stop = routeStops.getJSONObject(i);
-                                    
+
                                     String stopId = stop.optString("stop_id", "unknown");
                                     String stopNameEn = stop.optString("name_en", "Unknown Stop");
                                     String stopNameTc = stop.optString("name_tc", "未知站");
                                     String stopNameSc = stop.optString("name_sc", "未知站");
-                                    
+
                                     // Create stop item
-                                    String adjustedBound = (routeBound.equalsIgnoreCase("outbound") || 
+                                    String adjustedBound = (routeBound.equalsIgnoreCase("outbound") ||
                                                          routeBound.equalsIgnoreCase("O")) ? "O" : "I";
 
                                     Log.d(TAG, "Before insert to database, gmbRouteID: " + gmbRouteID + ", gmbRouteSeq: " + gmbRouteSeq);
@@ -661,11 +698,11 @@ public class BusRouteDetailViewActivity extends AppCompatActivity implements OnM
                                         routeNumber, adjustedBound, routeServiceType,
                                         stopNameEn, stopNameTc, stopNameSc, stopId, gmbRouteID, String.valueOf(gmbRouteSeq));
                                     freshStops.add(item);
-                                    
+
                                     // Try to get location data for the stop
                                     fetchGMBStopLocation(stopId, freshStops.size() - 1, freshStops, stopPositions);
                                 }
-                                
+
                                 apiSuccess.set(true);
                             } else {
                                 Log.e(TAG, "No route_stops array in GMB API response");
@@ -681,10 +718,10 @@ public class BusRouteDetailViewActivity extends AppCompatActivity implements OnM
                     latch.countDown();
                 }
             };
-            
+
             // Make the API call
             dataFetcher.fetchGMBRouteStops(Integer.parseInt(gmbRouteID), Integer.parseInt(gmbRouteSeq), onSuccess);
-            
+
             // Wait for the API response with a timeout
             try {
                 boolean completed = latch.await(10, TimeUnit.SECONDS);
@@ -695,26 +732,26 @@ public class BusRouteDetailViewActivity extends AppCompatActivity implements OnM
                 Log.e(TAG, "Interrupted while waiting for GMB API response", e);
                 Thread.currentThread().interrupt();
             }
-            
+
             // Update UI on main thread
             runOnUiThread(() -> {
                 if (apiSuccess.get() && !freshStops.isEmpty()) {
                     Log.d(TAG, "Updating UI with " + freshStops.size() + " GMB stops from API");
-                    
+
                     // Clear existing items
                     busRouteStopItems.clear();
                     busRouteStopItems.addAll(freshStops);
                     adapter.notifyDataSetChanged();
-                    
+
                     // Update map with any stop positions we gathered
                     if (!stopPositions.isEmpty() && mMap != null) {
                         mMap.clear();
-                        
+
                         // Add markers for each stop
                         for (int i = 0; i < stopPositions.size(); i++) {
                             LatLng stopPosition = stopPositions.get(i);
                             float markerHue = (i == 0) ? BitmapDescriptorFactory.HUE_BLUE : BitmapDescriptorFactory.HUE_RED;
-                            
+
                             // Get the correct stop from freshStops if indices match
                             String stopTitle = "Stop " + (i + 1);
                             if (i < freshStops.size()) {
@@ -722,18 +759,18 @@ public class BusRouteDetailViewActivity extends AppCompatActivity implements OnM
                                 // Use the English name of the stop
                                 stopTitle = stop.getStopEn();
                             }
-                            
+
                             mMap.addMarker(new MarkerOptions()
                                 .position(stopPosition)
                                 .title(stopTitle)
                                 .icon(BitmapDescriptorFactory.defaultMarker(markerHue)));
                         }
-                        
+
                         // Draw route line if we have multiple stops
                         if (stopPositions.size() >= 2) {
                             connectPointsOnMap(stopPositions);
                         }
-                        
+
                         // Center map on first stop
                         mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(stopPositions.get(0), 15f));
                     } else {
@@ -744,9 +781,9 @@ public class BusRouteDetailViewActivity extends AppCompatActivity implements OnM
                             mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(defaultHongKong, 12f));
                         }
                     }
-                    
+
                     Toast.makeText(BusRouteDetailViewActivity.this,
-                        "Loaded " + freshStops.size() + " GMB bus stops from API", 
+                        "Loaded " + freshStops.size() + " GMB bus stops from API",
                         Toast.LENGTH_SHORT).show();
                 } else {
                     Log.e(TAG, "Failed to fetch GMB stops from API");
@@ -754,29 +791,30 @@ public class BusRouteDetailViewActivity extends AppCompatActivity implements OnM
                         "Failed to load GMB bus stops", Toast.LENGTH_SHORT).show();
                 }
             });
-            
+
         } catch (NumberFormatException e) {
             Log.e(TAG, "Invalid route ID or sequence: " + e.getMessage());
             runOnUiThread(() -> Toast.makeText(
                 BusRouteDetailViewActivity.this,
-                "Error: Invalid GMB route information", 
+                "Error: Invalid GMB route information",
                 Toast.LENGTH_SHORT).show());
         }
     }
-    
+
     // Helper method to fetch location data for a GMB stop
     private void fetchGMBStopLocation(String stopId, int index, List<BusRouteStopItem> stops, List<LatLng> positions) {
+        Log.d("BusRouteDetailViewActivity", "Fetching GMB stop location for " + stopId);
         if (stopId == null || stopId.isEmpty() || stopId.equals("unknown")) {
             Log.d(TAG, "Invalid stop ID for location fetch");
             return;
         }
-        
+
         // Check if we already have this stop location in the database
         try {
             SQLiteDatabase db = databaseHelper.getReadableDatabase();
-            String query = "SELECT * FROM " + GMBDatabase.Tables.GMB_STOP_LOCATIONS.TABLE_NAME + 
+            String query = "SELECT * FROM " + GMBDatabase.Tables.GMB_STOP_LOCATIONS.TABLE_NAME +
                           " WHERE " + GMBDatabase.Tables.GMB_STOP_LOCATIONS.COLUMN_STOP_ID + " = ?";
-            
+
             try (Cursor cursor = db.rawQuery(query, new String[]{stopId})) {
                 if (cursor.moveToFirst()) {
                     // We have location data in the database
@@ -784,13 +822,13 @@ public class BusRouteDetailViewActivity extends AppCompatActivity implements OnM
                         cursor.getColumnIndex(GMBDatabase.Tables.GMB_STOP_LOCATIONS.COLUMN_LATITUDE));
                     @SuppressLint("Range") String longitude = cursor.getString(
                         cursor.getColumnIndex(GMBDatabase.Tables.GMB_STOP_LOCATIONS.COLUMN_LONGITUDE));
-                    
+
                     if (latitude != null && !latitude.isEmpty() && longitude != null && !longitude.isEmpty()) {
                         try {
                             double lat = Double.parseDouble(latitude);
                             double lng = Double.parseDouble(longitude);
                             LatLng stopPosition = new LatLng(lat, lng);
-                            
+
                             // Only add if index is valid
                             if (index >= 0 && index < stops.size()) {
                                 synchronized (positions) {
@@ -811,10 +849,10 @@ public class BusRouteDetailViewActivity extends AppCompatActivity implements OnM
         } catch (Exception e) {
             Log.e(TAG, "Error checking database for stop location: " + e.getMessage());
         }
-        
+
         // If we get here, we need to fetch from API - use the DataFetcher method
         Log.d(TAG, "No location data in database for GMB stop " + stopId + ", fetching from API");
-        
+
         // Create a listener for the database updates
         // This will monitor the database for changes to this stop's location data
         Thread dbMonitorThread = new Thread(() -> {
@@ -822,11 +860,11 @@ public class BusRouteDetailViewActivity extends AppCompatActivity implements OnM
             for (int attempt = 0; attempt < 5; attempt++) { // Try for a reasonable amount of time
                 try {
                     Thread.sleep(1000); // Check every second
-                    
+
                     SQLiteDatabase db = databaseHelper.getReadableDatabase();
-                    String query = "SELECT * FROM " + GMBDatabase.Tables.GMB_STOP_LOCATIONS.TABLE_NAME + 
+                    String query = "SELECT * FROM " + GMBDatabase.Tables.GMB_STOP_LOCATIONS.TABLE_NAME +
                                   " WHERE " + GMBDatabase.Tables.GMB_STOP_LOCATIONS.COLUMN_STOP_ID + " = ?";
-                    
+
                     try (Cursor cursor = db.rawQuery(query, new String[]{stopId})) {
                         if (cursor.moveToFirst()) {
                             // Check if we have valid location data
@@ -834,13 +872,13 @@ public class BusRouteDetailViewActivity extends AppCompatActivity implements OnM
                                 cursor.getColumnIndex(GMBDatabase.Tables.GMB_STOP_LOCATIONS.COLUMN_LATITUDE));
                             @SuppressLint("Range") String longitude = cursor.getString(
                                 cursor.getColumnIndex(GMBDatabase.Tables.GMB_STOP_LOCATIONS.COLUMN_LONGITUDE));
-                            
+
                             if (latitude != null && !latitude.isEmpty() && longitude != null && !longitude.isEmpty()) {
                                 try {
                                     double lat = Double.parseDouble(latitude);
                                     double lng = Double.parseDouble(longitude);
                                     LatLng stopPosition = new LatLng(lat, lng);
-                                    
+
                                     // Only add if index is valid
                                     if (index >= 0 && index < stops.size()) {
                                         synchronized (positions) {
@@ -850,7 +888,7 @@ public class BusRouteDetailViewActivity extends AppCompatActivity implements OnM
                                             }
                                             positions.set(index, stopPosition);
                                         }
-                                        
+
                                         // If we have enough positions, update the map
                                         if (positions.size() >= 2) {
                                             final List<LatLng> validPositions = new ArrayList<>();
@@ -861,7 +899,7 @@ public class BusRouteDetailViewActivity extends AppCompatActivity implements OnM
                                                     }
                                                 }
                                             }
-                                            
+
                                             if (validPositions.size() >= 2) {
                                                 handler.post(() -> {
                                                     if (mMap != null) {
@@ -870,7 +908,7 @@ public class BusRouteDetailViewActivity extends AppCompatActivity implements OnM
                                                 });
                                             }
                                         }
-                                        
+
                                         locationFound = true;
                                         break;
                                     }
@@ -887,14 +925,14 @@ public class BusRouteDetailViewActivity extends AppCompatActivity implements OnM
                     Log.e(TAG, "Error monitoring database for GMB stop location: " + e.getMessage());
                 }
             }
-            
+
             if (!locationFound) {
                 Log.d(TAG, "No location data found for GMB stop " + stopId + " after waiting");
             }
         });
         dbMonitorThread.setDaemon(true);
         dbMonitorThread.start();
-        
+
         // Use DataFetcher to make the API call
         dataFetcher.fetchGMBStopLocation(stopId);
     }
@@ -919,16 +957,16 @@ public class BusRouteDetailViewActivity extends AppCompatActivity implements OnM
         } else if (isGMB) {
             // For GMB, use the specialized GMB fallback method
             Log.d(TAG, "Using specialized GMB fallback method");
-            
+
             // Convert bound from "I"/"O" to "1"/"2" for GMB API
             String gmbRouteSeq = adjustedBound.equalsIgnoreCase("I") ? "1" : "2";
-            
+
             // Ensure we have the gmbRouteID from intent
             if (gmbRouteID == null || gmbRouteID.isEmpty()) {
                 gmbRouteID = getIntent().getStringExtra("gmbRouteID");
                 Log.d(TAG, "Re-fetched GMB Route ID from intent: " + gmbRouteID);
             }
-            
+
             if (gmbRouteID != null && !gmbRouteID.isEmpty()) {
                 fallbackForGMB(db, gmbRouteID, gmbRouteSeq);
             } else {
@@ -1021,7 +1059,7 @@ public class BusRouteDetailViewActivity extends AppCompatActivity implements OnM
 
                         // Connect stops on map and draw the route
                         connectPointsOnMap(stopPositions);
-                        
+
                         // Log success message
                         Log.d(TAG, "Successfully fetched and processed " + sortedStops.size() + " stops from API");
                     });
@@ -1045,18 +1083,18 @@ public class BusRouteDetailViewActivity extends AppCompatActivity implements OnM
                 Log.e(TAG, "Empty response for stop " + stopID);
                 return;
             }
-            
+
             JSONObject jsonResponse = new JSONObject(response);
             if (!jsonResponse.has("data")) {
                 Log.e(TAG, "Invalid response format for stop " + stopID + ": " + response);
                 return;
             }
-            
+
             JSONObject stopData = jsonResponse.getJSONObject("data");
             Log.d(TAG, "API result for stop " + stopID + " (seq: " + sequence + "): " + response);
 
             // Verify all required fields are present
-            if (!stopData.has("name_en") || !stopData.has("name_tc") || 
+            if (!stopData.has("name_en") || !stopData.has("name_tc") ||
                 !stopData.has("name_sc") || !stopData.has("lat") || !stopData.has("long")) {
                 Log.e(TAG, "Missing required fields in stop data for " + stopID);
                 return;
@@ -1094,7 +1132,7 @@ public class BusRouteDetailViewActivity extends AppCompatActivity implements OnM
                             .title(stopNameEn)
                             .snippet("Stop #" + sequence)
                             .icon(BitmapDescriptorFactory.defaultMarker(markerHue));
-                    
+
                     markers.add(markerOptions);
                     Log.d(TAG, "Added marker for stop " + stopID + " at " + lat + "," + lng);
                 }
@@ -1120,20 +1158,20 @@ public class BusRouteDetailViewActivity extends AppCompatActivity implements OnM
         try {
             Log.d(TAG, "Debugging GMB_STOP_LOCATIONS table:");
             String query = "SELECT * FROM " + GMBDatabase.Tables.GMB_STOP_LOCATIONS.TABLE_NAME + " LIMIT 10";
-            
+
             try (Cursor cursor = db.rawQuery(query, null)) {
                 Log.d(TAG, "Found " + cursor.getCount() + " entries in GMB_STOP_LOCATIONS table");
-                
+
                 if (cursor.getCount() > 0) {
                     String[] columnNames = cursor.getColumnNames();
                     Log.d(TAG, "Columns: " + Arrays.toString(columnNames));
-                    
+
                     while (cursor.moveToNext()) {
                         try {
                             String stopId = cursor.getString(cursor.getColumnIndexOrThrow(GMBDatabase.Tables.GMB_STOP_LOCATIONS.COLUMN_STOP_ID));
                             String lat = cursor.getString(cursor.getColumnIndexOrThrow(GMBDatabase.Tables.GMB_STOP_LOCATIONS.COLUMN_LATITUDE));
                             String lng = cursor.getString(cursor.getColumnIndexOrThrow(GMBDatabase.Tables.GMB_STOP_LOCATIONS.COLUMN_LONGITUDE));
-                            
+
                             Log.d(TAG, "GMB Location: Stop ID=" + stopId + ", Lat=" + lat + ", Lng=" + lng);
                         } catch (Exception e) {
                             Log.e(TAG, "Error retrieving GMB stop location data: " + e.getMessage());
@@ -1145,7 +1183,7 @@ public class BusRouteDetailViewActivity extends AppCompatActivity implements OnM
             Log.e(TAG, "Error debugging GMB_STOP_LOCATIONS: " + e.getMessage());
         }
     }
-    
+
     // Helper class to associate a stop with its sequence number
     private static class StopWithSequence {
         final BusRouteStopItem stopItem;
@@ -1209,14 +1247,14 @@ public class BusRouteDetailViewActivity extends AppCompatActivity implements OnM
 
             // Get the origin (first stop) and final destination (last stop)
             String origin = stopPositions.get(0).latitude + "," + stopPositions.get(0).longitude;
-            String finalDestination = stopPositions.get(stopPositions.size() - 1).latitude + "," + 
+            String finalDestination = stopPositions.get(stopPositions.size() - 1).latitude + "," +
                                     stopPositions.get(stopPositions.size() - 1).longitude;
 
             // Break intermediate stops into batches of 23 (25 total including origin and destination)
             List<List<LatLng>> batches = new ArrayList<>();
             // Skip first point as it's the origin
             List<LatLng> intermediatePoints = stopPositions.subList(1, stopPositions.size() - 1);
-            
+
             for (int i = 0; i < intermediatePoints.size(); i += 23) {
                 int end = Math.min(i + 23, intermediatePoints.size());
                 batches.add(intermediatePoints.subList(i, end));

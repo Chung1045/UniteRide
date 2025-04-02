@@ -363,14 +363,11 @@ public class GMBDatabase {
         }
     }
 
-    public void updateStopLocation(String jsonData) throws JSONException {
+    public void updateStopLocation(String jsonData, String stopID) throws JSONException {
         Log.d("GMBDatabase", "updateStopLocations");
 
         JSONObject jsonObject = new JSONObject(jsonData);
         JSONObject data = jsonObject.getJSONObject("data");
-        
-        // Get the stop ID
-        int stopId = data.getInt("stop_id");
         
         JSONObject location = data.getJSONObject("coordinates");
         JSONObject coordinates = location.getJSONObject("wgs84");
@@ -378,10 +375,10 @@ public class GMBDatabase {
         String lat = coordinates.getString("latitude");
         String lng = coordinates.getString("longitude");
 
-        Log.d("GMBDatabase", "Adding location for stop " + stopId + ": lat=" + lat + ", lng=" + lng);
+        Log.d("GMBDatabase", "Adding location for stop " + stopID + ": lat=" + lat + ", lng=" + lng);
 
         ContentValues values = new ContentValues();
-        values.put(Tables.GMB_STOP_LOCATIONS.COLUMN_STOP_ID, stopId);
+        values.put(Tables.GMB_STOP_LOCATIONS.COLUMN_STOP_ID, stopID);
         values.put(Tables.GMB_STOP_LOCATIONS.COLUMN_LATITUDE, lat);
         values.put(Tables.GMB_STOP_LOCATIONS.COLUMN_LONGITUDE, lng);
 
@@ -389,9 +386,9 @@ public class GMBDatabase {
             db.beginTransaction();
             db.insertWithOnConflict(Tables.GMB_STOP_LOCATIONS.TABLE_NAME, null, values, SQLiteDatabase.CONFLICT_REPLACE);
             db.setTransactionSuccessful();
-            Log.d("GMBDatabase", "Successfully saved location for stop " + stopId);
+            Log.d("GMBDatabase", "Successfully saved location for stop " + stopID);
         } catch (Exception e) {
-            Log.e("GMBDatabase", "Error inserting stop location for stop " + stopId, e);
+            Log.e("GMBDatabase", "Error inserting stop location for stop " + stopID, e);
         } finally {
             db.endTransaction();
         }
