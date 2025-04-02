@@ -20,6 +20,7 @@ import com.chung.a9rushtobus.fragments.FragmentSaved;
 import com.chung.a9rushtobus.fragments.FragmentSearch;
 import com.chung.a9rushtobus.fragments.FragmentSettings;
 import com.chung.a9rushtobus.fragments.FragmentTrafficNews;
+import com.chung.a9rushtobus.preferences.LocaleHelper;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.android.material.color.DynamicColors;
 
@@ -27,6 +28,7 @@ public class MainActivity extends AppCompatActivity {
     private BottomNavigationView bottomNav;
     private UserPreferences userPreferences;
     private DatabaseHelper dbHelper;
+    private LocaleHelper localeHelper;
     private SharedPreferences.OnSharedPreferenceChangeListener preferenceChangeListener;
     private boolean isDataReady = false;
 
@@ -34,54 +36,39 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
+        // Initialize user preferences
         userPreferences = new UserPreferences(this);
+
+        if (savedInstanceState == null) {
+            localeHelper = new LocaleHelper();
+            String localeCode = UserPreferences.sharedPref.getString(UserPreferences.SETTINGS_APP_LANG, "en");
+            localeHelper.setAppLocale(this, localeCode);
+        }
+
+        // Continue with existing logic
         dbHelper = new DatabaseHelper(this);
         dbHelper.onCreate(dbHelper.getWritableDatabase());
 
         SplashScreen splashScreen = SplashScreen.installSplashScreen(this);
         splashScreen.setKeepOnScreenCondition(() -> !isDataReady);
 
-        splashScreen.setOnExitAnimationListener(splashScreenView -> {
-            // This code will be executed after the splash screen is dismissed.
-            boolean isFirstTimeLaunch = UserPreferences.sharedPref.getBoolean(UserPreferences.ONBOARDING_COMPLETE, true);
-
-            if (isFirstTimeLaunch) {
-                startActivity(new Intent(this, OnboardingActivity.class));
-                finish();
-            } else {
-                initTheme();
-
-                bottomNav = findViewById(R.id.bottomNav_main);
-                initListener();
-            }
-            // Remove the splash screen view from the view hierarchy.
-            splashScreenView.remove();
-        });
-
         new Thread(() -> {
             try {
-                Thread.sleep(3000);
-            } catch (Exception e){
+                // Simulate background work like database loading
+                Thread.sleep(2000);
+            } catch (Exception e) {
                 e.printStackTrace();
             }
             isDataReady = true;
+            runOnUiThread(() -> splashScreen.setKeepOnScreenCondition(() -> false));
         }).start();
-        EdgeToEdge.enable(this);
         setContentView(R.layout.activity_main);
-        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
-            Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
-            v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
-            return insets;
-        });
 
         bottomNav = findViewById(R.id.bottomNav_main);
-        bottomNav.setItemActiveIndicatorColor(
-                ContextCompat.getColorStateList(this, R.color.brand_colorPrimary)
-        );
-
         initTheme();
         initListener();
     }
+
 
     private void updateBottomNavVisibility() {
         BottomNavigationView bottomNav = findViewById(R.id.bottomNav_main);
@@ -90,6 +77,9 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void initListener() {
+        bottomNav.setItemActiveIndicatorColor(
+                ContextCompat.getColorStateList(this, R.color.brand_colorPrimary)
+        );
 
         bottomNav.setOnItemSelectedListener(item -> {
             int menuItemId = item.getItemId();

@@ -20,16 +20,30 @@ import com.chung.a9rushtobus.elements.CustomRadioButtonPreference;
 import com.chung.a9rushtobus.elements.CustomSwitchPreference;
 
 import java.util.Locale;
+import java.util.Objects;
 
 public class SettingsLanguagePreferenceView extends PreferenceFragmentCompat {
+    private static final String CURRENT_TOOLBAR_TITLE = "current_toolbar_title";
+    
+    // Factory method to create a new instance of this fragment
+    public static SettingsLanguagePreferenceView newInstance() {
+        return new SettingsLanguagePreferenceView();
+    }
 
     private CustomMainSwitchPreference followSysPref;
-
     private CustomRadioButtonPreference chinTradPref, chinSimpPref, engPref;
+    private LocaleHelper localeHelper;
 
     @Override
     public void onCreatePreferences(Bundle savedInstanceState, String rootKey) {
         setPreferencesFromResource(R.xml.preference_language, rootKey);
+        localeHelper = new LocaleHelper();
+        
+        // Initialize UserPreferences only if we're attached to an activity
+        if (getActivity() != null) {
+            new UserPreferences(getActivity());
+        }
+        
         layoutInit();
         listenerInit();
     }
@@ -37,9 +51,30 @@ public class SettingsLanguagePreferenceView extends PreferenceFragmentCompat {
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
+        
+        // Restore toolbar title
+        String savedTitle = UserPreferences.sharedPref.getString(CURRENT_TOOLBAR_TITLE, null);
+        if (savedTitle != null) {
+            updateToolbarTitle(savedTitle);
+        }
+    }
+
+    private void updateToolbarTitle(String title) {
+        if (getActivity() != null) {
+            androidx.appcompat.widget.Toolbar toolbar = getActivity().findViewById(R.id.settingsToolBar);
+            com.google.android.material.appbar.CollapsingToolbarLayout collapsingToolbar = 
+                (com.google.android.material.appbar.CollapsingToolbarLayout) toolbar.getParent();
+
+            toolbar.setTitle(title);
+            if (collapsingToolbar != null) {
+                collapsingToolbar.setTitle(title);
+            }
+        }
     }
 
     private void listenerInit() {
+        // Make sure we're attached to a context before proceeding
+        if (getContext() == null) return;
 
         assert chinTradPref != null;
         assert chinSimpPref != null;
@@ -50,13 +85,13 @@ public class SettingsLanguagePreferenceView extends PreferenceFragmentCompat {
             boolean isChecked = (Boolean) newValue;
             if (isChecked) {
                 Toast.makeText(getContext(), "Follow system lang selected", Toast.LENGTH_SHORT).show();
-                UserPreferences.editor.putBoolean(UserPreferences.SETTINGS_LANG_FOLLOW_SYSTEM, true).commit();
+                localeHelper.toggleFollowSysLocale(getContext());
                 chinTradPref.setEnabled(false);
                 chinSimpPref.setEnabled(false);
                 engPref.setEnabled(false);
             } else {
                 Toast.makeText(getContext(), "Follow system lang deselected", Toast.LENGTH_SHORT).show();
-                UserPreferences.editor.putBoolean(UserPreferences.SETTINGS_LANG_FOLLOW_SYSTEM, false).commit();
+                localeHelper.toggleFollowSysLocale(getContext());
                 chinTradPref.setEnabled(true);
                 chinSimpPref.setEnabled(true);
                 engPref.setEnabled(true);
@@ -66,6 +101,7 @@ public class SettingsLanguagePreferenceView extends PreferenceFragmentCompat {
 
         chinTradPref.setOnPreferenceChangeListener((preference, newValue) -> {
             if ((boolean) newValue) {
+                chinTradPref.setChecked(true);
                 chinSimpPref.setChecked(false);
                 engPref.setChecked(false);
                 setAppLocale(getContext(), "zh-rHK");
@@ -75,6 +111,7 @@ public class SettingsLanguagePreferenceView extends PreferenceFragmentCompat {
 
         chinSimpPref.setOnPreferenceChangeListener((preference, newValue) -> {
             if ((boolean) newValue) {
+                chinSimpPref.setChecked(true);
                 chinTradPref.setChecked(false);
                 engPref.setChecked(false);
                 setAppLocale(getContext(), "zh-rCN");                
@@ -84,6 +121,7 @@ public class SettingsLanguagePreferenceView extends PreferenceFragmentCompat {
 
         engPref.setOnPreferenceChangeListener((preference, newValue) -> {
             if ((boolean) newValue) {
+                engPref.setChecked(true);
                 chinTradPref.setChecked(false);
                 chinSimpPref.setChecked(false);
                 setAppLocale(getContext(), "en");
@@ -94,6 +132,9 @@ public class SettingsLanguagePreferenceView extends PreferenceFragmentCompat {
     }
 
     private void layoutInit() {
+        // Make sure we're attached to a context before proceeding
+        if (getContext() == null) return;
+        
         followSysPref = findPreference("pref_language_follow_system");
         chinTradPref = findPreference("pref_language_trad_chinese");
         chinSimpPref = findPreference("pref_language_simp_chinese");
@@ -114,6 +155,24 @@ public class SettingsLanguagePreferenceView extends PreferenceFragmentCompat {
             chinSimpPref.setEnabled(true);
             engPref.setEnabled(true);
         }
+
+        switch (UserPreferences.sharedPref.getString(UserPreferences.SETTINGS_APP_LANG, "en")) {
+            case "zh-rHK":
+                chinTradPref.setChecked(true);
+                chinSimpPref.setChecked(false);
+                engPref.setChecked(false);
+                break;
+            case "zh-rCN":
+                chinSimpPref.setChecked(true);
+                chinTradPref.setChecked(false);
+                engPref.setChecked(false);
+                break;
+            case "en":
+                engPref.setChecked(true);
+                chinTradPref.setChecked(false);
+                chinSimpPref.setChecked(false);
+        }
+
     }
 
     public void setAppLocale(Context context, String localeCode) {
@@ -140,9 +199,12 @@ public class SettingsLanguagePreferenceView extends PreferenceFragmentCompat {
         // Save the selected language preference
         UserPreferences.editor.putString(UserPreferences.SETTINGS_APP_LANG, localeCode).commit();
 
-        // Recreate the activity to apply changes
+        // Save current toolbar title before recreating
         if (context instanceof Activity) {
             Activity activity = (Activity) context;
+            // Save the current toolbar title
+            UserPreferences.editor.putString(CURRENT_TOOLBAR_TITLE, 
+                getString(R.string.settings_category_langOption_name)).apply();
             activity.recreate();
         }
     }

@@ -30,6 +30,4 @@
         android:title="@string/settings_lang_englishOption_name"
         android:defaultValue="false"/>
 
-
-
 </androidx.preference.PreferenceScreen>

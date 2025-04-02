@@ -21,8 +21,10 @@ import com.google.android.material.bottomnavigation.BottomNavigationView;
 
 public class SettingsMainPreferenceView extends PreferenceFragmentCompat {
 
+    private static final String KEY_CURRENT_TITLE = "current_title";
     private BottomNavigationView bottomNavigationView;
     private DataFetcher dataFetcher;
+    private String currentTitle;
 
     @Override
     public void onCreatePreferences(Bundle savedInstanceState, String rootKey) {
@@ -36,15 +38,28 @@ public class SettingsMainPreferenceView extends PreferenceFragmentCompat {
         super.onViewCreated(view, savedInstanceState);
         bottomNavigationView = requireActivity().findViewById(R.id.bottomNav_main);
 
-        // Set initial toolbar title
-        updateToolbarTitle(getString(R.string.bottomNav_settings_tabName));
+        // Restore saved title or set default
+        if (savedInstanceState != null) {
+            currentTitle = savedInstanceState.getString(KEY_CURRENT_TITLE);
+        }
+        if (currentTitle == null) {
+            currentTitle = getString(R.string.bottomNav_settings_tabName);
+        }
+        updateToolbarTitle(currentTitle);
         bottomNavigationView.setVisibility(View.VISIBLE);
+    }
+
+    @Override
+    public void onSaveInstanceState(@NonNull Bundle outState) {
+        super.onSaveInstanceState(outState);
+        outState.putString(KEY_CURRENT_TITLE, currentTitle);
     }
 
     private void updateToolbarTitle(String title) {
         MaterialToolbar toolbar = requireActivity().findViewById(R.id.settingsToolBar);
         CollapsingToolbarLayout collapsingToolbar = (CollapsingToolbarLayout) toolbar.getParent();
 
+        currentTitle = title;  // Save the current title
         toolbar.setTitle(title);
         if (collapsingToolbar != null) {
             collapsingToolbar.setTitle(title);
@@ -64,7 +79,7 @@ public class SettingsMainPreferenceView extends PreferenceFragmentCompat {
                             R.anim.slide_out_left,
                             R.anim.slide_in_left,
                             R.anim.slide_out_right
-                    ).replace(R.id.fragmentContainerView, new SettingsLanguagePreferenceView())
+                    ).replace(R.id.fragmentContainerView, SettingsLanguagePreferenceView.newInstance())
                     .addToBackStack(null)
                     .commit();
             bottomNavigationView.setVisibility(View.GONE);
