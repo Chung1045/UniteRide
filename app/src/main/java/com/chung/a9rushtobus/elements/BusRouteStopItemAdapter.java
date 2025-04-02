@@ -176,9 +176,7 @@ public class BusRouteStopItemAdapter extends RecyclerView.Adapter<BusRouteStopIt
         for (int position = 0; position < items.size(); position++) {
             BusRouteStopItem item = items.get(position);
             int finalPosition = position;
-            if (item.getCompany().equals("kmb") || item.getCompany().equals("ctb")) {
-                fetchEtaForStop(item, finalPosition, System.currentTimeMillis());
-            }
+            fetchEtaForStop(item, finalPosition, System.currentTimeMillis());
         }
 
         if (isUpdating) {
@@ -203,10 +201,12 @@ public class BusRouteStopItemAdapter extends RecyclerView.Adapter<BusRouteStopIt
             );
         } else {
             Log.d("ETARefresh", "Refreshing ETA for GMB " + position);
-            dataFetcher.fetchGMBStopETA(item.getStopID(), item.getGmbRouteID(), item.getGmbRouteSeq(),
+            Log.d("ETARefresh", "Value to be pass: " + item.getStopID() + " " + item.getGmbRouteID() + " " + position + 1);
+            dataFetcher.fetchGMBStopETA(item.getGmbRouteID(), item.getGmbRouteSeq(), String.valueOf(position + 1),
                     etaDataArray -> {
                         Log.d("ETARefresh", "ETA data received for position " + position);
                         Log.d("ETARefresh", "return value: " + etaDataArray);
+                        processEtaData(item, position, etaDataArray, startTime);
 //                processEtaData(item, position, etaDataArray, startTime);
                     }, error -> handleEtaError(item, position, error)
             );
@@ -219,6 +219,7 @@ public class BusRouteStopItemAdapter extends RecyclerView.Adapter<BusRouteStopIt
 
         try {
             if (etaDataArray.length() == 0) {
+                Log.d("ETARefresh", "No ETA data received for position " + position);
                 newEtaData.add("No available bus at the moment");
                 item.setClosestETA(null);
             } else {
@@ -231,10 +232,23 @@ public class BusRouteStopItemAdapter extends RecyclerView.Adapter<BusRouteStopIt
                         continue;
                     }
 
-                    String etaTime = utils.parseTime(etaData.optString("eta", "N/A"));
-                    String etaMinutes = utils.getTimeDifference(etaData.optString("eta", "N/A"));
+                    String etaTime = "N/A", etaMinutes = "N/A";
+
+                    if (item.getCompany().equals("ctb") || item.getCompany().equals("kmb")) {
+                        etaTime = utils.parseTime(etaData.optString("eta", "N/A"));
+                        etaMinutes = utils.getTimeDifference(etaData.optString("eta", "N/A"));
+                    } else if (item.getCompany().equals("gmb")) {
+                        Log.d("ETARefresh", "In GMB Block");
+                        etaTime = utils.parseTime(etaData.optString("timestamp", "N/A"));
+                        etaMinutes = etaData.optString("diff", "N/A");
+                        Log.d("ETARefresh", "ETA time: " + etaTime);
+                        Log.d("ETARefresh", "ETA minutes: " + etaMinutes);
+                    }
+
                     String displayText = etaMinutes.equals("N/A") ?
                             "No available bus" : etaTime + " " + etaMinutes + " mins";
+
+                    Log.d("ETARefresh", "Display text: " + displayText);
 
                     if (i == 0 && !etaMinutes.equals("N/A")) {
                         updateClosestEta(item, etaMinutes, position);

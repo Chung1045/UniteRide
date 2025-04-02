@@ -1,5 +1,7 @@
 package com.chung.a9rushtobus.elements;
 
+import android.util.Log;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -37,6 +39,7 @@ public class BusRouteStopItem {
         this.stopID = stopID;
         this.gmbRouteID = gmbRouteID;
         this.gmbRouteSeq = gmbRouteSeq;
+        this.company = "gmb"; // Set the company to "gmb" explicitly
     }
 
     public String getRoute() {
@@ -136,10 +139,12 @@ public class BusRouteStopItem {
     }
     
     // Simplified constructor for GMB routes
-    public BusRouteStopItem(String route, String serviceType, String stopID, String gmbRouteID) {
+    public BusRouteStopItem(String route, String serviceType, String stopID, String gmbRouteID, String gmbRouteSeq) {
         this.route = route;
         this.serviceType = serviceType;
         this.stopID = stopID;
         this.gmbRouteID = gmbRouteID;
+        this.gmbRouteSeq = gmbRouteSeq;
+        this.company = "gmb"; // Set the company to "gmb" explicitly
     }
 }

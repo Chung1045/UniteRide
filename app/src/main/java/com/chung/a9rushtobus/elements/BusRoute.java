@@ -16,6 +16,7 @@ public class BusRoute {
     private String destSc;
     private String gmbRouteID;
     private String gmbRouteRegion;
+    private String gmbRouteSeq;
     private String remarksEn;
     private String remarksTc;
     private String remarksSc;
@@ -44,19 +45,8 @@ public class BusRoute {
                    String remarksEn, String remarksTc, String remarksSc, String descriptionEn, String descriptionTc, String descriptionSc) {
         this.route = route;
         this.company = "GMB";
-        
-        // Convert route_sequence (1: inbound, 2: outbound) to direction bound
-        if (routeSeq != null) {
-            if (routeSeq.equals("1")) {
-                this.bound = "I";  // Inbound
-            } else if (routeSeq.equals("2")) {
-                this.bound = "O";  // Outbound
-            } else {
-                this.bound = routeSeq;  // If it's something else, just use the value
-            }
-        } else {
-            this.bound = "";
-        }
+
+        this.gmbRouteSeq = routeSeq;
         
         // For GMB, we can use the region as service type or combine with remarks if needed
         this.serviceType = region != null ? region : "";
@@ -137,6 +127,10 @@ public class BusRoute {
 
     public String getGmbRouteRegion() {
         return gmbRouteRegion;
+    }
+
+    public String getGMBRouteSeq() {
+        return gmbRouteSeq;
     }
 
     public String getDescriptionEn() {

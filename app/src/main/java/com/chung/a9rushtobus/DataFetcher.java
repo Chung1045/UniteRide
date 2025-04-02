@@ -519,10 +519,10 @@ public class DataFetcher {
         }
     }
 
-    public void fetchGMBStopETA(String stopID, String routeID, String routeSeq, Consumer<JSONArray> onSuccess, Consumer<String> onError) {
+    public void fetchGMBStopETA(String routeID, String routeSeq, String stopSeq, Consumer<JSONArray> onSuccess, Consumer<String> onError) {
         Log.d("DataFetch", "Fetching GMB stop ETA information");
-
-        String url = GMB_BASE_URL + "eta/route-stop/" + routeID + "/" + routeSeq + "/" + stopID;
+        Log.d("DataFetch", "Parameters: " + routeID + ", " + routeSeq + ", " + stopSeq);
+        String url = GMB_BASE_URL + "eta/route-stop/" + routeID + "/" + routeSeq + "/" + stopSeq;
         Request request = new Request.Builder().url(url).build();
 
         client.newCall(request).enqueue(new Callback() {
@@ -553,18 +553,22 @@ public class DataFetcher {
                     }
 
                     String jsonData = responseBody.string();
-                    Log.d("DataFetch", "Data for stopID " + stopID + ": " + jsonData);
+                    Log.d("DataFetch", "Data for stopSeq " + stopSeq + ": " + jsonData);
 
                     try {
+                        Log.d("DataFetch", "In try block");
                         JSONObject jsonObject = new JSONObject(jsonData);
-                        JSONArray dataArray = jsonObject.getJSONArray("data");
-                        mainHandler.post(() -> onSuccess.accept(dataArray));
+                        JSONObject dataArray = jsonObject.getJSONObject("data");
+                        JSONArray etaArray = dataArray.getJSONArray("eta");
+                        mainHandler.post(() -> onSuccess.accept(etaArray));
                     } catch (JSONException e) {
+                        Log.d("DataFetch", "In JSONEXCEPTION block");
                         String errMsg = "JSON parsing error: " + e.getMessage();
                         Log.e("DataFetch", errMsg);
                         mainHandler.post(() -> onError.accept(errMsg));
                     }
                 } catch (Exception e) {
+                    Log.d("DataFetch", "In exception e block");
                     String errMsg = "Error processing response: " + e.getMessage();
                     Log.e("DataFetch", errMsg);
                     mainHandler.post(() -> onError.accept(errMsg));

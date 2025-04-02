@@ -74,7 +74,7 @@ public class BusRouteDetailViewActivity extends AppCompatActivity implements OnM
     private BusRouteStopItemAdapter adapter;
     private RecyclerView busRouteStopRecyclerView;
     private List<BusRouteStopItem> busRouteStopItems;
-    private String routeNumber, routeDestination, gmbRouteID, routeBound, routeServiceType, busCompany, description;
+    private String routeNumber, routeDestination, gmbRouteID, gmbRouteSeq, routeBound, routeServiceType, busCompany, description;
     private Integer initialStopSeqView = 0;
     private Utils utils;
     private DataFetcher dataFetcher;
@@ -104,10 +104,25 @@ public class BusRouteDetailViewActivity extends AppCompatActivity implements OnM
         initialStopSeqView = getIntent().getIntExtra("initialStopSeqView", 0);
         busCompany = getIntent().getStringExtra("company");
 
+        // Log all intent extras for debugging
+        Bundle extras = getIntent().getExtras();
+        if (extras != null) {
+            for (String key : extras.keySet()) {
+                Log.d(TAG, "Intent Extra - " + key + ": " + extras.get(key));
+            }
+        }
+
         assert busCompany != null;
+        Log.d(TAG, "Bus Company: " + busCompany);
         if (busCompany.equals("GMB")) {
             gmbRouteID = getIntent().getStringExtra("gmbRouteID");
+            gmbRouteSeq = getIntent().getStringExtra("gmbRouteSeq");
             Log.d(TAG, "GMB Route ID: " + gmbRouteID);
+            Log.d(TAG, "GMB Route Seq: " + gmbRouteSeq);
+            
+            if (gmbRouteID == null || gmbRouteID.isEmpty()) {
+                Log.e(TAG, "WARNING: GMB Route ID is missing in the intent!");
+            }
         }
 
 
@@ -387,10 +402,20 @@ public class BusRouteDetailViewActivity extends AppCompatActivity implements OnM
                         // Convert bound from "outbound"/"inbound" to "2"/"1" for GMB API
                         String gmbRouteSeq = routeBound.equalsIgnoreCase("inbound") ? "1" : "2";
                         
+                        // Ensure we have the gmbRouteID from intent
+                        if (gmbRouteID == null || gmbRouteID.isEmpty()) {
+                            gmbRouteID = getIntent().getStringExtra("gmbRouteID");
+                            Log.d(TAG, "Re-fetched GMB Route ID from intent: " + gmbRouteID);
+                        }
+                        
                         if (gmbRouteID != null && !gmbRouteID.isEmpty()) {
                             fallbackForGMB(db, gmbRouteID, gmbRouteSeq);
                             // Skip the rest of the processing since fallbackForGMB handles UI updates
                             return;
+                        } else {
+                            Log.e(TAG, "Missing GMB route ID for API fallback");
+                            handler.post(() -> Toast.makeText(BusRouteDetailViewActivity.this,
+                                "Missing route information for GMB", Toast.LENGTH_SHORT).show());
                         }
                     }
                 } catch (InterruptedException e) {
@@ -539,9 +564,21 @@ public class BusRouteDetailViewActivity extends AppCompatActivity implements OnM
             String adjustedBound = (routeBound.equalsIgnoreCase("outbound") || routeBound.equalsIgnoreCase("O")) ? "O" : "I";
             Log.d(TAG, "Stop " + index + " using bound: " + routeBound + " (adjusted to: " + adjustedBound + ")");
 
+            if (busCompany.equalsIgnoreCase("kmb") || busCompany.equalsIgnoreCase("ctb")) {
                 stops.add(new BusRouteStopItem(
                         routeNumber, adjustedBound, routeServiceType,
                         stopNameEn, stopNameTc, stopNameSc, stopId, busCompany));
+            } else {
+
+                Log.d("LogBusRouteDetailView", "Bus Company: " + busCompany);
+                Log.d("LogBusRouteDetailView", "GMB Route ID: " + gmbRouteID);
+                Log.d("LogBusRouteDetailView", "GMB Route Seq: " + gmbRouteSeq);
+
+                stops.add(new BusRouteStopItem(
+                        routeNumber, adjustedBound, routeServiceType,
+                        stopNameEn, stopNameTc, stopNameSc, stopId,
+                        gmbRouteID, gmbRouteSeq));
+            }
 
                 // Process coordinates if available
                 if (latitude != null && !latitude.isEmpty() && longitude != null && !longitude.isEmpty()) {
@@ -568,9 +605,15 @@ public class BusRouteDetailViewActivity extends AppCompatActivity implements OnM
     private void fallbackForGMB(SQLiteDatabase db, String gmbRouteID, String gmbRouteSeq) {
         Log.d(TAG, "Performing API fallback for GMB route ID: " + gmbRouteID + ", sequence: " + gmbRouteSeq);
         
+        // Double-check that we have valid route ID
+        if (gmbRouteID == null || gmbRouteID.isEmpty()) {
+            Log.e(TAG, "GMB Route ID is null or empty in fallbackForGMB method!");
+            runOnUiThread(() -> Toast.makeText(this,
+                "Error: Missing GMB route information", Toast.LENGTH_SHORT).show());
+            return;
+        }
+        
         try {
-            int routeId = Integer.parseInt(gmbRouteID);
-            int routeSeq = Integer.parseInt(gmbRouteSeq);
             
             // Show loading toast on main thread
             runOnUiThread(() -> Toast.makeText(
@@ -611,10 +654,12 @@ public class BusRouteDetailViewActivity extends AppCompatActivity implements OnM
                                     // Create stop item
                                     String adjustedBound = (routeBound.equalsIgnoreCase("outbound") || 
                                                          routeBound.equalsIgnoreCase("O")) ? "O" : "I";
-                                    
+
+                                    Log.d(TAG, "Before insert to database, gmbRouteID: " + gmbRouteID + ", gmbRouteSeq: " + gmbRouteSeq);
+
                                     BusRouteStopItem item = new BusRouteStopItem(
                                         routeNumber, adjustedBound, routeServiceType,
-                                        stopNameEn, stopNameTc, stopNameSc, stopId, String.valueOf(routeId), String.valueOf(routeSeq));
+                                        stopNameEn, stopNameTc, stopNameSc, stopId, gmbRouteID, String.valueOf(gmbRouteSeq));
                                     freshStops.add(item);
                                     
                                     // Try to get location data for the stop
@@ -638,7 +683,7 @@ public class BusRouteDetailViewActivity extends AppCompatActivity implements OnM
             };
             
             // Make the API call
-            dataFetcher.fetchGMBRouteStops(routeId, routeSeq, onSuccess);
+            dataFetcher.fetchGMBRouteStops(Integer.parseInt(gmbRouteID), Integer.parseInt(gmbRouteSeq), onSuccess);
             
             // Wait for the API response with a timeout
             try {
@@ -877,6 +922,12 @@ public class BusRouteDetailViewActivity extends AppCompatActivity implements OnM
             
             // Convert bound from "I"/"O" to "1"/"2" for GMB API
             String gmbRouteSeq = adjustedBound.equalsIgnoreCase("I") ? "1" : "2";
+            
+            // Ensure we have the gmbRouteID from intent
+            if (gmbRouteID == null || gmbRouteID.isEmpty()) {
+                gmbRouteID = getIntent().getStringExtra("gmbRouteID");
+                Log.d(TAG, "Re-fetched GMB Route ID from intent: " + gmbRouteID);
+            }
             
             if (gmbRouteID != null && !gmbRouteID.isEmpty()) {
                 fallbackForGMB(db, gmbRouteID, gmbRouteSeq);
