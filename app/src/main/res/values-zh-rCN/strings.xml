@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">UniteRide</string>
+    <string name="hello_blank_fragment">空白片段</string>
+    <string name="onboarding_1_5_title">欢迎使用 UniteRide</string>
+    <string name="onboarding_1_5_content">发现快速规划和简单的巴士信息\n立即开始您的旅程！</string>
+    <string name="onboarding_1_5_button_content">开始使用</string>
+    <string name="onboarding_1_5_contentDescription">引导页 1/5 内容欢迎图片</string>
+
+    <string name="onboarding_2_5_title">选择您偏好的语言</string>
+    <string name="onboarding_2_5_content">请选择您想在使用 UniteRide 时使用的语言。</string>
+    <string name="onboarding_2_5_language_default">简体中文</string>
+    <string name="onboarding_2_5_button_content">继续</string>
+
+    <string name="onboarding_3_5_title">获取即时巴士到达通知！</string>
+    <string name="onboarding_3_5_content">我们可以在巴士到达时向您发送实时提醒，让您准确知道巴士何时到达，轻松掌握行程计划。</string>
+    <string name="onboarding_3_5_access_button_content">允许通知</string>
+    <string name="onboarding_3_5_button_content">暂时不要</string>
+
+    <string name="onboarding_4_5_title">智能出行，一触即发！</string>
+    <string name="onboarding_4_5_content">我们需要访问您的当前位置以定位最近的巴士和巴士站，让您能够立即轻松快速地规划行程。</string>
+    <string name="onboarding_4_5_access_button_content">允许位置访问</string>
+    <string name="onboarding_4_5_button_content">暂时不要</string>
+
+    <string name="onboarding_5_5_title">一切就绪！</string>
+    <string name="onboarding_5_5_content">您现在可以开始使用我们的巴士应用程序，轻松自信地规划行程</string>
+    <string name="onboarding_5_5_button_content">开始使用</string>
+
+    <string name="bus_company_kmb_name">九巴</string>
+    <string name="bus_company_LWB_name">龙运</string>
+    <string name="bus_company_ctb_name">城巴</string>
+    <string name="bus_company_gmb_name">小巴</string>
+
+    <string name="region_nt_name">新界</string>
+    <string name="region_kln_name">九龙</string>
+    <string name="region_hki_name">香港岛</string>
+
+    <string name="bottomNav_saved_tabName">收藏</string>
+    <string name="bottomNav_nearby_tabName">附近</string>
+    <string name="bottomNav_search_tabName">搜索</string>
+    <string name="bottomNav_news_tabName">新闻</string>
+    <string name="bottomNav_settings_tabName">设置</string>
+
+    <string name="frag_search_searchBar_hint">搜索巴士路线</string>
+    
+    <string name="settings_category_langOption_name">语言</string>
+    <string name="settings_category_themeOption_name">主题</string>
+    <string name="settings_category_accessibilityOption_name">无障碍</string>
+    <string name="settings_category_aboutOption_name">关于</string>
+    <string name="settings_category_featuresOption_name">功能</string>
+    
+    <string name="settings_mainSwitchPref_followSys_name">跟随系统设置</string>
+    
+    <string name="settings_lang_chineseTradOption_name">繁体中文</string>
+    <string name="settings_lang_chineseSimpOption_name">简体中文</string>
+    <string name="settings_lang_englishOption_name">英文</string>
+    
+    <string name="settings_theme_lightOption_name">浅色主题</string>
+    <string name="settings_theme_darkOption_name">深色主题</string>
+    
+    <string name="settings_accessibility_boldOption_name">粗体文字</string>
+    
+    <string name="settings_about_permissionOption_name">权限</string>
+    <string name="settings_about_libOption_name">使用的库</string>
+    <string name="settings_about_githubOption_name">在 GitHub 上查看</string>
+    
+    <string name="settings_features_RTHKOption_name">显示香港电台交通新闻</string>
+    <string name="settings_features_RTHKOption_desc">新闻仅提供繁体中文版本</string>
+    
+    <string name="err_msg_noInternet_name">无网络连接</string>
+    <string name="err_msg_noInternet_desc">无法加载。请检查您的网络连接并重试。</string>
+    
+    <string name="notif_trackBus_name">正在追踪巴士 </string>
+    <string name="bus_eta_msg_noBus_name">当前没有可用的巴士</string>
+
+    <string-array name="options_application_theme">
+        <item name="light_theme">浅色</item>
+        <item name="dark_theme">深色</item>
+    </string-array>
+
+    <string-array name="settings_category">
+        <item name="category_language">语言</item>
+    </string-array>
+</resources>
