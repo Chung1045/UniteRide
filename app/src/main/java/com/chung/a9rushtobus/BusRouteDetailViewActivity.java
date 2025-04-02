@@ -379,13 +379,12 @@ public class BusRouteDetailViewActivity extends AppCompatActivity implements OnM
 
                         boolean isMatchOrOffline = false;
                         try {
+
+                            //todo
                             if (busCompany.equalsIgnoreCase("kmb") || busCompany.equalsIgnoreCase("ctb")) {
                                 isMatchOrOffline = dataFetcher.isStopNumberMatch(cursor.getCount(), routeNumber, routeBound, routeServiceType, busCompany);
                             } else if (busCompany.equalsIgnoreCase("gmb")) {
-                                // For GMB, we'll consider the data valid if we have stops with location data
-                                // Otherwise, we might need to implement a specific check for GMB
-                                isMatchOrOffline = true; // Default to using local data for GMB
-                                Log.d(TAG, "Using local database data for GMB route");
+                                isMatchOrOffline = dataFetcher.isGMBStopNumberMatch(cursor.getCount(), gmbRouteID, gmbRouteSeq);
                             }
                         } catch (Exception e) {
                             // Handle any exceptions during the check and proceed with local data

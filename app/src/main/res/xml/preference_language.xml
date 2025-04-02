@@ -5,15 +5,14 @@
         android:iconSpaceReserved="false"
         android:key="pref_language_follow_system"
         android:widgetLayout="@layout/components_main_switch"
-        android:summary="Enable dark mode"
-        android:title="Follow System Settings" />
+        android:title="@string/settings_mainSwitchPref_followSys_name" />
 
     <com.chung.a9rushtobus.elements.CustomRadioButtonPreference
         android:iconSpaceReserved="false"
         android:key="pref_language_trad_chinese"
         android:layout="@layout/components_radio_option"
         android:title="中文（繁體）"
-        android:summary="Traditional Chinese"
+        android:summary="@string/settings_lang_chineseTradOption_name"
         android:defaultValue="false"/>
 
     <com.chung.a9rushtobus.elements.CustomRadioButtonPreference
@@ -21,14 +20,14 @@
         android:key="pref_language_simp_chinese"
         android:layout="@layout/components_radio_option"
         android:title="中文（簡体）"
-        android:summary="Simplified Chinese"
+        android:summary="@string/settings_lang_chineseSimpOption_name"
         android:defaultValue="false"/>
 
     <com.chung.a9rushtobus.elements.CustomRadioButtonPreference
         android:iconSpaceReserved="false"
         android:key="pref_language_english"
         android:layout="@layout/components_radio_option"
-        android:title="English"
+        android:title="@string/settings_lang_englishOption_name"
         android:defaultValue="false"/>
 
 

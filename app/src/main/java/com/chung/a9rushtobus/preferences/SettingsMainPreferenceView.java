@@ -37,7 +37,7 @@ public class SettingsMainPreferenceView extends PreferenceFragmentCompat {
         bottomNavigationView = requireActivity().findViewById(R.id.bottomNav_main);
 
         // Set initial toolbar title
-        updateToolbarTitle("Settings");
+        updateToolbarTitle(getString(R.string.bottomNav_settings_tabName));
         bottomNavigationView.setVisibility(View.VISIBLE);
     }
 
@@ -57,7 +57,7 @@ public class SettingsMainPreferenceView extends PreferenceFragmentCompat {
         assert applicationLanguage != null;
 
         applicationLanguage.setOnPreferenceClickListener(view -> {
-            updateToolbarTitle("Language");
+            updateToolbarTitle(getString(R.string.settings_category_langOption_name));
             getParentFragmentManager().beginTransaction()
                     .setCustomAnimations(
                             R.anim.slide_in_right,
@@ -75,7 +75,7 @@ public class SettingsMainPreferenceView extends PreferenceFragmentCompat {
         assert applicationTheme != null;
 
         applicationTheme.setOnPreferenceClickListener(view -> {
-            updateToolbarTitle("Theme");
+            updateToolbarTitle(getString(R.string.settings_category_themeOption_name));
             getParentFragmentManager().beginTransaction()
                     .setCustomAnimations(
                     R.anim.slide_in_right,
@@ -92,7 +92,7 @@ public class SettingsMainPreferenceView extends PreferenceFragmentCompat {
         assert feauturePreference != null;
 
         feauturePreference.setOnPreferenceClickListener(view -> {
-            updateToolbarTitle("Features");
+            updateToolbarTitle(getString(R.string.settings_category_featuresOption_name));
             getParentFragmentManager().beginTransaction().setCustomAnimations(
                             R.anim.slide_in_right,
                             R.anim.slide_out_left,
@@ -108,7 +108,7 @@ public class SettingsMainPreferenceView extends PreferenceFragmentCompat {
         assert aboutPreference != null;
 
         aboutPreference.setOnPreferenceClickListener(view -> {
-            updateToolbarTitle("About");
+            updateToolbarTitle(getString(R.string.settings_category_aboutOption_name));
             getParentFragmentManager().beginTransaction().setCustomAnimations(
                             R.anim.slide_in_right,
                             R.anim.slide_out_left,
@@ -124,7 +124,7 @@ public class SettingsMainPreferenceView extends PreferenceFragmentCompat {
         assert accessibilityPreference != null;
 
         accessibilityPreference.setOnPreferenceClickListener(view -> {
-            updateToolbarTitle("Accessibility");
+            updateToolbarTitle(getString(R.string.settings_category_accessibilityOption_name));
             getParentFragmentManager().beginTransaction().setCustomAnimations(
                             R.anim.slide_in_right,
                             R.anim.slide_out_left,

@@ -4,6 +4,6 @@
     <com.chung.a9rushtobus.elements.CustomSwitchPreference
         android:iconSpaceReserved="false"
         android:key="pref_accessibility_bold_text"
-        android:title="Bold Text" />
+        android:title="@string/settings_accessibility_boldOption_name" />
 
 </androidx.preference.PreferenceScreen>

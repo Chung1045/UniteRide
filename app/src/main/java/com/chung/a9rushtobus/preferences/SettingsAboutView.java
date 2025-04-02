@@ -45,7 +45,7 @@ public class SettingsAboutView extends Fragment {
     private void listenerInit() {
 
         prefAboutPermission.setOnClickListener(view -> {
-            updateToolbarTitle("Permission");
+            updateToolbarTitle(getString(R.string.settings_about_permissionOption_name));
             getParentFragmentManager()
                     .beginTransaction()
                     .setCustomAnimations(
@@ -58,7 +58,7 @@ public class SettingsAboutView extends Fragment {
                     .commit();
         });
 
-        prefAboutLibraries.setOnClickListener(view -> updateToolbarTitle("Libraries"));
+        prefAboutLibraries.setOnClickListener(view -> updateToolbarTitle(getString(R.string.settings_about_libOption_name)));
 
         prefAboutGitHub.setOnClickListener(view -> utils.startUrlIntent("https://www.github.com"));
 

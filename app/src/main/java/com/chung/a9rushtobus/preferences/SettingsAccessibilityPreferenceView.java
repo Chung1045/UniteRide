@@ -28,7 +28,7 @@ public class SettingsAccessibilityPreferenceView extends PreferenceFragmentCompa
         // Get the toolbar from the hosting activity
         MaterialToolbar toolbar = requireActivity().findViewById(R.id.settingsToolBar);
         if (toolbar != null) {
-            toolbar.setTitle("Accessibility");
+            toolbar.setTitle(getString(R.string.settings_category_accessibilityOption_name));
         }
     }
 

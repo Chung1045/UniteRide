@@ -5,21 +5,20 @@
         android:iconSpaceReserved="false"
         android:key="pref_theme_follow_system"
         android:widgetLayout="@layout/components_main_switch"
-        android:summary="Enable dark mode"
-        android:title="Follow System Settings" />
+        android:title="@string/settings_mainSwitchPref_followSys_name" />
 
     <com.chung.a9rushtobus.elements.CustomRadioButtonPreference
         android:iconSpaceReserved="false"
         android:key="pref_theme_light_theme"
         android:layout="@layout/components_radio_option"
-        android:title="Light Theme"
+        android:title="@string/settings_theme_lightOption_name"
         android:defaultValue="false"/>
 
     <com.chung.a9rushtobus.elements.CustomRadioButtonPreference
         android:iconSpaceReserved="false"
         android:key="pref_theme_dark_theme"
         android:layout="@layout/components_radio_option"
-        android:title="Dark Theme"
+        android:title="@string/settings_theme_darkOption_name"
         android:defaultValue="true"/>
 
 </PreferenceScreen>

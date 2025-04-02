@@ -474,6 +474,43 @@ public class DataFetcher {
         }
     }
 
+    public boolean isGMBStopNumberMatch(Integer stopNumber, String routeID, String routeSeq) {
+
+        String url = GMB_BASE_URL + "route-stop/" + routeID + "/" + routeSeq;
+
+        Request request = new Request.Builder().url(url).build();
+
+        try (Response response = client.newCall(request).execute()) { // Synchronous request
+            if (!response.isSuccessful()) {
+                Log.e("DataFetcher", "Error fetching stops: " + response.code());
+                // Return true in case of network errors to avoid unnecessary refetches
+                return true;
+            }
+
+            String jsonData = response.body().string();
+            JSONObject jsonObject = new JSONObject(jsonData);
+
+            if (!jsonObject.has("data")) {
+                Log.e("DataFetch", "Invalid API response format");
+                return true; // Return true to use existing data
+            }
+
+            JSONArray dataArray = jsonObject.getJSONObject("data").getJSONArray("route_stops");
+
+            Log.d("DataFetch", "API reports " + dataArray.length() + " stops, database has " + stopNumber);
+            return dataArray.length() == stopNumber;
+        } catch (java.net.UnknownHostException | java.net.SocketTimeoutException | java.net.ConnectException e) {
+            // These are network connectivity issues
+            Log.e("DataFetch", "Network connectivity error: " + e.getMessage());
+            // When offline, trust the database and continue
+            return true;
+        } catch (Exception e) {
+            Log.e("DataFetch", "Error fetching stop data: " + e.getMessage());
+            // For other errors, better to trust the database than to have no data
+            return true;
+        }
+    }
+
     public boolean isStopNumberMatch(Integer stopNumber, String route, String bound, String serviceType, String company) {
         String url;
 

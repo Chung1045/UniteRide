@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">UniteRide</string>
+    <string name="bus_company_gmb_name">小巴</string>
     <string name="region_nt_name">新界</string>
     <string name="region_kln_name">九龍</string>
     <string name="region_hki_name">香港島</string>
@@ -8,4 +9,27 @@
     <string name="bottomNav_nearby_tabName">附近</string>
     <string name="bottomNav_search_tabName">搜尋</string>
     <string name="bottomNav_news_tabName">快訊</string>
+    <string name="bus_company_kmb_name">九巴</string>
+    <string name="bus_company_LWB_name">龍運</string>
+    <string name="bus_company_ctb_name">城巴</string>
+    <string name="bottomNav_settings_tabName">設置</string>
+    <string name="frag_search_searchBar_hint">搜尋巴士路線</string>
+    <string name="settings_category_langOption_name">語言</string>
+    <string name="settings_category_themeOption_name">主題</string>
+    <string name="settings_category_accessibilityOption_name">無障礙</string>
+    <string name="settings_category_aboutOption_name">關於應用程式</string>
+    <string name="settings_category_featuresOption_name">額外功能</string>
+    <string name="settings_mainSwitchPref_followSys_name">跟隨系統設定</string>
+    <string name="settings_lang_chineseTradOption_name">繁體中文</string>
+    <string name="settings_lang_chineseSimpOption_name">簡體中文</string>
+    <string name="settings_lang_englishOption_name">英文</string>
+    <string name="settings_theme_lightOption_name">淺色主題</string>
+    <string name="settings_theme_darkOption_name">深色主題</string>
+    <string name="settings_accessibility_boldOption_name">粗體文字</string>
+    <string name="settings_about_permissionOption_name">權限</string>
+    <string name="settings_about_libOption_name">程式庫</string>
+    <string name="settings_about_githubOption_name">在 GitHub 上查看專案</string>
+    <string name="settings_features_RTHKOption_name">顯示香港電台交通消息</string>
+    <string name="settings_features_RTHKOption_desc">只提供繁體中文版本</string>
+    <string name="notif_trackBus_name">正在追蹤巴士</string>
 </resources>

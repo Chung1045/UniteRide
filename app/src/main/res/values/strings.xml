@@ -43,6 +43,39 @@ start your journey now!</string>
     <string name="bottomNav_news_tabName">News</string>
     <string name="bottomNav_settings_tabName">Settings</string>
 
+    <string name="frag_search_searchBar_hint">Search Bus Routes</string>
+    
+    <string name="settings_category_langOption_name">Language</string>
+    <string name="settings_category_themeOption_name">Theme</string>
+    <string name="settings_category_accessibilityOption_name">Accessibility</string>
+    <string name="settings_category_aboutOption_name">About</string>
+    <string name="settings_category_featuresOption_name">Features</string>
+
+    <string name="settings_mainSwitchPref_followSys_name">Follow System Settings</string>
+
+    <string name="settings_lang_chineseTradOption_name">Traditional Chinese</string>
+    <string name="settings_lang_chineseSimpOption_name">Simplified Chinese</string>
+    <string name="settings_lang_englishOption_name">English</string>
+
+    <string name="settings_theme_lightOption_name">Light Theme</string>
+    <string name="settings_theme_darkOption_name">Dark Theme</string>
+
+    <string name="settings_accessibility_boldOption_name">Bold Text</string>
+
+    <string name="settings_about_permissionOption_name">Permissions</string>
+    <string name="settings_about_libOption_name">Libraries</string>
+    <string name="settings_about_githubOption_name">View On GitHub</string>
+
+    <string name="settings_features_RTHKOption_name">Show RTHK Traffic News</string>
+    <string name="settings_features_RTHKOption_desc">News available only in Traditional Chinese</string>
+
+    <string name="err_msg_noInternet_name">No internet</string>
+    <string name="err_msg_noInternet_desc">Unable to load. Check your Internet connection and try again.</string>
+
+    <string name="notif_trackBus_name">Tracking for Bus </string>
+    <string name="bus_eta_msg_noBus_name">No available bus at the moment</string>
+
+
     <string-array name="options_application_theme">
         <item name="light_theme">Light</item>
         <item name="dark_theme">Dark</item>

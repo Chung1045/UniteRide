@@ -42,7 +42,7 @@
                     android:layout_height="?attr/actionBarSize"
                     android:elevation="0dp"
                     app:layout_collapseMode="pin"
-                    app:title="Saved" />
+                    app:title="@string/bottomNav_saved_tabName" />
 
             </com.google.android.material.appbar.CollapsingToolbarLayout>
 

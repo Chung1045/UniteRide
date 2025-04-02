@@ -5,7 +5,7 @@
         android:iconSpaceReserved="false"
         android:key="pref_feature_rthkNews"
         android:widgetLayout="@layout/components_switch_preference"
-        android:summary="News available only in Traditional Chinese"
-        android:title="Show RTHK Traffic News"/>
+        android:summary="@string/settings_features_RTHKOption_desc"
+        android:title="@string/settings_features_RTHKOption_name"/>
 
 </androidx.preference.PreferenceScreen>

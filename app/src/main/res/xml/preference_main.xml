@@ -4,7 +4,7 @@
 
     <Preference
         android:key="pref_main_language"
-        android:title="Language"
+        android:title="@string/settings_category_langOption_name"
         android:layout_marginStart="10dp"
         android:layout_marginEnd="10dp"
         android:widgetLayout="@layout/components_basic_preference_top"
@@ -12,7 +12,7 @@
 
     <Preference
         android:key="pref_main_theme"
-        android:title="Theme"
+        android:title="@string/settings_category_themeOption_name"
         android:iconSpaceReserved="false"
         android:layout_marginStart="16dp"
         android:layout_marginEnd="16dp"
@@ -20,7 +20,7 @@
 
     <Preference
         android:key="pref_main_accessibility"
-        android:title="Accessibility"
+        android:title="@string/settings_category_accessibilityOption_name"
         android:iconSpaceReserved="false"
         android:layout_marginStart="16dp"
         android:layout_marginEnd="16dp"
@@ -28,7 +28,7 @@
 
     <Preference
         android:key="pref_main_about"
-        android:title="About"
+        android:title="@string/settings_category_aboutOption_name"
         android:iconSpaceReserved="false"
         android:layout_marginStart="16dp"
         android:layout_marginEnd="16dp"
@@ -36,7 +36,7 @@
 
     <Preference
         android:key="pref_main_features"
-        android:title="Features"
+        android:title="@string/settings_category_featuresOption_name"
         android:iconSpaceReserved="false"
         android:layout_marginStart="16dp"
         android:layout_marginEnd="16dp"
