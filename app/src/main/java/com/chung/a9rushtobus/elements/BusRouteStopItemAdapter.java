@@ -20,7 +20,9 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.chung.a9rushtobus.DataFetcher;
 import com.chung.a9rushtobus.R;
+import com.chung.a9rushtobus.UserPreferences;
 import com.chung.a9rushtobus.Utils;
+import com.chung.a9rushtobus.preferences.LocaleHelper;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -63,7 +65,8 @@ public class BusRouteStopItemAdapter extends RecyclerView.Adapter<BusRouteStopIt
     @Override
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
         BusRouteStopItem item = items.get(position);
-        holder.stopName.setText(item.getStopTc());
+        holder.stopName.setText(item.getStopName());
+        holder.stopName.setSelected(true);
         holder.stopSeq.setText(String.valueOf(position + 1));
 
         // Set the expanded state based on the data model
@@ -106,7 +109,7 @@ public class BusRouteStopItemAdapter extends RecyclerView.Adapter<BusRouteStopIt
 
     private void addPlaceholderEtas(LinearLayout etaLayout) {
         for (int i = 0; i < 3; i++) {
-            addEtaTextView(etaLayout, "Loading ETA...");
+            addEtaTextView(etaLayout, context.getString(R.string.bus_eta_msg_loadingETA_name));
         }
     }
 
@@ -168,7 +171,7 @@ public class BusRouteStopItemAdapter extends RecyclerView.Adapter<BusRouteStopIt
             Log.d("ETARefresh", "Stopped periodic ETA updates");
         }
     }
-    
+
     /**
      * Pauses ETA updates - called from activity's onPause
      */
@@ -178,7 +181,7 @@ public class BusRouteStopItemAdapter extends RecyclerView.Adapter<BusRouteStopIt
         // Also cancel any pending refetch tasks
         refetchHandler.removeCallbacksAndMessages(null);
     }
-    
+
     /**
      * Resumes ETA updates - called from activity's onResume
      */
@@ -238,7 +241,7 @@ public class BusRouteStopItemAdapter extends RecyclerView.Adapter<BusRouteStopIt
         try {
             if (etaDataArray.length() == 0) {
                 Log.d("ETARefresh", "No ETA data received for position " + position);
-                newEtaData.add("No available bus at the moment");
+                newEtaData.add(context.getString(R.string.bus_eta_msg_noBus_name));
                 item.setClosestETA(null);
             } else {
                 boolean needsRefetch = false;
@@ -264,7 +267,49 @@ public class BusRouteStopItemAdapter extends RecyclerView.Adapter<BusRouteStopIt
                     }
 
                     String displayText = etaMinutes.equals("N/A") ?
-                            "No available bus" : etaTime + " " + etaMinutes + " mins";
+                            context.getString(R.string.bus_eta_msg_noBus_name) : etaTime + " " + etaMinutes + " " + context.getString(R.string.bus_eta_minute_text_name);
+
+                    if (item.getCompany().equals("kmb") || item.getCompany().equals("ctb")) {
+                        if (etaData.getString("rmk_en") != null || etaData.getString("rmk_en").isEmpty()) {
+                            String appLang = UserPreferences.sharedPref.getString(UserPreferences.SETTINGS_APP_LANG, "en");
+                            String rmk_text;
+
+                            switch (appLang) {
+                                case "zh-rCN":
+                                    rmk_text = etaData.getString("rmk_sc");
+                                    break;
+                                case "zh-rHK":
+                                    rmk_text = etaData.getString("rmk_tc");
+                                    break;
+                                default:
+                                    rmk_text = etaData.getString("rmk_en");
+                            }
+
+                            newEtaData.add(rmk_text);
+                        }
+
+                    } else if (item.getCompany().equals("gmb")) {
+                        if (etaData.getString("remarks_en") != null || !etaData.getString("remarks_en").isEmpty()) {
+                            String appLang = UserPreferences.sharedPref.getString(UserPreferences.SETTINGS_APP_LANG, "en");
+                            String rmk_text;
+
+                            switch (appLang) {
+                                case "zh-rCN":
+                                    rmk_text = etaData.getString("remarks_sc");
+                                    break;
+                                case "zh-rHK":
+                                    rmk_text = etaData.getString("remarks_tc");
+                                    break;
+                                default:
+                                    rmk_text = etaData.getString("remarks_en");
+                            }
+
+                            newEtaData.add(rmk_text);
+                        }
+                    } else {
+                        Log.wtf(TAG, "What? How do you get to here? Are you from other world? " + item.getCompany());
+                    }
+
 
                     Log.d("ETARefresh", "Display text: " + displayText);
 
@@ -274,7 +319,7 @@ public class BusRouteStopItemAdapter extends RecyclerView.Adapter<BusRouteStopIt
                             needsRefetch = true;
                             displayText = etaTime + " " + "---";
                         } else if (Integer.parseInt(etaMinutes) == 0) {
-                            displayText = etaTime + " " + "Arriving";
+                            displayText = etaTime + " " + context.getString(R.string.detail_view_eta_arriving_name);
                         }
                     }
 
@@ -306,12 +351,12 @@ public class BusRouteStopItemAdapter extends RecyclerView.Adapter<BusRouteStopIt
         if (etaMinutes.equals("N/A")) {
             item.setClosestETA("!");
         } else if (etaMinutes.equals("0")) {
-            item.setClosestETA("Arriving");
+            item.setClosestETA(context.getString(R.string.detail_view_eta_arriving_name));
         } else if (Integer.parseInt(etaMinutes) < 0) {
             item.setClosestETA("---");
             Log.d("ETARefresh", "Position " + (position + 1) + " Negative ETA detected: " + etaMinutes + " mins. Will refetch.");
         } else {
-            item.setClosestETA(etaMinutes + " mins");
+            item.setClosestETA(etaMinutes + " " + context.getString(R.string.bus_eta_minute_text_name));
         }
     }
 
@@ -338,7 +383,7 @@ public class BusRouteStopItemAdapter extends RecyclerView.Adapter<BusRouteStopIt
             Log.d(TAG, "Skipping UI update for position " + position + " as context is invalid or adapter is detached");
             return;
         }
-        
+
         try {
             new Handler(Looper.getMainLooper()).post(() -> {
                 // Double-check that the adapter is still valid before notifying

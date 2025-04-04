@@ -1,5 +1,10 @@
 package com.chung.a9rushtobus.elements;
 
+import android.content.Context;
+
+import com.chung.a9rushtobus.R;
+import com.chung.a9rushtobus.UserPreferences;
+
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -89,24 +94,34 @@ public class BusRoute {
         return origEn;
     }
 
-    public String getOrigTc() {
-        return origTc;
-    }
+    public String getOrig() {
+        String appLang = UserPreferences.sharedPref.getString(UserPreferences.SETTINGS_APP_LANG, "en");
 
-    public String getOrigSc() {
-        return origSc;
+        switch (appLang) {
+            case "zh-rCN":
+                return origSc;
+            case "zh-rHK":
+                return origTc;
+            default: // "en" or any other case
+                return origEn;
+        }
     }
 
     public String getDestEn() {
         return destEn;
     }
 
-    public String getDestTc() {
-        return destTc;
-    }
+    public String getDest() {
+        String appLang = UserPreferences.sharedPref.getString(UserPreferences.SETTINGS_APP_LANG, "en");
 
-    public String getDestSc() {
-        return destSc;
+        switch (appLang) {
+            case "zh-rCN":
+                return destSc;
+            case "zh-rHK":
+                return destTc;
+            default: // "en" or any other case
+                return destEn;
+        }
     }
 
     public String getRemarksEn() {
@@ -125,9 +140,22 @@ public class BusRoute {
         return gmbRouteID;
     }
 
-    public String getGmbRouteRegion() {
-        return gmbRouteRegion;
+    public String getGmbRouteRegion(Context context) {
+        String appLang = UserPreferences.sharedPref.getString(UserPreferences.SETTINGS_APP_LANG, "en");
+
+        if ("zh-rCN".equals(appLang) || "zh-rHK".equals(appLang)) {
+            switch (gmbRouteRegion) {
+                case "HKI":
+                    return context.getString(R.string.region_hki_name);
+                case "KLN":
+                    return context.getString(R.string.region_kln_name);
+                default:
+                    return context.getString(R.string.region_nt_name);
+            }
+        }
+        return gmbRouteRegion; // Default return for "en" or other languages
     }
+
 
     public String getGMBRouteSeq() {
         return gmbRouteSeq;
@@ -143,6 +171,19 @@ public class BusRoute {
 
     public String getDescriptionSc() {
         return descriptionSc;
+    }
+
+    public String getDescription() {
+        String appLang = UserPreferences.sharedPref.getString(UserPreferences.SETTINGS_APP_LANG, "en");
+
+        switch (appLang) {
+            case "zh-rCN":
+                return descriptionSc;
+            case "zh-rHK":
+                return descriptionTc;
+            default: // "en" or any other case
+                return descriptionEn;
+        }
     }
 
 

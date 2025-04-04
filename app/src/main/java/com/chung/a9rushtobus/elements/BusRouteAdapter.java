@@ -1,5 +1,6 @@
 package com.chung.a9rushtobus.elements;
 
+import static androidx.core.content.ContextCompat.getString;
 import static androidx.core.content.ContextCompat.startActivity;
 import android.content.Context;
 import android.content.Intent;
@@ -15,6 +16,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.chung.a9rushtobus.BusRouteDetailViewActivity;
 import com.chung.a9rushtobus.R;
+import com.chung.a9rushtobus.UserPreferences;
 
 import java.util.List;
 import java.util.Objects;
@@ -40,33 +42,45 @@ public class BusRouteAdapter extends RecyclerView.Adapter<BusRouteAdapter.ViewHo
         BusRoute routeInfo = busRoutes.get(position);
         String routeNumber = routeInfo.getRoute();
         holder.tvRouteName.setText(routeNumber);
-        holder.tvDestination.setText(String.format("To %s", routeInfo.getDestEn()));
-        holder.tvOrigin.setText(routeInfo.getOrigEn());
+
+        String appLang = UserPreferences.sharedPref.getString(UserPreferences.SETTINGS_APP_LANG, "en");
+
+        switch (appLang) {
+            case "zh-rCN":
+            case "zh-rHK":
+                holder.tvDestination.setText(String.format("往 %s", routeInfo.getDest()));
+                break;
+            default: // "en" or any other case
+                holder.tvDestination.setText(String.format("To %s", routeInfo.getDest()));
+        }
+        holder.tvOrigin.setText(routeInfo.getOrig());
         
         // Debug log for each route being displayed
         Log.d("BusRouteAdapter", "Displaying route: " + routeNumber + 
               ", Company: " + routeInfo.getCompany() + 
-              ", Origin: " + routeInfo.getOrigEn() + 
-              ", Destination: " + routeInfo.getDestEn());
+              ", Origin: " + routeInfo.getOrig() +
+              ", Destination: " + routeInfo.getDest());
 
-        if (routeInfo.getCompany().equals("kmb")) {
-            holder.tvRouteBusCompany.setText("KMB");
-            holder.tvRouteRemarks.setVisibility(View.GONE);
-        } else if (routeInfo.getCompany().equals("ctb")) {
-            holder.tvRouteBusCompany.setText("CTB");
-            holder.tvRouteRemarks.setVisibility(View.GONE);
-        } else if (routeInfo.getCompany().equals("GMB")) {
-            holder.tvRouteBusCompany.setText("GMB");
-            holder.tvRouteBusCompany.setText("GMB-" + routeInfo.getGmbRouteRegion());
-            Log.d("BusRouteAdapter", "GMB Route Description: " + routeInfo.getDescriptionEn());
-            if (routeInfo.getDescriptionEn().equals("Normal Route") || routeInfo.getDescriptionEn().equals("Normal Departure")) {
-                // TODO: Add multi language support
+        switch (routeInfo.getCompany()) {
+            case "kmb":
+                holder.tvRouteBusCompany.setText(R.string.bus_company_kmb_name);
                 holder.tvRouteRemarks.setVisibility(View.GONE);
-            } else {
-                holder.tvRouteRemarks.setVisibility(View.VISIBLE);
-                holder.tvRouteRemarks.setText(routeInfo.getDescriptionEn());
-            }
+                break;
+            case "ctb":
+                holder.tvRouteBusCompany.setText(R.string.bus_company_ctb_name);
+                holder.tvRouteRemarks.setVisibility(View.GONE);
+                break;
+            case "GMB":
+                holder.tvRouteBusCompany.setText(context.getString(R.string.bus_company_gmb_name) + " - " + routeInfo.getGmbRouteRegion(context));
+                Log.d("BusRouteAdapter", "GMB Route Description: " + routeInfo.getDescription());
+                if (routeInfo.getDescriptionEn().equals("Normal Route") || routeInfo.getDescriptionEn().equals("Normal Departure")) {
+                    holder.tvRouteRemarks.setVisibility(View.GONE);
+                } else {
+                    holder.tvRouteRemarks.setVisibility(View.VISIBLE);
+                    holder.tvRouteRemarks.setText(routeInfo.getDescription());
+                }
 
+                break;
         }
 
 
@@ -126,11 +140,11 @@ public class BusRouteAdapter extends RecyclerView.Adapter<BusRouteAdapter.ViewHo
                 Log.d("BusRouteAdapter", "Item clicked: " + tvRouteName.getText());
                 Intent intent = new Intent(view.getContext(), BusRouteDetailViewActivity.class);
                 intent.putExtra("route", routeInfo.getRoute());
-                intent.putExtra("destination", routeInfo.getDestEn());
+                intent.putExtra("destination", routeInfo.getDest());
                 intent.putExtra("bound", routeInfo.getBound());
                 intent.putExtra("serviceType", routeInfo.getServiceType());
                 intent.putExtra("company", routeInfo.getCompany());
-                intent.putExtra("description", routeInfo.getDescriptionEn());
+                intent.putExtra("description", routeInfo.getDescription());
 
                 if (routeInfo.getCompany().equals("GMB")) {
                     intent.putExtra("gmbRouteID", routeInfo.getGmbRouteID());
@@ -141,8 +155,7 @@ public class BusRouteAdapter extends RecyclerView.Adapter<BusRouteAdapter.ViewHo
 
                 }
 
-
-                Log.e("BusRouteAdapter", "Item clicked: " + "Route " + routeInfo.getRoute() + " Destination " + routeInfo.getDestEn() + " Bound " + routeInfo.getBound() + " ServiceType " + routeInfo.getServiceType() + " Company " + routeInfo.getCompany());
+                Log.e("BusRouteAdapter", "Item clicked: " + "Route " + routeInfo.getRoute() + " Destination " + routeInfo.getDest() + " Bound " + routeInfo.getBound() + " ServiceType " + routeInfo.getServiceType() + " Company " + routeInfo.getCompany());
                 Log.e("BusRouteAdapter", "Attempting to start new BusRouteDetailViewActivity");
                 startActivity(view.getContext(), intent, null);
             });

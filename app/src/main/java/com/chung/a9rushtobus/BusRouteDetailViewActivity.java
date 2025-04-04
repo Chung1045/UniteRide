@@ -134,8 +134,8 @@ public class BusRouteDetailViewActivity extends AppCompatActivity implements OnM
 
 
         description = getIntent().getStringExtra("description");
-        if (description == null || description.isEmpty()) {
-            description = "Normal Route";
+        if (description == null || description.isEmpty() || description.equals("Normal Departure")) {
+            description = getString(R.string.detail_view_normal_route_name);
         }
         // Determine the correct bound value for later queries ("O" for outbound, "I" for inbound)
         String boundExtra = getIntent().getStringExtra("bound");
@@ -379,8 +379,6 @@ public class BusRouteDetailViewActivity extends AppCompatActivity implements OnM
 
                         boolean isMatchOrOffline = false;
                         try {
-
-                            //todo
                             if (busCompany.equalsIgnoreCase("kmb") || busCompany.equalsIgnoreCase("ctb")) {
                                 isMatchOrOffline = dataFetcher.isStopNumberMatch(cursor.getCount(), routeNumber, routeBound, routeServiceType, busCompany);
                             } else if (busCompany.equalsIgnoreCase("gmb")) {

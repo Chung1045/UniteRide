@@ -2,6 +2,8 @@ package com.chung.a9rushtobus.elements;
 
 import android.util.Log;
 
+import com.chung.a9rushtobus.UserPreferences;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -64,6 +66,19 @@ public class BusRouteStopItem {
 
     public String getStopSc() {
         return stopSc;
+    }
+
+    public String getStopName() {
+        String appLang = UserPreferences.sharedPref.getString(UserPreferences.SETTINGS_APP_LANG, "en");
+
+        switch (appLang) {
+            case "zh-rCN":
+                return stopSc;
+            case "zh-rHK":
+                return stopTc;
+            default: // "en" or any other case
+                return stopEn;
+        }
     }
 
     public String getStopID() {

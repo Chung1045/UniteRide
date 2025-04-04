@@ -16,13 +16,13 @@ start your journey now!</string>
     <string name="onboarding_3_5_content">We can send you real-time alerts when your bus arrives, so you know exactly when it’s there and stay on top of your travel plans effortlessly.</string>
     <string name="onboarding_3_5_access_button_content">Allow notification</string>
     <string name="onboarding_3_5_button_content">Not right now</string>
-    <string name="onboarding_3_5_contentDescription">onboarding 3/5 content welcome picture</string>
+    <string name="onboarding_3_5_contentDescription" translatable="false">onboarding 3/5 content welcome picture</string>
 
     <string name="onboarding_4_5_title">Ride smarter in a snap!</string>
     <string name="onboarding_4_5_content">We’ll need to access your current location to locate the closest bus and bus stop, so you can plan your journey with ease and speed right away.</string>
     <string name="onboarding_4_5_access_button_content">Allow location access</string>
     <string name="onboarding_4_5_button_content">Not right now</string>
-    <string name="onboarding_4_5_contentDescription">onboarding 4/5 content welcome picture</string>
+    <string name="onboarding_4_5_contentDescription" translatable="false">onboarding 4/5 content welcome picture</string>
 
     <string name="onboarding_5_5_title">You are all set!</string>
     <string name="onboarding_5_5_content">You are now ready to dive in and start using our bus app to plan your trips with ease and confidence</string>
@@ -44,6 +44,10 @@ start your journey now!</string>
     <string name="bottomNav_settings_tabName">Settings</string>
 
     <string name="frag_search_searchBar_hint">Search Bus Routes</string>
+    <string name="frag_search_specialRoute_name">SPECIAL</string>
+
+    <string name="detail_view_normal_route_name">Normal Route</string>
+    <string name="detail_view_eta_arriving_name">Arriving</string>
     
     <string name="settings_category_langOption_name">Language</string>
     <string name="settings_category_themeOption_name">Theme</string>
@@ -73,7 +77,9 @@ start your journey now!</string>
     <string name="err_msg_noInternet_desc">Unable to load. Check your Internet connection and try again.</string>
 
     <string name="notif_trackBus_name">Tracking for Bus </string>
+    <string name="bus_eta_msg_loadingETA_name">Loading ETA...</string>
     <string name="bus_eta_msg_noBus_name">No available bus at the moment</string>
+    <string name="bus_eta_minute_text_name">min</string>
 
 
     <string-array name="options_application_theme">
