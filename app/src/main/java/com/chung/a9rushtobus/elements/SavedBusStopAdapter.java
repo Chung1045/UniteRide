@@ -289,8 +289,7 @@ public class SavedBusStopAdapter extends RecyclerView.Adapter<SavedBusStopAdapte
         try {
             if (etaDataArray.length() == 0) {
                 Log.d("ETARefresh", "No ETA data received for saved stop " + position);
-                newEtaData.add(localizedContext.getString(R.string.bus_eta_msg_noBus_name));
-                item.setClosestETA(localizedContext.getString(R.string.bus_eta_msg_noBus_name));
+                item.setClosestETA("---");
             } else {
                 for (int i = 0; i < Math.min(etaDataArray.length(), 3); i++) {
                     JSONObject etaData = etaDataArray.getJSONObject(i);
@@ -305,7 +304,7 @@ public class SavedBusStopAdapter extends RecyclerView.Adapter<SavedBusStopAdapte
                     }
 
                     String displayText = etaMinutes.equals("N/A") ?
-                            localizedContext.getString(R.string.bus_eta_msg_noBus_name) :
+                            "---" :
                             etaTime + " " + etaMinutes + " " + localizedContext.getString(R.string.bus_eta_minute_text_name);
 
                     newEtaData.add(displayText);

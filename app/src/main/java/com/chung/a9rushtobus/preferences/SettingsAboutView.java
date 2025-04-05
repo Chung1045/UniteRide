@@ -1,12 +1,14 @@
 package com.chung.a9rushtobus.preferences;
 
 import android.os.Bundle;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
+import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.Fragment;
 
 import com.chung.a9rushtobus.R;
@@ -35,6 +37,10 @@ public class SettingsAboutView extends Fragment {
     public void onViewCreated(@NonNull View view, Bundle savedInstanceState) {
         toolbar = requireActivity().findViewById(R.id.settingsToolBar);
         collapsingToolbar = (CollapsingToolbarLayout) toolbar.getParent();
+        Log.d("SettingsAboutView", "onViewCreated: " + collapsingToolbar);
+        Log.d("SettingsAboutView", "onViewCreated: " + toolbar);
+        Log.d("SettingsAboutView", "Toolbar title " + toolbar.getTitle());
+        Log.d("SettingsAboutView", "CollapsingToolbar title " + collapsingToolbar.getTitle());
         utils = new Utils(requireActivity(), view, getContext());
         prefAboutPermission = view.findViewById(R.id.pref_about_permission);
         prefAboutLibraries = view.findViewById(R.id.pref_about_libraries);
