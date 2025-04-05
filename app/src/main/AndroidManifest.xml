@@ -40,7 +40,7 @@
             android:value="${MAPS_API_KEY}" />
             
         <service
-            android:name=".BackgroundService"
+            android:name=".service.BackgroundService"
             android:enabled="true"
             android:exported="false"
             android:foregroundServiceType="dataSync" />

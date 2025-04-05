@@ -14,7 +14,8 @@ import java.util.function.BiConsumer;
 
 public class GMBDatabase {
 
-    private static SQLiteDatabase db;
+    private final SQLiteDatabase db;
+    private final Object dbLock = new Object();
 
     public static String SQL_CREATE_GMB_ROUTES_TABLES = "CREATE TABLE IF NOT EXISTS " +
             Tables.GMB_ROUTES.TABLE_NAME + " (" + Tables.GMB_ROUTES.COLUMN_ROUTE_NUMBER + " TEXT, " +
@@ -71,7 +72,7 @@ public class GMBDatabase {
     public static String SQL_DELETE_GMB_STOP_LOCATIONS_TABLE = "DROP TABLE IF EXISTS " + Tables.GMB_STOP_LOCATIONS.TABLE_NAME;
 
     public GMBDatabase(SQLiteOpenHelper helper) {
-        db = helper.getWritableDatabase();
+        this.db = helper.getWritableDatabase();
     }
 
     public static class Tables {

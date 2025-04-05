@@ -22,12 +22,11 @@ import androidx.lifecycle.DefaultLifecycleObserver;
 import androidx.lifecycle.LifecycleOwner;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.chung.a9rushtobus.BackgroundService;
-import com.chung.a9rushtobus.DataFetcher;
+import com.chung.a9rushtobus.service.BackgroundService;
+import com.chung.a9rushtobus.service.DataFetcher;
 import com.chung.a9rushtobus.R;
 import com.chung.a9rushtobus.UserPreferences;
 import com.chung.a9rushtobus.Utils;
-import com.chung.a9rushtobus.preferences.LocaleHelper;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -434,7 +433,7 @@ public class BusRouteStopItemAdapter extends RecyclerView.Adapter<BusRouteStopIt
         TextView firstETA;
         ConstraintLayout mainLayout, detailLayout;
         LinearLayout etaLayout;
-        Button trackBusButton;
+        Button trackBusButton, saveStopButton;
 
         public ViewHolder(@NonNull View itemView) {
             super(itemView);
@@ -445,6 +444,7 @@ public class BusRouteStopItemAdapter extends RecyclerView.Adapter<BusRouteStopIt
             firstETA = itemView.findViewById(R.id.item_stop_summary_stop_first_eta);
             etaLayout = itemView.findViewById(R.id.eta_container);
             trackBusButton = itemView.findViewById(R.id.track_bus_button);
+            saveStopButton = itemView.findViewById(R.id.save_stop_button);
         }
     }
 }

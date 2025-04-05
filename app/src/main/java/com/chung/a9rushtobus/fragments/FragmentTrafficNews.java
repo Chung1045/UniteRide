@@ -18,7 +18,7 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
-import com.chung.a9rushtobus.DataFetcher;
+import com.chung.a9rushtobus.service.DataFetcher;
 import com.chung.a9rushtobus.database.DatabaseHelper;
 import com.chung.a9rushtobus.R;
 import com.chung.a9rushtobus.elements.RTHKTrafficAdapter;

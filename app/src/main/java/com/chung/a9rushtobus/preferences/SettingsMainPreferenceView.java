@@ -12,7 +12,7 @@ import androidx.annotation.Nullable;
 import androidx.preference.Preference;
 import androidx.preference.PreferenceFragmentCompat;
 
-import com.chung.a9rushtobus.DataFetcher;
+import com.chung.a9rushtobus.service.DataFetcher;
 import com.chung.a9rushtobus.OnboardingActivity;
 import com.chung.a9rushtobus.R;
 import com.google.android.material.appbar.CollapsingToolbarLayout;

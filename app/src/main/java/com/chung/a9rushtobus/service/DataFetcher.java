@@ -1,4 +1,4 @@
-package com.chung.a9rushtobus;
+package com.chung.a9rushtobus.service;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
@@ -13,7 +13,6 @@ import com.chung.a9rushtobus.database.CTBDatabase;
 import com.chung.a9rushtobus.database.DatabaseHelper;
 import com.chung.a9rushtobus.elements.BusRoute;
 import com.chung.a9rushtobus.elements.RTHKTrafficEntry;
-import com.google.android.gms.common.api.Api;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -33,8 +32,6 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
-import java.util.Queue;
-import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;

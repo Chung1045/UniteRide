@@ -23,9 +23,8 @@ import android.view.ViewGroup;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
 import android.widget.ProgressBar;
-import android.widget.Toast;
 
-import com.chung.a9rushtobus.DataFetcher;
+import com.chung.a9rushtobus.service.DataFetcher;
 import com.chung.a9rushtobus.database.CTBDatabase;
 import com.chung.a9rushtobus.database.DatabaseHelper;
 import com.chung.a9rushtobus.R;
@@ -40,8 +39,6 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 public class FragmentSearch extends Fragment {
 

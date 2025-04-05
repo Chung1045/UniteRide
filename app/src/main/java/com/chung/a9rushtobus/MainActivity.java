@@ -112,7 +112,7 @@ public class MainActivity extends AppCompatActivity {
                 .hide(searchFragment)
                 .hide(trafficNewsFragment)
                 .hide(settingsFragment)
-                .show(nearbyFragment) // Show the default fragment
+                .show(savedFragment) // Show the default fragment
                 .commit();
         
         bottomNav.setOnItemSelectedListener(item -> {

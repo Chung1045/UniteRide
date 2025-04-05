@@ -30,6 +30,7 @@ import com.chung.a9rushtobus.database.GMBDatabase;
 import com.chung.a9rushtobus.database.KMBDatabase;
 import com.chung.a9rushtobus.elements.BusRouteStopItem;
 import com.chung.a9rushtobus.elements.BusRouteStopItemAdapter;
+import com.chung.a9rushtobus.service.DataFetcher;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
@@ -46,7 +47,6 @@ import org.json.JSONObject;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedReader;
-import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
@@ -62,11 +62,6 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
-
-import okhttp3.Call;
-import okhttp3.Callback;
-import okhttp3.Request;
-import okhttp3.Response;
 
 public class BusRouteDetailViewActivity extends AppCompatActivity implements OnMapReadyCallback {
 

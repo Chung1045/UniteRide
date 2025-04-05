@@ -17,8 +17,17 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 
     // Table creation constants
 
-    private static final String SQL_CREATE_RTHK_NEWS_TABLE = "CREATE TABLE IF NOT EXISTS " + Tables.RTHK_NEWS.TABLE_NAME + " (" + Tables.RTHK_NEWS.COLUMN_CONTENT + " TEXT," + Tables.RTHK_NEWS.COLUMN_DATE + " TEXT" + ");";
+    private static final String SQL_CREATE_RTHK_NEWS_TABLE = "CREATE TABLE IF NOT EXISTS " +
+            Tables.RTHK_NEWS.TABLE_NAME + " (" + Tables.RTHK_NEWS.COLUMN_CONTENT + " TEXT," +
+            Tables.RTHK_NEWS.COLUMN_DATE + " TEXT" + ");";
+    private static final String SQL_CREATE_USER_SAVED_TABLE = "CREATE TABLE IF NOT EXISTS " +
+            Tables.USER_SAVED.TABLE_NAME + " (" + Tables.USER_SAVED.COLUMN_ROUTE_ID + " TEXT," +
+            Tables.USER_SAVED.COLUMN_COMPANY_ID + " TEXT," +
+            Tables.USER_SAVED.COLUMN_ROUTE_BOUND + " TEXT," +
+            Tables.USER_SAVED.COLUMN_ROUTE_SERVICE_TYPE + " TEXT," +
+            Tables.USER_SAVED.COLUMN_STOP_ID + " TEXT" + ");";
     private static final String SQL_DELETE_RTHK_NEWS_TABLE = "DROP TABLE IF EXISTS " + Tables.RTHK_NEWS.TABLE_NAME;
+    private static final String SQL_DELETE_USER_SAVED_TABLE = "DROP TABLE IF EXISTS " + Tables.USER_SAVED.TABLE_NAME;
 
 
     // Static inner class to hold table contract details
@@ -76,7 +85,6 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 
         if (exists) {
             Log.d("DatabaseHelper", "Entry already exists, skipping insert");
-            db.close();
             return -1; // Indicate that no insertion was performed
         }
 
@@ -105,6 +113,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         db.execSQL(GMBDatabase.SQL_CREATE_GMB_ROUTE_STOPS_TABLE);
         db.execSQL(GMBDatabase.SQL_CREATE_GMB_STOP_LOCATIONS_TABLE);
         db.execSQL(SQL_CREATE_RTHK_NEWS_TABLE);
+        db.execSQL(SQL_CREATE_USER_SAVED_TABLE);
     }
 
     // Handle database upgrades
@@ -122,6 +131,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         db.execSQL(GMBDatabase.SQL_DELETE_GMB_ROUTE_STOPS_TABLE);
         db.execSQL(GMBDatabase.SQL_DELETE_GMB_STOP_LOCATIONS_TABLE);
         db.execSQL(SQL_DELETE_RTHK_NEWS_TABLE);
+        db.execSQL(SQL_DELETE_USER_SAVED_TABLE);
 
         // Recreate tables
         onCreate(db);

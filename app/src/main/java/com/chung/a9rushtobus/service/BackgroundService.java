@@ -1,12 +1,13 @@
-package com.chung.a9rushtobus;
+package com.chung.a9rushtobus.service;
 
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
+import java.util.HashMap;
+import java.util.Map;
 import android.content.Context;
 import android.content.res.Configuration;
-import java.util.Locale;
 import android.content.Intent;
 import android.os.Build;
 import android.os.Handler;
@@ -17,6 +18,9 @@ import android.util.Log;
 import androidx.annotation.Nullable;
 import androidx.core.app.NotificationCompat;
 
+import com.chung.a9rushtobus.BusRouteDetailViewActivity;
+import com.chung.a9rushtobus.R;
+import com.chung.a9rushtobus.UserPreferences;
 import com.chung.a9rushtobus.elements.BusRouteStopItem;
 
 import org.json.JSONArray;
@@ -26,23 +30,24 @@ import org.json.JSONObject;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Calendar;
 import java.util.Date;
-import java.util.List;
 import java.util.Locale;
 import java.util.TimeZone;
 
 public class BackgroundService extends Service {
     private static final String TAG = "BackgroundService";
     private static final String CHANNEL_ID = "BusTrackingChannel";
-    private static final int NOTIFICATION_ID = 1;
     private static final int UPDATE_INTERVAL_MS = 60000; // 60 seconds
     private static final String ACTION_STOP_TRACKING = "com.chung.a9rushtobus.action.STOP_TRACKING";
     private Handler handler;
     private DataFetcher dataFetcher;
     private NotificationManager notificationManager;
-    private BusRouteStopItem trackedStop;
-    private boolean isTracking = false;
+    private Map<String, TrackingInfo> trackingStops = new HashMap<>();
+    
+    // Generate unique notification ID for each route
+    private int generateNotificationId(BusRouteStopItem stop) {
+        return (stop.getCompany() + stop.getRoute() + stop.getStopID()).hashCode();
+    }
 
     @Override
     public void onCreate() {
@@ -59,11 +64,17 @@ public class BackgroundService extends Service {
             String action = intent.getAction();
             if (ACTION_STOP_TRACKING.equals(action)) {
                 Log.d(TAG, "Received stop tracking action");
-                stopTracking();
-                return START_NOT_STICKY; // Don't restart the service after stopping
+                String stopKey = intent.getStringExtra("stop_key");
+                if (stopKey != null) {
+                    stopTracking(stopKey);
+                }
+                return START_NOT_STICKY;
             } else if (intent.hasExtra("stop_item")) {
-                trackedStop = intent.getParcelableExtra("stop_item");
-                startTracking();
+                BusRouteStopItem stopItem = intent.getParcelableExtra("stop_item");
+                if (stopItem != null) {
+                    String stopKey = stopItem.getCompany() + stopItem.getRoute() + stopItem.getStopID();
+                    startTracking(stopKey, stopItem);
+                }
             }
         }
         return START_STICKY;
@@ -91,65 +102,86 @@ public class BackgroundService extends Service {
         }
     }
 
-    private void startTracking() {
-        if (isTracking || trackedStop == null) {
+    private void startTracking(String stopKey, BusRouteStopItem stopItem) {
+        if (trackingStops.containsKey(stopKey)) {
             return;
         }
 
-        isTracking = true;
-        fetchEtaAndUpdateNotification();
+        int notificationId = generateNotificationId(stopItem);
+        Handler stopHandler = new Handler(Looper.getMainLooper());
+        TrackingInfo trackingInfo = new TrackingInfo(stopItem, stopHandler, notificationId);
+        trackingStops.put(stopKey, trackingInfo);
+        
+        fetchEtaAndUpdateNotification(stopKey);
     }
 
-    private void stopTracking() {
-        Log.d(TAG, "Stopping bus tracking service");
-        isTracking = false;
-        handler.removeCallbacksAndMessages(null);
-        stopForeground(true);
-        stopSelf();
+    private void stopTracking(String stopKey) {
+        Log.d(TAG, "Stopping bus tracking for " + stopKey);
+        TrackingInfo info = trackingStops.get(stopKey);
+        if (info != null) {
+            info.setTracking(false);
+            info.getHandler().removeCallbacksAndMessages(null);
+            notificationManager.cancel(info.getNotificationId());
+            trackingStops.remove(stopKey);
+        }
+
+        if (trackingStops.isEmpty()) {
+            stopForeground(true);
+            stopSelf();
+        }
     }
 
-    private void fetchEtaAndUpdateNotification() {
-        if (!isTracking) {
+    private void fetchEtaAndUpdateNotification(String stopKey) {
+        TrackingInfo info = trackingStops.get(stopKey);
+        if (info == null || !info.isTracking()) {
             return;
         }
 
-        if (trackedStop.getCompany().equals("kmb") || trackedStop.getCompany().equals("ctb")) {
+        BusRouteStopItem stop = info.getStopItem();
+        if (stop.getCompany().equals("kmb") || stop.getCompany().equals("ctb")) {
             dataFetcher.fetchStopETA(
-                    trackedStop.getStopID(),
-                    trackedStop.getRoute(),
-                    trackedStop.getServiceType(),
-                    trackedStop.getCompany(),
-                    this::processEtaData,
-                    error -> handleEtaError(error)
+                    stop.getStopID(),
+                    stop.getRoute(),
+                    stop.getServiceType(),
+                    stop.getCompany(),
+                    etaData -> processEtaData(stopKey, etaData),
+                    error -> handleEtaError(stopKey, error)
             );
-        } else if (trackedStop.getCompany().equals("gmb")) {
+        } else if (stop.getCompany().equals("gmb")) {
             dataFetcher.fetchGMBStopETA(
-                    trackedStop.getGmbRouteID(),
-                    trackedStop.getGmbRouteSeq(),
-                    trackedStop.getStopSeq(),
-                    this::processEtaData,
-                    error -> handleEtaError(error)
+                    stop.getGmbRouteID(),
+                    stop.getGmbRouteSeq(),
+                    stop.getStopSeq(),
+                    etaData -> processEtaData(stopKey, etaData),
+                    error -> handleEtaError(stopKey, error)
             );
         }
     }
 
-    private void processEtaData(JSONArray etaDataArray) {
+    private void processEtaData(String stopKey, JSONArray etaDataArray) {
         try {
             String notificationText;
+            TrackingInfo info = trackingStops.get(stopKey);
+            if (info == null) return;
+            BusRouteStopItem stop = info.getStopItem();
+            
+            StringBuilder etaBuilder = new StringBuilder();
+            // Add stop name at the top
+            etaBuilder.append(stop.getStopName()).append("\n\n");
 
             if (etaDataArray.length() == 0) {
-                notificationText = getString(R.string.bus_eta_msg_noBus_name);
+                etaBuilder.append(getString(R.string.bus_eta_msg_noBus_name));
+                notificationText = etaBuilder.toString();
             } else {
-                StringBuilder etaBuilder = new StringBuilder();
 
                 // Process first valid ETA
                 JSONObject firstEta = null;
                 for (int i = 0; i < etaDataArray.length(); i++) {
                     JSONObject eta = etaDataArray.getJSONObject(i);
+                    
+                    if (shouldSkipEta(eta, stop)) continue;
 
-                    if (shouldSkipEta(eta)) continue;
-
-                    String remarks = getRemarks(eta);
+                    String remarks = getRemarks(eta, stop);
                     if (!remarks.isEmpty()) {
                         etaBuilder.append(remarks).append("\n");
                     }
@@ -161,7 +193,7 @@ public class BackgroundService extends Service {
 
                 if (firstEta == null) {
                     notificationText = getString(R.string.bus_eta_msg_noBus_name);
-                    updateNotification(notificationText);
+                    updateNotification(stopKey, notificationText);
                     return;
                 }
 
@@ -169,10 +201,14 @@ public class BackgroundService extends Service {
                 for (int i = 0; i < Math.min(etaDataArray.length(), 3); i++) {
                     JSONObject eta = etaDataArray.getJSONObject(i);
 
-                    if (shouldSkipEta(eta)) continue;
+                    TrackingInfo currentInfo = trackingStops.get(stopKey);
+                    if (currentInfo == null) continue;
+                    BusRouteStopItem currentStop = currentInfo.getStopItem();
+                    
+                    if (shouldSkipEta(eta, currentStop)) continue;
                     if (eta == firstEta) continue;
 
-                    String remarks = getRemarks(eta);
+                    String remarks = getRemarks(eta, currentStop);
                     if (!remarks.isEmpty()) {
                         etaBuilder.append("\n").append(remarks);
                     }
@@ -185,23 +221,23 @@ public class BackgroundService extends Service {
                 notificationText = etaBuilder.toString();
             }
 
-            updateNotification(notificationText);
-
-            if (isTracking) {
-                handler.postDelayed(this::fetchEtaAndUpdateNotification, UPDATE_INTERVAL_MS);
+            updateNotification(stopKey, notificationText);
+            
+            if (info != null && info.isTracking()) {
+                info.getHandler().postDelayed(() -> fetchEtaAndUpdateNotification(stopKey), UPDATE_INTERVAL_MS);
             }
 
         } catch (JSONException e) {
             Log.e(TAG, "Error processing ETA data: " + e.getMessage());
-            updateNotification("Error processing ETA data");
+            updateNotification(stopKey, "Error processing ETA data");
         }
     }
 
-    private boolean shouldSkipEta(JSONObject eta) {
+    private boolean shouldSkipEta(JSONObject eta, BusRouteStopItem stop) {
         try {
-            return trackedStop.getCompany().equals("kmb") &&
+            return stop.getCompany().equals("kmb") &&
                     eta.has("service_type") &&
-                    !eta.getString("service_type").equals(trackedStop.getServiceType());
+                    !eta.getString("service_type").equals(stop.getServiceType());
         } catch (JSONException e) {
             return true; // skip if service_type is missing or invalid
         }
@@ -243,8 +279,8 @@ public class BackgroundService extends Service {
         }
     }
 
-    private String getRemarks(JSONObject eta) throws JSONException {
-        String company = trackedStop.getCompany();
+    private String getRemarks(JSONObject eta, BusRouteStopItem stop) throws JSONException {
+        String company = stop.getCompany();
         if (company.equals("kmb") || company.equals("ctb")) {
             return getLocalizedRemarks(eta, "rmk_en", "rmk_tc", "rmk_sc");
         } else if (company.equals("gmb")) {
@@ -312,13 +348,14 @@ public class BackgroundService extends Service {
         return remarks;
     }
 
-    private void handleEtaError(String error) {
+    private void handleEtaError(String stopKey, String error) {
         Log.e(TAG, "Error fetching ETA: " + error);
-        updateNotification("Error: " + error);
+        updateNotification(stopKey, "Error: " + error);
 
         // Retry after delay
-        if (isTracking) {
-            handler.postDelayed(this::fetchEtaAndUpdateNotification, UPDATE_INTERVAL_MS);
+        TrackingInfo info = trackingStops.get(stopKey);
+        if (info != null && info.isTracking()) {
+            info.getHandler().postDelayed(() -> fetchEtaAndUpdateNotification(stopKey), UPDATE_INTERVAL_MS);
         }
     }
 
@@ -341,7 +378,11 @@ public class BackgroundService extends Service {
         return createConfigurationContext(configuration);
     }
 
-private void updateNotification(String content) {
+private void updateNotification(String stopKey, String content) {
+        TrackingInfo info = trackingStops.get(stopKey);
+        if (info == null) return;
+        
+        BusRouteStopItem trackedStop = info.getStopItem();
         // Debug logging
         Log.d(TAG, "Current Locale: " + getResources().getConfiguration().locale);
         Log.d(TAG, "App Language Setting: " + UserPreferences.sharedPref.getString(UserPreferences.SETTINGS_APP_LANG, "en"));
@@ -358,6 +399,7 @@ private void updateNotification(String content) {
         // Create stop tracking intent
         Intent stopIntent = new Intent(this, BackgroundService.class);
         stopIntent.setAction(ACTION_STOP_TRACKING);
+        stopIntent.putExtra("stop_key", stopKey);
         PendingIntent stopPendingIntent = PendingIntent.getService(
                 this,
                 0,
@@ -381,7 +423,7 @@ private void updateNotification(String content) {
         }
 
         NotificationCompat.Builder builder = new NotificationCompat.Builder(this, CHANNEL_ID)
-                .setContentTitle(localizedContext.getString(R.string.notif_trackBus_name) + " " + companyDisplayName + " " + trackedStop.getRoute() + " - " + trackedStop.getStopName())
+                .setContentTitle(localizedContext.getString(R.string.notif_trackBus_name) + " " + companyDisplayName + " " + trackedStop.getRoute())
                 .setContentText(content)
                 .setSmallIcon(R.drawable.baseline_notifications_active_24)
                 .setPriority(NotificationCompat.PRIORITY_LOW)  // Lower priority for sticky behavior
@@ -396,12 +438,19 @@ private void updateNotification(String content) {
             builder.setStyle(new NotificationCompat.BigTextStyle().bigText(content));
         }
 
-        startForeground(NOTIFICATION_ID, builder.build());
+        if (trackingStops.size() == 1) {
+            startForeground(info.getNotificationId(), builder.build());
+        } else {
+            notificationManager.notify(info.getNotificationId(), builder.build());
+        }
     }
 
     @Override
     public void onDestroy() {
         super.onDestroy();
-        stopTracking();
+        // Stop tracking for all stops
+        for (String stopKey : new ArrayList<>(trackingStops.keySet())) {
+            stopTracking(stopKey);
+        }
     }
 }

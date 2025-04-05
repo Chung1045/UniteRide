@@ -1,0 +1,157 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        app:cardCornerRadius="8dp"
+        app:cardElevation="4dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
+
+        <LinearLayout
+            android:id="@+id/item_nearby_bus_route_info_holder"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="8dp"
+            android:background="@drawable/background_bus_route_entry"
+            android:clickable="true"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:padding="16dp"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            tools:ignore="MissingConstraints">
+
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="vertical">
+
+                <TextView
+                    android:id="@+id/tvNearbyRouteBusSpecialIndicator"
+                    android:layout_width="70dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginEnd="10dp"
+                    android:text="@string/frag_search_specialRoute_name"
+                    android:textAlignment="center"
+                    android:textSize="12sp" />
+
+                <TextView
+                    android:id="@+id/tvRouteName"
+                    android:layout_width="70dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginEnd="10dp"
+                    android:text="83K"
+                    android:textAlignment="center"
+                    android:textSize="24sp" />
+
+            </LinearLayout>
+
+
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical">
+
+                <TextView
+                    android:id="@+id/tvNearbyRouteBusCompany"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginEnd="16dp"
+                    android:text="KMB"
+                    android:textSize="12sp" />
+
+                <TextView
+                    android:id="@+id/tvNearbyRouteDestination"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:ellipsize="marquee"
+                    android:focusable="true"
+                    android:focusableInTouchMode="true"
+                    android:marqueeRepeatLimit="marquee_forever"
+                    android:scrollHorizontally="true"
+                    android:singleLine="true"
+                    android:text="TO SHA TIN CENTRAL"
+                    android:textSize="16sp" />
+
+                <TextView
+                    android:id="@+id/tvNearbyRouteOrigin"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:ellipsize="marquee"
+                    android:focusable="true"
+                    android:marqueeRepeatLimit="marquee_forever"
+                    android:scrollHorizontally="true"
+                    android:singleLine="true"
+                    android:text="WONG NAI TAU"
+                    android:textSize="12sp" />
+
+                <TextView
+                    android:id="@+id/tvNearbyRouteRemarks"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="5dp"
+                    android:layout_weight="1"
+                    android:ellipsize="marquee"
+                    android:focusable="true"
+                    android:marqueeRepeatLimit="marquee_forever"
+                    android:scrollHorizontally="true"
+                    android:singleLine="true"
+                    android:text="This is a remark"
+                    android:textSize="12sp" />
+
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="100dp"
+                android:layout_height="wrap_content"
+                android:orientation="vertical">
+
+                <TextView
+                    android:id="@+id/tvNearbyRouteETA"
+                    android:layout_width="100dp"
+                    android:layout_height="wrap_content"
+                    android:text="10 min"
+                    android:textAlignment="textEnd"
+                    android:textSize="20sp" />
+
+                <TextView
+                    android:id="@+id/tvNearbyRouteETA2"
+                    android:layout_width="100dp"
+                    android:layout_height="wrap_content"
+                    android:text="10 min"
+                    android:textAlignment="textEnd"
+                    android:textSize="16sp" />
+
+                <TextView
+                    android:id="@+id/tvNearbyRouteETA3"
+                    android:layout_width="100dp"
+                    android:layout_height="wrap_content"
+                    android:text="10 min"
+                    android:textAlignment="textEnd"
+                    android:textSize="16sp" />
+
+            </LinearLayout>
+
+
+            <TextView
+                android:id="@+id/tvNearbyRouteId"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:visibility="gone" />
+
+        </LinearLayout>
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+</androidx.constraintlayout.widget.ConstraintLayout>
