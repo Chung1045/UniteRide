@@ -6,6 +6,7 @@
     android:id="@+id/activity_bus_detail_constraint_layout"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:fitsSystemWindows="true"
     tools:context=".BusRouteDetailViewActivity">
 
     <!-- Guideline at 60% height for the map -->
@@ -91,6 +92,7 @@
         app:layout_constraintTop_toBottomOf="@+id/linearLayout">
 
         <TextView
+            android:id="@+id/bus_detail_activity_route_remarks"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Normal Route"

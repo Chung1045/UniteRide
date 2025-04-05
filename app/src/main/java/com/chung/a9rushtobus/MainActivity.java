@@ -20,6 +20,7 @@ import com.chung.a9rushtobus.fragments.FragmentSaved;
 import com.chung.a9rushtobus.fragments.FragmentSearch;
 import com.chung.a9rushtobus.fragments.FragmentSettings;
 import com.chung.a9rushtobus.fragments.FragmentTrafficNews;
+import com.chung.a9rushtobus.preferences.LocaleHelper;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.android.material.color.DynamicColors;
 
@@ -27,6 +28,7 @@ public class MainActivity extends AppCompatActivity {
     private BottomNavigationView bottomNav;
     private UserPreferences userPreferences;
     private DatabaseHelper dbHelper;
+    private LocaleHelper localeHelper;
     private SharedPreferences.OnSharedPreferenceChangeListener preferenceChangeListener;
     private boolean isDataReady = false;
 
@@ -34,7 +36,17 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
+        // Initialize user preferences
         userPreferences = new UserPreferences(this);
+
+        if (savedInstanceState == null) {
+            localeHelper = new LocaleHelper();
+            String localeCode = UserPreferences.sharedPref.getString(UserPreferences.SETTINGS_APP_LANG, "en");
+            localeHelper.setAppLocale(this, localeCode);
+            recreate();
+        }
+
+        // Continue with existing logic
         dbHelper = new DatabaseHelper(this);
         dbHelper.onCreate(dbHelper.getWritableDatabase());
 
@@ -48,40 +60,27 @@ public class MainActivity extends AppCompatActivity {
             if (isFirstTimeLaunch) {
                 startActivity(new Intent(this, OnboardingActivity.class));
                 finish();
-            } else {
-                initTheme();
-
-                bottomNav = findViewById(R.id.bottomNav_main);
-                initListener();
             }
-            // Remove the splash screen view from the view hierarchy.
             splashScreenView.remove();
         });
 
         new Thread(() -> {
             try {
-                Thread.sleep(3000);
-            } catch (Exception e){
+                // Simulate background work like database loading
+                Thread.sleep(2000);
+            } catch (Exception e) {
                 e.printStackTrace();
             }
             isDataReady = true;
+            runOnUiThread(() -> splashScreen.setKeepOnScreenCondition(() -> false));
         }).start();
-        EdgeToEdge.enable(this);
         setContentView(R.layout.activity_main);
-        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
-            Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
-            v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
-            return insets;
-        });
 
         bottomNav = findViewById(R.id.bottomNav_main);
-        bottomNav.setItemActiveIndicatorColor(
-                ContextCompat.getColorStateList(this, R.color.brand_colorPrimary)
-        );
-
         initTheme();
         initListener();
     }
+
 
     private void updateBottomNavVisibility() {
         BottomNavigationView bottomNav = findViewById(R.id.bottomNav_main);
@@ -90,26 +89,83 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void initListener() {
+        bottomNav.setItemActiveIndicatorColor(
+                ContextCompat.getColorStateList(this, R.color.brand_colorPrimary)
+        );
 
+        // Create fragments once and reuse them
+        final FragmentSaved savedFragment = new FragmentSaved();
+        final FragmentNearby nearbyFragment = new FragmentNearby();
+        final FragmentSearch searchFragment = new FragmentSearch();
+        final FragmentTrafficNews trafficNewsFragment = new FragmentTrafficNews();
+        final FragmentSettings settingsFragment = new FragmentSettings();
+        
+        // Add the initial fragment
+        getSupportFragmentManager().beginTransaction()
+                .add(R.id.fragmentView_main, savedFragment)
+                .add(R.id.fragmentView_main, nearbyFragment)
+                .add(R.id.fragmentView_main, searchFragment)
+                .add(R.id.fragmentView_main, trafficNewsFragment)
+                .add(R.id.fragmentView_main, settingsFragment)
+                .hide(savedFragment)
+                .hide(nearbyFragment)
+                .hide(searchFragment)
+                .hide(trafficNewsFragment)
+                .hide(settingsFragment)
+                .show(savedFragment) // Show the default fragment
+                .commit();
+        
         bottomNav.setOnItemSelectedListener(item -> {
             int menuItemId = item.getItemId();
             bottomNav.setItemActiveIndicatorColor(
                     ContextCompat.getColorStateList(this, R.color.brand_colorPrimary)
             );
+            
+            // Use show/hide instead of replace for better performance
             if (menuItemId == R.id.menu_item_main_saved) {
-                getSupportFragmentManager().beginTransaction().replace(R.id.fragmentView_main, new FragmentSaved()).commit();
+                getSupportFragmentManager().beginTransaction()
+                        .hide(nearbyFragment)
+                        .hide(searchFragment)
+                        .hide(trafficNewsFragment)
+                        .hide(settingsFragment)
+                        .show(savedFragment)
+                        .commit();
                 return true;
             } else if (menuItemId == R.id.menu_item_main_nearby) {
-                getSupportFragmentManager().beginTransaction().replace(R.id.fragmentView_main, new FragmentNearby()).commit();
+                getSupportFragmentManager().beginTransaction()
+                        .hide(savedFragment)
+                        .hide(searchFragment)
+                        .hide(trafficNewsFragment)
+                        .hide(settingsFragment)
+                        .show(nearbyFragment)
+                        .commit();
                 return true;
             } else if (menuItemId == R.id.menu_item_main_search) {
-                getSupportFragmentManager().beginTransaction().replace(R.id.fragmentView_main, new FragmentSearch()).commit();
+                getSupportFragmentManager().beginTransaction()
+                        .hide(savedFragment)
+                        .hide(nearbyFragment)
+                        .hide(trafficNewsFragment)
+                        .hide(settingsFragment)
+                        .show(searchFragment)
+                        .commit();
                 return true;
             } else if (menuItemId == R.id.menu_item_main_news) {
-                getSupportFragmentManager().beginTransaction().replace(R.id.fragmentView_main, new FragmentTrafficNews()).commit();
+                getSupportFragmentManager().beginTransaction()
+                        .hide(savedFragment)
+                        .hide(nearbyFragment)
+                        .hide(searchFragment)
+                        .hide(settingsFragment)
+                        .show(trafficNewsFragment)
+                        .commit();
                 return true;
             } else if (menuItemId == R.id.menu_item_main_settings) {
-                getSupportFragmentManager().beginTransaction().replace(R.id.fragmentView_main, new FragmentSettings()).commit();
+                getSupportFragmentManager().beginTransaction()
+                        .hide(savedFragment)
+                        .hide(nearbyFragment)
+                        .hide(searchFragment)
+                        .hide(trafficNewsFragment)
+                        .show(settingsFragment)
+                        .commit();
                 return true;
             } else {
                 return false;

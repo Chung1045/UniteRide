@@ -1,6 +1,7 @@
 package com.chung.a9rushtobus.elements;
 
 import android.content.Context;
+import android.content.Intent;
 import android.os.Handler;
 import android.os.Looper;
 import android.transition.TransitionManager;
@@ -9,17 +10,24 @@ import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.constraintlayout.widget.ConstraintLayout;
+import androidx.core.content.ContextCompat;
 import androidx.lifecycle.DefaultLifecycleObserver;
 import androidx.lifecycle.LifecycleOwner;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.chung.a9rushtobus.DataFetcher;
+import com.chung.a9rushtobus.database.DatabaseHelper;
+import com.chung.a9rushtobus.database.DatabaseHelper;
+import com.chung.a9rushtobus.service.BackgroundService;
+import com.chung.a9rushtobus.service.DataFetcher;
 import com.chung.a9rushtobus.R;
+import com.chung.a9rushtobus.UserPreferences;
 import com.chung.a9rushtobus.Utils;
 
 import org.json.JSONArray;
@@ -28,6 +36,7 @@ import org.json.JSONObject;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 public class BusRouteStopItemAdapter extends RecyclerView.Adapter<BusRouteStopItemAdapter.ViewHolder> implements DefaultLifecycleObserver {
 
@@ -41,6 +50,7 @@ public class BusRouteStopItemAdapter extends RecyclerView.Adapter<BusRouteStopIt
     private final Handler refetchHandler;
     private final Runnable updateRunnable;
     private boolean isUpdating = false;
+    private DatabaseHelper databaseHelper;
 
     public BusRouteStopItemAdapter(Context context, List<BusRouteStopItem> items, Utils utils) {
         this.context = context;
@@ -50,6 +60,7 @@ public class BusRouteStopItemAdapter extends RecyclerView.Adapter<BusRouteStopIt
         this.updateHandler = new Handler(Looper.getMainLooper());
         this.refetchHandler = new Handler(Looper.getMainLooper());
         this.updateRunnable = this::refreshAllEtaData;
+        this.databaseHelper = new DatabaseHelper(context);
     }
 
     @NonNull
@@ -63,7 +74,8 @@ public class BusRouteStopItemAdapter extends RecyclerView.Adapter<BusRouteStopIt
     @Override
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
         BusRouteStopItem item = items.get(position);
-        holder.stopName.setText(item.getStopTc());
+        holder.stopName.setText(item.getStopName());
+        holder.stopName.setSelected(true);
         holder.stopSeq.setText(String.valueOf(position + 1));
 
         // Set the expanded state based on the data model
@@ -71,7 +83,7 @@ public class BusRouteStopItemAdapter extends RecyclerView.Adapter<BusRouteStopIt
 
         // Clear previous ETA views
         holder.etaLayout.removeAllViews();
-        
+
         // Get ETA data
         List<String> etaDataFull = item.getEtaDataFull();
         String etaData = item.getClosestETA();
@@ -85,6 +97,78 @@ public class BusRouteStopItemAdapter extends RecyclerView.Adapter<BusRouteStopIt
             TransitionManager.beginDelayedTransition((ViewGroup) holder.detailLayout.getParent());
             holder.detailLayout.setVisibility(item.isExpanded() ? View.VISIBLE : View.GONE);
         });
+
+        // Set up track bus button
+        holder.trackBusButton.setOnClickListener(v -> {
+            Intent serviceIntent = new Intent(context, BackgroundService.class);
+            serviceIntent.putExtra("stop_item", item);
+            context.startService(serviceIntent);
+            Toast.makeText(context, 
+                context.getString(R.string.notif_tracking_started, item.getStopName()), 
+                Toast.LENGTH_SHORT).show();
+        });
+        
+        // Check if the stop is already saved and update the button accordingly
+        boolean isSaved = databaseHelper.savedRoutesManager.isRouteStopSaved(item);
+        updateSaveButton(holder.saveStopButton, isSaved);
+        
+        // Set up save stop button
+        holder.saveStopButton.setOnClickListener(v -> {
+            boolean currentlySaved = databaseHelper.savedRoutesManager.isRouteStopSaved(item);
+            
+            if (currentlySaved) {
+                // Remove from saved routes
+                boolean removed = databaseHelper.savedRoutesManager.removeRouteStop(item);
+                if (removed) {
+                    Toast.makeText(context, 
+                        context.getString(R.string.saved_stop_removed, item.getStopName()), 
+                        Toast.LENGTH_SHORT).show();
+                    updateSaveButton(holder.saveStopButton, false);
+                }
+            } else {
+                // Save the route stop
+                boolean saved = databaseHelper.savedRoutesManager.saveRouteStop(item);
+                if (saved) {
+                    Toast.makeText(context, "Saved stop: " + item.getStopName(), Toast.LENGTH_SHORT).show();
+                    updateSaveButton(holder.saveStopButton, true);
+                }
+            }
+        });
+
+        updateSaveButton(holder.saveStopButton, isSaved);
+        
+        // Set up save stop button
+        holder.saveStopButton.setOnClickListener(v -> {
+            boolean currentlySaved = databaseHelper.savedRoutesManager.isRouteStopSaved(item);
+            
+            if (currentlySaved) {
+                // Remove from saved routes
+                boolean removed = databaseHelper.savedRoutesManager.removeRouteStop(item);
+                if (removed) {
+                    Toast.makeText(context, 
+                        context.getString(R.string.saved_stop_removed, item.getStopName()), 
+                        Toast.LENGTH_SHORT).show();
+                    updateSaveButton(holder.saveStopButton, false);
+                }
+            } else {
+                // Save the route stop
+                boolean saved = databaseHelper.savedRoutesManager.saveRouteStop(item);
+                if (saved) {
+                    Toast.makeText(context, "Saved stop: " + item.getStopName(), Toast.LENGTH_SHORT).show();
+                    updateSaveButton(holder.saveStopButton, true);
+                }
+            }
+        });
+
+        if (holder.firstETA != null && !Objects.equals(item.getCompany(), "gmb")) {
+            holder.firstETA.setText(item.getClosestETA());
+            if (item.hasRemarks()) {
+                holder.firstETA.setTextColor(ContextCompat.getColor(context, R.color.brand_colorOnError));
+            } else {
+                holder.firstETA.setTextColor(holder.firstETA.getTextColors().getDefaultColor());
+            }
+        }
+
     }
 
     private void displayEtaData(ViewHolder holder, List<String> etaDataFull, String etaData) {
@@ -106,7 +190,7 @@ public class BusRouteStopItemAdapter extends RecyclerView.Adapter<BusRouteStopIt
 
     private void addPlaceholderEtas(LinearLayout etaLayout) {
         for (int i = 0; i < 3; i++) {
-            addEtaTextView(etaLayout, "Loading ETA...");
+            addEtaTextView(etaLayout, context.getString(R.string.bus_eta_msg_loadingETA_name));
         }
     }
 
@@ -154,7 +238,7 @@ public class BusRouteStopItemAdapter extends RecyclerView.Adapter<BusRouteStopIt
             updateHandler.postDelayed(this::startPeriodicUpdates, 3000);
             return;
         }
-        
+
         isUpdating = true;
         updateHandler.post(updateRunnable);
         Log.d("ETARefresh", "Started periodic ETA updates");
@@ -169,6 +253,24 @@ public class BusRouteStopItemAdapter extends RecyclerView.Adapter<BusRouteStopIt
         }
     }
 
+    /**
+     * Pauses ETA updates - called from activity's onPause
+     */
+    public void pauseETAUpdates() {
+        Log.d("ETARefresh", "Pausing ETA updates from activity");
+        stopPeriodicUpdates();
+        // Also cancel any pending refetch tasks
+        refetchHandler.removeCallbacksAndMessages(null);
+    }
+
+    /**
+     * Resumes ETA updates - called from activity's onResume
+     */
+    public void resumeETAUpdates() {
+        Log.d("ETARefresh", "Resuming ETA updates from activity");
+        startPeriodicUpdates();
+    }
+
     // Method to refresh all visible ETA data
     private void refreshAllEtaData() {
         Log.d("ETARefresh", "Refreshing ETA data for " + items.size() + " stops");
@@ -176,9 +278,7 @@ public class BusRouteStopItemAdapter extends RecyclerView.Adapter<BusRouteStopIt
         for (int position = 0; position < items.size(); position++) {
             BusRouteStopItem item = items.get(position);
             int finalPosition = position;
-            if (item.getCompany().equals("kmb") || item.getCompany().equals("ctb")) {
-                fetchEtaForStop(item, finalPosition, System.currentTimeMillis());
-            }
+            fetchEtaForStop(item, finalPosition, System.currentTimeMillis());
         }
 
         if (isUpdating) {
@@ -187,14 +287,32 @@ public class BusRouteStopItemAdapter extends RecyclerView.Adapter<BusRouteStopIt
     }
 
     private void fetchEtaForStop(BusRouteStopItem item, int position, long startTime) {
-        dataFetcher.fetchStopETA(
-            item.getStopID(), 
-            item.getRoute(), 
-            item.getServiceType(), 
-            item.getCompany(),
-            etaDataArray -> processEtaData(item, position, etaDataArray, startTime),
-            error -> handleEtaError(item, position, error)
-        );
+
+        if (item.getCompany().equals("kmb") || item.getCompany().equals("ctb")) {
+            dataFetcher.fetchStopETA(
+                    item.getStopID(),
+                    item.getRoute(),
+                    item.getServiceType(),
+                    item.getCompany(),
+                    etaDataArray -> {
+                        Log.d("ETARefresh", "ETA data received for position " + position);
+                        Log.d("ETARefresh", "return value: " + etaDataArray);
+                        processEtaData(item, position, etaDataArray, startTime);
+                    },
+                    error -> handleEtaError(item, position, error)
+            );
+        } else {
+            Log.d("ETARefresh", "Refreshing ETA for GMB " + position);
+            Log.d("ETARefresh", "Value to be pass: " + item.getStopID() + " " + item.getGmbRouteID() + " " + position + 1);
+            dataFetcher.fetchGMBStopETA(item.getGmbRouteID(), item.getGmbRouteSeq(), String.valueOf(position + 1),
+                    etaDataArray -> {
+                        Log.d("ETARefresh", "ETA data received for position " + position);
+                        Log.d("ETARefresh", "return value: " + etaDataArray);
+                        processEtaData(item, position, etaDataArray, startTime);
+//                processEtaData(item, position, etaDataArray, startTime);
+                    }, error -> handleEtaError(item, position, error)
+            );
+        }
     }
 
     private void processEtaData(BusRouteStopItem item, int position, JSONArray etaDataArray, long startTime) {
@@ -203,29 +321,87 @@ public class BusRouteStopItemAdapter extends RecyclerView.Adapter<BusRouteStopIt
 
         try {
             if (etaDataArray.length() == 0) {
-                newEtaData.add("No available bus at the moment");
+                Log.d("ETARefresh", "No ETA data received for position " + position);
+                newEtaData.add(context.getString(R.string.bus_eta_msg_noBus_name));
                 item.setClosestETA(null);
+                updateClosestEta(item, "N/A", position, "");
             } else {
                 boolean needsRefetch = false;
 
                 for (int i = 0; i < Math.min(etaDataArray.length(), 3); i++) {
                     JSONObject etaData = etaDataArray.getJSONObject(i);
+                    Log.d("ETARefresh", "Processing ETA data: " + etaData);
                     if (item.getCompany().equals("kmb") && !etaData.getString("service_type").equals(item.getServiceType())) {
                         continue;
                     }
 
-                    String etaTime = utils.parseTime(etaData.optString("eta", "N/A"));
-                    String etaMinutes = utils.getTimeDifference(etaData.optString("eta", "N/A"));
+                    String etaTime = "N/A", etaMinutes = "N/A";
+
+                    if (item.getCompany().equals("ctb") || item.getCompany().equals("kmb")) {
+                        etaTime = utils.parseTime(etaData.optString("eta", "N/A"));
+                        etaMinutes = utils.getTimeDifference(etaData.optString("eta", "N/A"));
+                    } else if (item.getCompany().equals("gmb")) {
+                        Log.d("ETARefresh", "In GMB Block");
+                        etaTime = utils.parseTime(etaData.optString("timestamp", "N/A"));
+                        etaMinutes = etaData.optString("diff", "N/A");
+                        Log.d("ETARefresh", "ETA time: " + etaTime);
+                        Log.d("ETARefresh", "ETA minutes: " + etaMinutes);
+                    }
+
                     String displayText = etaMinutes.equals("N/A") ?
-                            "No available bus" : etaTime + " " + etaMinutes + " mins";
+                            context.getString(R.string.bus_eta_msg_noBus_name) : etaTime + " " + etaMinutes + " " + context.getString(R.string.bus_eta_minute_text_name);
+
+                    String rmk_text = null;
+
+                    if (item.getCompany().equals("kmb") || item.getCompany().equals("ctb")) {
+                        if (etaData.getString("rmk_en") != null || etaData.getString("rmk_en").isEmpty()) {
+                            String appLang = UserPreferences.sharedPref.getString(UserPreferences.SETTINGS_APP_LANG, "en");
+
+                            switch (appLang) {
+                                case "zh-rCN":
+                                    rmk_text = etaData.getString("rmk_sc");
+                                    break;
+                                case "zh-rHK":
+                                    rmk_text = etaData.getString("rmk_tc");
+                                    break;
+                                default:
+                                    rmk_text = etaData.getString("rmk_en");
+                            }
+
+                            newEtaData.add(rmk_text);
+                        }
+
+                    } else if (item.getCompany().equals("gmb")) {
+                        if (etaData.getString("remarks_en") != null || !etaData.getString("remarks_en").isEmpty()) {
+                            String appLang = UserPreferences.sharedPref.getString(UserPreferences.SETTINGS_APP_LANG, "en");
+
+                            switch (appLang) {
+                                case "zh-rCN":
+                                    rmk_text = etaData.getString("remarks_sc");
+                                    break;
+                                case "zh-rHK":
+                                    rmk_text = etaData.getString("remarks_tc");
+                                    break;
+                                default:
+                                    rmk_text = etaData.getString("remarks_en");
+                            }
+
+                            newEtaData.add(rmk_text);
+                        }
+                    } else {
+                        Log.wtf(TAG, "What? How do you get to here? Are you from other world? " + item.getCompany());
+                    }
+
+
+                    Log.d("ETARefresh", "Display text: " + displayText);
 
                     if (i == 0 && !etaMinutes.equals("N/A")) {
-                        updateClosestEta(item, etaMinutes, position);
+                        updateClosestEta(item, etaMinutes, position, rmk_text);
                         if (Integer.parseInt(etaMinutes) < 0) {
                             needsRefetch = true;
                             displayText = etaTime + " " + "---";
                         } else if (Integer.parseInt(etaMinutes) == 0) {
-                            displayText = etaTime + " " + "Arriving";
+                            displayText = etaTime + " " + context.getString(R.string.detail_view_eta_arriving_name);
                         }
                     }
 
@@ -253,17 +429,20 @@ public class BusRouteStopItemAdapter extends RecyclerView.Adapter<BusRouteStopIt
         updateUi(position);
     }
 
-    private void updateClosestEta(BusRouteStopItem item, String etaMinutes, int position) {
-        if (etaMinutes.equals("N/A")) {
-            item.setClosestETA("!");
+    private void updateClosestEta(BusRouteStopItem item, String etaMinutes, int position, String rmk_text) {
+        Log.e(TAG, "ETA for position " + position + ": " + etaMinutes);
+        if (etaMinutes.equals("N/A") || etaMinutes.isEmpty()) {
+            item.setClosestETA("---");
         } else if (etaMinutes.equals("0")) {
-            item.setClosestETA("Arriving");
+            item.setClosestETA(context.getString(R.string.detail_view_eta_arriving_name));
         } else if (Integer.parseInt(etaMinutes) < 0) {
             item.setClosestETA("---");
             Log.d("ETARefresh", "Position " + (position + 1) + " Negative ETA detected: " + etaMinutes + " mins. Will refetch.");
         } else {
-            item.setClosestETA(etaMinutes + " mins");
+            item.setClosestETA(etaMinutes + " " + context.getString(R.string.bus_eta_minute_text_name));
         }
+
+        item.setHasRemarks(!rmk_text.isEmpty());
     }
 
     private void scheduleRefetch(BusRouteStopItem item, int position) {
@@ -284,8 +463,41 @@ public class BusRouteStopItemAdapter extends RecyclerView.Adapter<BusRouteStopIt
     }
 
     private void updateUi(int position) {
-        new Handler(Looper.getMainLooper()).post(() -> notifyItemChanged(position));
+        // Check if we're still attached to a valid context and the adapter is still active
+        if (context == null || items == null || position >= items.size()) {
+            Log.d(TAG, "Skipping UI update for position " + position + " as context is invalid or adapter is detached");
+            return;
+        }
+
+        try {
+            new Handler(Looper.getMainLooper()).post(() -> {
+                // Double-check that the adapter is still valid before notifying
+                if (!isUpdating || items == null || position >= items.size()) {
+                    Log.d(TAG, "Skipping UI update as adapter is no longer active");
+                    return;
+                }
+                notifyItemChanged(position);
+            });
+        } catch (Exception e) {
+            Log.e(TAG, "Error updating UI for position " + position + ": " + e.getMessage());
+        }
     }
+    
+    /**
+     * Updates the save button appearance based on whether the stop is saved or not
+     */
+    private void updateSaveButton(Button saveButton, boolean isSaved) {
+        if (isSaved) {
+            // Stop is saved - update button to indicate it can be removed
+            saveButton.setText(R.string.detail_view_unsave_route_stop_name);
+            saveButton.setCompoundDrawablesWithIntrinsicBounds(R.drawable.baseline_bookmark_24, 0, 0, 0);
+        } else {
+            // Stop is not saved - update button to indicate it can be saved
+            saveButton.setText(R.string.detail_view_save_route_stop_name);
+            saveButton.setCompoundDrawablesWithIntrinsicBounds(R.drawable.baseline_bookmark_border_24, 0, 0, 0);
+        }
+    }
+
 
     public static class ViewHolder extends RecyclerView.ViewHolder {
         TextView stopName;
@@ -293,6 +505,7 @@ public class BusRouteStopItemAdapter extends RecyclerView.Adapter<BusRouteStopIt
         TextView firstETA;
         ConstraintLayout mainLayout, detailLayout;
         LinearLayout etaLayout;
+        Button trackBusButton, saveStopButton;
 
         public ViewHolder(@NonNull View itemView) {
             super(itemView);
@@ -302,6 +515,8 @@ public class BusRouteStopItemAdapter extends RecyclerView.Adapter<BusRouteStopIt
             stopSeq = itemView.findViewById(R.id.item_stop_summary_stop_seq);
             firstETA = itemView.findViewById(R.id.item_stop_summary_stop_first_eta);
             etaLayout = itemView.findViewById(R.id.eta_container);
+            trackBusButton = itemView.findViewById(R.id.track_bus_button);
+            saveStopButton = itemView.findViewById(R.id.save_stop_button);
         }
     }
 }

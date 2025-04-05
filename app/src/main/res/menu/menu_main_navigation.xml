@@ -4,21 +4,21 @@
     <item
         android:id="@+id/menu_item_main_saved"
         android:icon="@drawable/baseline_bookmark_border_24"
-        android:title="Saved" />
+        android:title="@string/bottomNav_saved_tabName" />
     <item
         android:id="@+id/menu_item_main_nearby"
         android:icon="@drawable/baseline_location_pin_24"
-        android:title="Nearby" />
+        android:title="@string/bottomNav_nearby_tabName" />
     <item
         android:id="@+id/menu_item_main_search"
         android:icon="@drawable/baseline_search_24"
-        android:title="Search" />
+        android:title="@string/bottomNav_search_tabName" />
     <item
         android:id="@+id/menu_item_main_news"
         android:icon="@drawable/baseline_notifications_none_24"
-        android:title="News" />
+        android:title="@string/bottomNav_news_tabName" />
     <item
         android:id="@+id/menu_item_main_settings"
         android:icon="@drawable/baseline_settings_24"
-        android:title="Settings" />
+        android:title="@string/bottomNav_settings_tabName" />
 </menu>

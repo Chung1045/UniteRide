@@ -16,7 +16,7 @@ import com.google.android.material.appbar.MaterialToolbar;
 
 public class SettingsAboutView extends Fragment {
     private MaterialToolbar toolbar;
-    private CollapsingToolbarLayout collapsingToolbar ;
+    private CollapsingToolbarLayout collapsingToolbar;
     private TextView prefAboutPermission, prefAboutLibraries, prefAboutGitHub;
     private Utils utils;
 
@@ -42,17 +42,23 @@ public class SettingsAboutView extends Fragment {
         listenerInit();
     }
 
-    private void listenerInit(){
+    private void listenerInit() {
 
         prefAboutPermission.setOnClickListener(view -> {
-            updateToolbarTitle("Permission");
-            getParentFragmentManager().beginTransaction()
-                    .replace(R.id.fragmentContainerView, new PrefPermissionView())
+            updateToolbarTitle(getString(R.string.settings_about_permissionOption_name));
+            getParentFragmentManager()
+                    .beginTransaction()
+                    .setCustomAnimations(
+                            R.anim.slide_in_right,
+                            R.anim.slide_out_left,
+                            R.anim.slide_in_left,
+                            R.anim.slide_out_right
+                    ).replace(R.id.fragmentContainerView, new PrefPermissionView())
                     .addToBackStack(null)
                     .commit();
         });
 
-        prefAboutLibraries.setOnClickListener(view -> updateToolbarTitle("Libraries"));
+        prefAboutLibraries.setOnClickListener(view -> updateToolbarTitle(getString(R.string.settings_about_libOption_name)));
 
         prefAboutGitHub.setOnClickListener(view -> utils.startUrlIntent("https://www.github.com"));
 
@@ -63,7 +69,6 @@ public class SettingsAboutView extends Fragment {
         toolbar.setTitle(title);
         if (collapsingToolbar != null) {
             collapsingToolbar.setTitle(title);
-
         }
     }
 

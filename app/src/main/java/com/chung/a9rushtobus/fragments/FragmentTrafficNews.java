@@ -1,5 +1,6 @@
 package com.chung.a9rushtobus.fragments;
 
+import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
@@ -17,7 +18,7 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
-import com.chung.a9rushtobus.DataFetcher;
+import com.chung.a9rushtobus.service.DataFetcher;
 import com.chung.a9rushtobus.database.DatabaseHelper;
 import com.chung.a9rushtobus.R;
 import com.chung.a9rushtobus.elements.RTHKTrafficAdapter;
@@ -76,6 +77,10 @@ public class FragmentTrafficNews extends Fragment {
         fetchTrafficNews();
     }
 
+    private boolean isFragmentValid() {
+        return isAdded() && getActivity() != null && !isDetached();
+    }
+
     private List<RTHKTrafficEntry> loadCachedNewsFromDatabase() {
         List<RTHKTrafficEntry> cachedEntries = new ArrayList<>();
 
@@ -122,41 +127,88 @@ public class FragmentTrafficNews extends Fragment {
     }
 
     private void fetchTrafficNews() {
+        if (!isFragmentValid()) return;
+
         executorService.execute(() -> {
+            // Check again since we're in a background thread
+            if (!isFragmentValid()) return;
+
             try {
-                swipeRefreshLayout.setRefreshing(true);
+                if (getActivity() != null) {
+                    getActivity().runOnUiThread(() -> {
+                        if (swipeRefreshLayout != null) {
+                            swipeRefreshLayout.setRefreshing(true);
+                        }
+                    });
+                }
+
                 Future<List<RTHKTrafficEntry>> futureNews = dataFetcher.fetchTrafficNews();
                 List<RTHKTrafficEntry> newEntries = futureNews.get();
 
+                // Check again before posting to main thread
+                if (!isFragmentValid()) return;
+
                 mainHandler.post(() -> {
+                    if (!isFragmentValid()) return;
+
+                    if (swipeRefreshLayout != null) {
+                        swipeRefreshLayout.setRefreshing(false);
+                    }
                     updateTrafficEntries(newEntries);
-                    swipeRefreshLayout.setRefreshing(false);
                 });
             } catch (ExecutionException | InterruptedException e) {
+                if (!isFragmentValid()) return;
+
                 mainHandler.post(() -> {
-                    Toast.makeText(requireContext(),
-                            "Error fetching traffic news: " + e.getMessage(),
-                            Toast.LENGTH_SHORT).show();
-                    swipeRefreshLayout.setRefreshing(false);
+                    if (!isFragmentValid()) return;
+
+                    Context context = getContext();
+                    if (context != null && swipeRefreshLayout != null) {
+                        Toast.makeText(context,
+                                "Error fetching traffic news: " + e.getMessage(),
+                                Toast.LENGTH_SHORT).show();
+                        swipeRefreshLayout.setRefreshing(false);
+                    }
                 });
             }
         });
     }
 
     private void updateTrafficEntries(List<RTHKTrafficEntry> newEntries) {
+        if (!isFragmentValid()) return;
+
         trafficEntries.clear();
         trafficEntries.addAll(newEntries);
-        adapter.notifyDataSetChanged();
 
-        if (adapter.getItemCount() == 0) {
-            Toast.makeText(requireContext(), "No new traffic news found", Toast.LENGTH_SHORT).show();
+        if (adapter != null) {
+            adapter.notifyDataSetChanged();
+        }
+
+        if (adapter != null && adapter.getItemCount() == 0) {
+            Context context = getContext();
+            if (context != null) {
+                Toast.makeText(context, "No new traffic news found", Toast.LENGTH_SHORT).show();
+            }
         }
     }
 
     @Override
     public void onDestroyView() {
+        // Cancel any pending operations
+        mainHandler.removeCallbacksAndMessages(null);
+
+        if (executorService != null && !executorService.isShutdown()) {
+            executorService.shutdownNow(); // Force shutdown of any running tasks
+        }
+
+        if (dataFetcher != null) {
+            dataFetcher.shutdown();
+        }
+
+        swipeRefreshLayout = null;
+        adapter = null;
+        dataFetcher = null;
+
         super.onDestroyView();
-        dataFetcher.shutdown();
-        executorService.shutdown();
     }
 }

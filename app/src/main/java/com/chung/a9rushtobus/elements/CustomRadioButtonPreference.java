@@ -1,9 +1,12 @@
 package com.chung.a9rushtobus.elements;
 
 import android.content.Context;
+import android.content.res.ColorStateList;
 import android.util.AttributeSet;
 import android.widget.RadioButton;
 
+import androidx.appcompat.content.res.AppCompatResources;
+import androidx.core.widget.CompoundButtonCompat;
 import androidx.preference.CheckBoxPreference;
 import androidx.preference.PreferenceViewHolder;
 

@@ -32,8 +32,8 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:background="@null"
-            app:trackTint="@drawable/tint_switch_track"
-            app:thumbTint="@drawable/tint_switch_thumb"/>
+            app:trackTint="@drawable/tint_main_switch_track"
+            app:thumbTint="@drawable/tint_main_switch_thumb"/>
 
     </LinearLayout>
 

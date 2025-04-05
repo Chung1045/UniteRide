@@ -4,7 +4,10 @@ import static org.chromium.base.ThreadUtils.runOnUiThread;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.os.Handler;
+import android.util.Log;
 import android.view.View;
+import android.view.ViewParent;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
@@ -12,7 +15,7 @@ import androidx.annotation.Nullable;
 import androidx.preference.Preference;
 import androidx.preference.PreferenceFragmentCompat;
 
-import com.chung.a9rushtobus.DataFetcher;
+import com.chung.a9rushtobus.service.DataFetcher;
 import com.chung.a9rushtobus.OnboardingActivity;
 import com.chung.a9rushtobus.R;
 import com.google.android.material.appbar.CollapsingToolbarLayout;
@@ -21,8 +24,10 @@ import com.google.android.material.bottomnavigation.BottomNavigationView;
 
 public class SettingsMainPreferenceView extends PreferenceFragmentCompat {
 
+    private static final String KEY_CURRENT_TITLE = "current_title";
     private BottomNavigationView bottomNavigationView;
     private DataFetcher dataFetcher;
+    private String currentTitle;
 
     @Override
     public void onCreatePreferences(Bundle savedInstanceState, String rootKey) {
@@ -36,19 +41,96 @@ public class SettingsMainPreferenceView extends PreferenceFragmentCompat {
         super.onViewCreated(view, savedInstanceState);
         bottomNavigationView = requireActivity().findViewById(R.id.bottomNav_main);
 
-        // Set initial toolbar title
-        updateToolbarTitle("Settings");
+        // Restore saved title or set default
+        if (savedInstanceState != null) {
+            currentTitle = savedInstanceState.getString(KEY_CURRENT_TITLE);
+        }
+        if (currentTitle == null) {
+            currentTitle = getString(R.string.bottomNav_settings_tabName);
+        }
+        
+        // Update title directly to ensure it's applied
+        MaterialToolbar toolbar = requireActivity().findViewById(R.id.settingsToolBar);
+        if (toolbar != null) {
+            toolbar.setTitle(currentTitle);
+            
+            // Find the CollapsingToolbarLayout directly
+            CollapsingToolbarLayout collapsingToolbarLayout = 
+                (CollapsingToolbarLayout) toolbar.getParent();
+            if (collapsingToolbarLayout != null) {
+                collapsingToolbarLayout.setTitle(currentTitle);
+            }
+            
+            Log.d("SettingsMainPreference", "onViewCreated: Title set to: " + currentTitle);
+        }
+        
         bottomNavigationView.setVisibility(View.VISIBLE);
     }
 
-    private void updateToolbarTitle(String title) {
-        MaterialToolbar toolbar = requireActivity().findViewById(R.id.settingsToolBar);
-        CollapsingToolbarLayout collapsingToolbar = (CollapsingToolbarLayout) toolbar.getParent();
+    @Override
+    public void onSaveInstanceState(@NonNull Bundle outState) {
+        super.onSaveInstanceState(outState);
+        outState.putString(KEY_CURRENT_TITLE, currentTitle);
+    }
 
-        toolbar.setTitle(title);
-        if (collapsingToolbar != null) {
-            collapsingToolbar.setTitle(title);
+    @Override
+    public void onResume() {
+        super.onResume();
+        if (getParentFragmentManager().getBackStackEntryCount() == 0) {
+            // We're back at the root settings, restore the main settings title
+            currentTitle = getString(R.string.bottomNav_settings_tabName);
+            
+            // Update title directly to ensure it's applied
+            if (isAdded() && getActivity() != null) {
+                MaterialToolbar toolbar = requireActivity().findViewById(R.id.settingsToolBar);
+                if (toolbar != null) {
+                    toolbar.setTitle(currentTitle);
+                    
+                    // Find the CollapsingToolbarLayout directly
+                    CollapsingToolbarLayout collapsingToolbarLayout = 
+                        (CollapsingToolbarLayout) toolbar.getParent();
+                    if (collapsingToolbarLayout != null) {
+                        collapsingToolbarLayout.setTitle(currentTitle);
+                    }
+                    
+                    Log.d("SettingsMainPreference", "onResume: Title restored to: " + currentTitle);
+                }
+                
+                bottomNavigationView.setVisibility(View.VISIBLE);
+            }
         }
+    }
+
+    private void updateToolbarTitle(String title) {
+        if (!isAdded() || getActivity() == null) {
+            return; // Don't proceed if fragment is not attached
+        }
+        
+        requireActivity().runOnUiThread(() -> {
+            try {
+                MaterialToolbar toolbar = requireActivity().findViewById(R.id.settingsToolBar);
+                if (toolbar != null) {
+                    toolbar.setTitle(title);
+                    
+                    // Find the CollapsingToolbarLayout directly
+                    CollapsingToolbarLayout collapsingToolbarLayout = 
+                        (CollapsingToolbarLayout) toolbar.getParent();
+                    if (collapsingToolbarLayout != null) {
+                        collapsingToolbarLayout.setTitle(title);
+                    }
+                    
+                    // Save the current title
+                    currentTitle = title;
+                    
+                    // Log successful title update
+                    Log.d("SettingsMainPreference", "Title updated to: " + title);
+                } else {
+                    Log.e("SettingsMainPreference", "Toolbar not found");
+                }
+            } catch (Exception e) {
+                Log.e("SettingsMainPreference", "Error updating toolbar title: " + e.getMessage(), e);
+            }
+        });
     }
 
     private void listenerInit() {
@@ -57,83 +139,212 @@ public class SettingsMainPreferenceView extends PreferenceFragmentCompat {
         assert applicationLanguage != null;
 
         applicationLanguage.setOnPreferenceClickListener(view -> {
-            updateToolbarTitle("Language");
-            getParentFragmentManager().beginTransaction()
-                    .setCustomAnimations(
-                            R.anim.slide_in_right,
-                            R.anim.slide_out_left,
-                            R.anim.slide_in_left,
-                            R.anim.slide_out_right
-                    ).replace(R.id.fragmentContainerView, new SettingsLanguagePreferenceView())
-                    .addToBackStack(null)
-                    .commit();
-            bottomNavigationView.setVisibility(View.GONE);
-            return false;
+            String newTitle = getString(R.string.settings_category_langOption_name);
+            
+            // Update title and ensure it's applied before fragment transaction
+            MaterialToolbar toolbar = requireActivity().findViewById(R.id.settingsToolBar);
+            if (toolbar != null) {
+                toolbar.setTitle(newTitle);
+                
+                // Find the CollapsingToolbarLayout directly
+                CollapsingToolbarLayout collapsingToolbarLayout = 
+                    (CollapsingToolbarLayout) toolbar.getParent();
+                if (collapsingToolbarLayout != null) {
+                    collapsingToolbarLayout.setTitle(newTitle);
+                }
+                
+                // Save the current title
+                currentTitle = newTitle;
+                
+                Log.d("SettingsMainPreference", "Language preference: Title updated to: " + newTitle);
+            }
+            
+            // Add a small delay to ensure UI updates before fragment transaction
+            new Handler().postDelayed(() -> {
+                if (isAdded()) {  // Check if fragment is still attached
+                    getParentFragmentManager().beginTransaction()
+                            .setCustomAnimations(
+                                    R.anim.slide_in_right,
+                                    R.anim.slide_out_left,
+                                    R.anim.slide_in_left,
+                                    R.anim.slide_out_right
+                            ).replace(R.id.fragmentContainerView, SettingsLanguagePreferenceView.newInstance())
+                            .addToBackStack(null)
+                            .commit();
+                    bottomNavigationView.setVisibility(View.GONE);
+                }
+            }, 50);  // Small delay to ensure UI updates
+            
+            return true;  // Indicate we handled the click
         });
 
         Preference applicationTheme = findPreference("pref_main_theme");
         assert applicationTheme != null;
 
         applicationTheme.setOnPreferenceClickListener(view -> {
-            updateToolbarTitle("Theme");
-            getParentFragmentManager().beginTransaction()
-                    .setCustomAnimations(
-                    R.anim.slide_in_right,
-                    R.anim.slide_out_left,
-                    R.anim.slide_in_left,
-                    R.anim.slide_out_right
-                    ).replace(R.id.fragmentContainerView, new SettingsThemePreferenceView())
-                    .addToBackStack(null)
-                    .commit();
-            return false;
+            String newTitle = getString(R.string.settings_category_themeOption_name);
+            
+            // Update title and ensure it's applied before fragment transaction
+            MaterialToolbar toolbar = requireActivity().findViewById(R.id.settingsToolBar);
+            if (toolbar != null) {
+                toolbar.setTitle(newTitle);
+                
+                // Find the CollapsingToolbarLayout directly
+                CollapsingToolbarLayout collapsingToolbarLayout = 
+                    (CollapsingToolbarLayout) toolbar.getParent();
+                if (collapsingToolbarLayout != null) {
+                    collapsingToolbarLayout.setTitle(newTitle);
+                }
+                
+                // Save the current title
+                currentTitle = newTitle;
+                
+                Log.d("SettingsMainPreference", "Theme preference: Title updated to: " + newTitle);
+            }
+            
+            // Add a small delay to ensure UI updates before fragment transaction
+            new Handler().postDelayed(() -> {
+                if (isAdded()) {  // Check if fragment is still attached
+                    getParentFragmentManager().beginTransaction()
+                            .setCustomAnimations(
+                            R.anim.slide_in_right,
+                            R.anim.slide_out_left,
+                            R.anim.slide_in_left,
+                            R.anim.slide_out_right
+                            ).replace(R.id.fragmentContainerView, new SettingsThemePreferenceView())
+                            .addToBackStack(null)
+                            .commit();
+                    bottomNavigationView.setVisibility(View.GONE);
+                }
+            }, 50);  // Small delay to ensure UI updates
+            
+            return true;
         });
 
         Preference feauturePreference = findPreference("pref_main_features");
         assert feauturePreference != null;
 
         feauturePreference.setOnPreferenceClickListener(view -> {
-            updateToolbarTitle("Features");
-            getParentFragmentManager().beginTransaction().setCustomAnimations(
-                            R.anim.slide_in_right,
-                            R.anim.slide_out_left,
-                            R.anim.slide_in_left,
-                            R.anim.slide_out_right
-                    ).replace(R.id.fragmentContainerView, new SettingsFeaturesPreferenceView())
-                    .addToBackStack(null)
-                    .commit();
-            return false;
+            String newTitle = getString(R.string.settings_category_featuresOption_name);
+            
+            // Update title and ensure it's applied before fragment transaction
+            MaterialToolbar toolbar = requireActivity().findViewById(R.id.settingsToolBar);
+            if (toolbar != null) {
+                toolbar.setTitle(newTitle);
+                
+                // Find the CollapsingToolbarLayout directly
+                CollapsingToolbarLayout collapsingToolbarLayout = 
+                    (CollapsingToolbarLayout) toolbar.getParent();
+                if (collapsingToolbarLayout != null) {
+                    collapsingToolbarLayout.setTitle(newTitle);
+                }
+                
+                // Save the current title
+                currentTitle = newTitle;
+                
+                Log.d("SettingsMainPreference", "Features preference: Title updated to: " + newTitle);
+            }
+            
+            // Add a small delay to ensure UI updates before fragment transaction
+            new Handler().postDelayed(() -> {
+                if (isAdded()) {  // Check if fragment is still attached
+                    getParentFragmentManager().beginTransaction().setCustomAnimations(
+                                    R.anim.slide_in_right,
+                                    R.anim.slide_out_left,
+                                    R.anim.slide_in_left,
+                                    R.anim.slide_out_right
+                            ).replace(R.id.fragmentContainerView, new SettingsFeaturesPreferenceView())
+                            .addToBackStack(null)
+                            .commit();
+                    bottomNavigationView.setVisibility(View.GONE);
+                }
+            }, 50);  // Small delay to ensure UI updates
+            
+            return true;
         });
 
         Preference aboutPreference = findPreference("pref_main_about");
         assert aboutPreference != null;
 
         aboutPreference.setOnPreferenceClickListener(view -> {
-            updateToolbarTitle("About");
-            getParentFragmentManager().beginTransaction().setCustomAnimations(
-                            R.anim.slide_in_right,
-                            R.anim.slide_out_left,
-                            R.anim.slide_in_left,
-                            R.anim.slide_out_right
-                    ).replace(R.id.fragmentContainerView, new SettingsAboutView())
-                    .addToBackStack(null)
-                    .commit();
-            return false;
+            String newTitle = getString(R.string.settings_category_aboutOption_name);
+            
+            // Update title and ensure it's applied before fragment transaction
+            MaterialToolbar toolbar = requireActivity().findViewById(R.id.settingsToolBar);
+            if (toolbar != null) {
+                toolbar.setTitle(newTitle);
+                
+                // Find the CollapsingToolbarLayout directly
+                CollapsingToolbarLayout collapsingToolbarLayout = 
+                    (CollapsingToolbarLayout) toolbar.getParent();
+                if (collapsingToolbarLayout != null) {
+                    collapsingToolbarLayout.setTitle(newTitle);
+                }
+                
+                // Save the current title
+                currentTitle = newTitle;
+                
+                Log.d("SettingsMainPreference", "About preference: Title updated to: " + newTitle);
+            }
+            
+            // Add a small delay to ensure UI updates before fragment transaction
+            new Handler().postDelayed(() -> {
+                if (isAdded()) {  // Check if fragment is still attached
+                    getParentFragmentManager().beginTransaction().setCustomAnimations(
+                                    R.anim.slide_in_right,
+                                    R.anim.slide_out_left,
+                                    R.anim.slide_in_left,
+                                    R.anim.slide_out_right
+                            ).replace(R.id.fragmentContainerView, new SettingsAboutView())
+                            .addToBackStack(null)
+                            .commit();
+                    bottomNavigationView.setVisibility(View.GONE);
+                }
+            }, 50);  // Small delay to ensure UI updates
+            
+            return true;
         });
 
         Preference accessibilityPreference = findPreference("pref_main_accessibility");
         assert accessibilityPreference != null;
 
         accessibilityPreference.setOnPreferenceClickListener(view -> {
-            updateToolbarTitle("Accessibility");
-            getParentFragmentManager().beginTransaction().setCustomAnimations(
-                            R.anim.slide_in_right,
-                            R.anim.slide_out_left,
-                            R.anim.slide_in_left,
-                            R.anim.slide_out_right
-                    ).replace(R.id.fragmentContainerView, new SettingsAccessibilityPreferenceView())
-                    .addToBackStack(null)
-                    .commit();
-            return false;
+            String newTitle = getString(R.string.settings_category_accessibilityOption_name);
+            
+            // Update title and ensure it's applied before fragment transaction
+            MaterialToolbar toolbar = requireActivity().findViewById(R.id.settingsToolBar);
+            if (toolbar != null) {
+                toolbar.setTitle(newTitle);
+                
+                // Find the CollapsingToolbarLayout directly
+                CollapsingToolbarLayout collapsingToolbarLayout = 
+                    (CollapsingToolbarLayout) toolbar.getParent();
+                if (collapsingToolbarLayout != null) {
+                    collapsingToolbarLayout.setTitle(newTitle);
+                }
+                
+                // Save the current title
+                currentTitle = newTitle;
+                
+                Log.d("SettingsMainPreference", "Accessibility preference: Title updated to: " + newTitle);
+            }
+            
+            // Add a small delay to ensure UI updates before fragment transaction
+            new Handler().postDelayed(() -> {
+                if (isAdded()) {  // Check if fragment is still attached
+                    getParentFragmentManager().beginTransaction().setCustomAnimations(
+                                    R.anim.slide_in_right,
+                                    R.anim.slide_out_left,
+                                    R.anim.slide_in_left,
+                                    R.anim.slide_out_right
+                            ).replace(R.id.fragmentContainerView, new SettingsAccessibilityPreferenceView())
+                            .addToBackStack(null)
+                            .commit();
+                    bottomNavigationView.setVisibility(View.GONE);
+                }
+            }, 50);  // Small delay to ensure UI updates
+            
+            return true;
         });
 
         Preference dev_OnboardPreference = findPreference("pref_dev_onboard");

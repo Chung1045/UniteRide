@@ -30,7 +30,7 @@ public class SettingsFeaturesPreferenceView extends PreferenceFragmentCompat {
         // Get the toolbar from the hosting activity
         MaterialToolbar toolbar = requireActivity().findViewById(R.id.settingsToolBar);
         if (toolbar != null) {
-            toolbar.setTitle("Features");
+            toolbar.setTitle(getString(R.string.settings_category_featuresOption_name));
         }
 
         switchPref = findPreference("pref_feature_rthkNews");
@@ -38,7 +38,7 @@ public class SettingsFeaturesPreferenceView extends PreferenceFragmentCompat {
         switchPref.setChecked(UserPreferences.sharedPref.getBoolean("featureShowRTHKNews", false));
     }
 
-    private void listenerInit(){
+    private void listenerInit() {
 
         SwitchPreferenceCompat switchPref = findPreference("pref_feature_rthkNews");
         assert switchPref != null;

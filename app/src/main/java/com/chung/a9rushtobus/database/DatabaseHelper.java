@@ -13,21 +13,40 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     public static final String DATABASE_NAME = "MyAppDatabase.db";
     public KMBDatabase kmbDatabase = new KMBDatabase(this);
     public CTBDatabase ctbDatabase = new CTBDatabase(this);
+    public GMBDatabase gmbDatabase = new GMBDatabase(this);
+    public SavedRoutesManager savedRoutesManager = new SavedRoutesManager(this);
 
     // Table creation constants
 
-    private static final String SQL_CREATE_RTHK_NEWS_TABLE = "CREATE TABLE IF NOT EXISTS " + Tables.RTHK_NEWS.TABLE_NAME + " (" + Tables.RTHK_NEWS.COLUMN_CONTENT + " TEXT," + Tables.RTHK_NEWS.COLUMN_DATE + " TEXT" + ");";
+    private static final String SQL_CREATE_RTHK_NEWS_TABLE = "CREATE TABLE IF NOT EXISTS " +
+            Tables.RTHK_NEWS.TABLE_NAME + " (" + Tables.RTHK_NEWS.COLUMN_CONTENT + " TEXT," +
+            Tables.RTHK_NEWS.COLUMN_DATE + " TEXT" + ");";
+    private static final String SQL_CREATE_USER_SAVED_TABLE = "CREATE TABLE IF NOT EXISTS " +
+            Tables.USER_SAVED.TABLE_NAME + " (" + Tables.USER_SAVED.COLUMN_ROUTE_ID + " TEXT," +
+            Tables.USER_SAVED.COLUMN_COMPANY_ID + " TEXT," +
+            Tables.USER_SAVED.COLUMN_ROUTE_BOUND + " TEXT," +
+            Tables.USER_SAVED.COLUMN_ROUTE_SERVICE_TYPE + " TEXT," +
+            Tables.USER_SAVED.COLUMN_STOP_ID + " TEXT" + ");";
     private static final String SQL_DELETE_RTHK_NEWS_TABLE = "DROP TABLE IF EXISTS " + Tables.RTHK_NEWS.TABLE_NAME;
+    private static final String SQL_DELETE_USER_SAVED_TABLE = "DROP TABLE IF EXISTS " + Tables.USER_SAVED.TABLE_NAME;
 
 
     // Static inner class to hold table contract details
     public static class Tables {
         // Entry table contract
-
         public static class RTHK_NEWS implements android.provider.BaseColumns {
             public static final String TABLE_NAME = "rthk_news";
             public static final String COLUMN_CONTENT = "content";
             public static final String COLUMN_DATE = "date";
+        }
+
+        public static class USER_SAVED implements android.provider.BaseColumns {
+            public static final String TABLE_NAME = "user_saved";
+            public static final String COLUMN_ROUTE_ID = "route_id";
+            public static final String COLUMN_COMPANY_ID = "company";
+            public static final String COLUMN_ROUTE_BOUND = "route_bound";
+            public static final String COLUMN_ROUTE_SERVICE_TYPE = "route_service_type";
+            public static final String COLUMN_STOP_ID = "stop_id";
         }
 
     }
@@ -39,8 +58,6 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 
     public void removeAllValues() {
         SQLiteDatabase db = this.getWritableDatabase();
-        Log.d("DatabaseHelper", "Attempting to remove all values");
-        db.execSQL("DELETE FROM " + KMBDatabase.Tables.KMB_STOPS.TABLE_NAME);
         Log.d("DatabaseHelper", "Attempting to remove all values 1");
         db.execSQL("DELETE FROM " + KMBDatabase.Tables.KMB_ROUTES.TABLE_NAME);
         Log.d("DatabaseHelper", "Attempting to remove all values 2");
@@ -50,7 +67,9 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         Log.d("DatabaseHelper", "Attempting to remove all values 4");
         db.execSQL("DELETE FROM " + CTBDatabase.Tables.CTB_ROUTE_STOPS.TABLE_NAME);
         Log.d("DatabaseHelper", "Attempting to remove all values 5");
-        db.execSQL("DELETE FROM " + CTBDatabase.Tables.CTB_STOPS.TABLE_NAME);
+        db.execSQL("DELETE FROM " + GMBDatabase.Tables.GMB_ROUTES.TABLE_NAME);
+        Log.d("DatabaseHelper", "Attempting to remove all values 6");
+        db.execSQL("DELETE FROM " + GMBDatabase.Tables.GMB_ROUTES_INFO.TABLE_NAME);
         Log.d("DatabaseHelper", "All values removed");
     }
 
@@ -67,7 +86,6 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 
         if (exists) {
             Log.d("DatabaseHelper", "Entry already exists, skipping insert");
-            db.close();
             return -1; // Indicate that no insertion was performed
         }
 
@@ -91,7 +109,12 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         db.execSQL(CTBDatabase.SQL_CREATE_CTB_ROUTES_TABLE);
         db.execSQL(CTBDatabase.SQL_CREATE_CTB_ROUTE_STOPS_TABLE);
         db.execSQL(CTBDatabase.SQL_CREATE_CTB_STOPS_TABLE);
+        db.execSQL(GMBDatabase.SQL_CREATE_GMB_ROUTES_TABLES);
+        db.execSQL(GMBDatabase.SQL_CREATE_GMB_ROUTES_INFO_TABLE);
+        db.execSQL(GMBDatabase.SQL_CREATE_GMB_ROUTE_STOPS_TABLE);
+        db.execSQL(GMBDatabase.SQL_CREATE_GMB_STOP_LOCATIONS_TABLE);
         db.execSQL(SQL_CREATE_RTHK_NEWS_TABLE);
+        db.execSQL(SQL_CREATE_USER_SAVED_TABLE);
     }
 
     // Handle database upgrades
@@ -104,7 +127,12 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         db.execSQL(CTBDatabase.SQL_DELETE_CTB_ROUTES_TABLE);
         db.execSQL(CTBDatabase.SQL_DELETE_CTB_ROUTE_STOPS_TABLE);
         db.execSQL(CTBDatabase.SQL_DELETE_CTB_STOPS_TABLE);
+        db.execSQL(GMBDatabase.SQL_DELETE_GMB_ROUTES_TABLES);
+        db.execSQL(GMBDatabase.SQL_DELETE_GMB_ROUTES_INFO_TABLE);
+        db.execSQL(GMBDatabase.SQL_DELETE_GMB_ROUTE_STOPS_TABLE);
+        db.execSQL(GMBDatabase.SQL_DELETE_GMB_STOP_LOCATIONS_TABLE);
         db.execSQL(SQL_DELETE_RTHK_NEWS_TABLE);
+        db.execSQL(SQL_DELETE_USER_SAVED_TABLE);
 
         // Recreate tables
         onCreate(db);

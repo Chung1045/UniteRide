@@ -31,7 +31,7 @@ public class SettingsThemePreferenceView extends PreferenceFragmentCompat {
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-        updateToolbarTitle("Theme");
+        updateToolbarTitle(getString(R.string.settings_category_themeOption_name));
     }
 
     private void updateToolbarTitle(String title) {

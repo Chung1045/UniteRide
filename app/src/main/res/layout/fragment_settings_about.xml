@@ -58,7 +58,7 @@
                 android:paddingVertical="16dp"
                 android:paddingHorizontal="16dp"
                 android:background="@drawable/background_basic_preference_top"
-                android:text="Permissions"
+                android:text="@string/settings_about_permissionOption_name"
                 android:clickable="true"
                 android:textSize="20sp"/>
 
@@ -71,7 +71,7 @@
                 android:paddingVertical="16dp"
                 android:paddingHorizontal="16dp"
                 android:background="@drawable/background_basic_preference_mid"
-                android:text="Libraries"
+                android:text="@string/settings_about_libOption_name"
                 android:clickable="true"
                 android:textSize="20sp"/>
 
@@ -85,7 +85,7 @@
                 android:paddingVertical="16dp"
                 android:paddingHorizontal="16dp"
                 android:background="@drawable/background_basic_preference_bottom"
-                android:text="View On Github"
+                android:text="@string/settings_about_githubOption_name"
                 android:clickable="true"
                 android:textSize="20sp"/>
         </LinearLayout>

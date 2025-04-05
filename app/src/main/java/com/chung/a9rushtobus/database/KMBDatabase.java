@@ -1,13 +1,14 @@
 package com.chung.a9rushtobus.database;
 
 import android.content.ContentValues;
+import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.util.Log;
 
 public class KMBDatabase {
     
-    private SQLiteDatabase db;
+    public SQLiteDatabase db;
     public static final String SQL_CREATE_KMB_ROUTES_TABLE = "CREATE TABLE IF NOT EXISTS "
             + KMBDatabase.Tables.KMB_ROUTES.TABLE_NAME + " ("
             + KMBDatabase.Tables.KMB_ROUTES.COLUMN_ROUTE + " TEXT,"
@@ -21,12 +22,13 @@ public class KMBDatabase {
             + KMBDatabase.Tables.KMB_ROUTES.COLUMN_DEST_SC + " TEXT" + ");";
     public static final String SQL_CREATE_KMB_STOPS_TABLE = "CREATE TABLE IF NOT EXISTS "
             + KMBDatabase.Tables.KMB_STOPS.TABLE_NAME + " ("
-            + KMBDatabase.Tables.KMB_STOPS.COLUMN_STOP_ID + " TEXT,"
+            + KMBDatabase.Tables.KMB_STOPS.COLUMN_STOP_ID + " TEXT PRIMARY KEY,"
             + KMBDatabase.Tables.KMB_STOPS.COLUMN_STOP_NAME_EN + " TEXT,"
             + KMBDatabase.Tables.KMB_STOPS.COLUMN_STOP_NAME_TC + " TEXT,"
             + KMBDatabase.Tables.KMB_STOPS.COLUMN_STOP_NAME_SC + " TEXT,"
             + KMBDatabase.Tables.KMB_STOPS.COLUMN_LATITUDE + " TEXT,"
-            + KMBDatabase.Tables.KMB_STOPS.COLUMN_LONGITUDE + " TEXT" + ");";
+            + KMBDatabase.Tables.KMB_STOPS.COLUMN_LONGITUDE + " TEXT"
+            + ");";
     public static final String SQL_CREATE_KMB_ROUTE_STOPS_TABLE = "CREATE TABLE IF NOT EXISTS "
             + KMBDatabase.Tables.KMB_ROUTE_STOPS.TABLE_NAME + " ("
             + KMBDatabase.Tables.KMB_ROUTE_STOPS.COLUMN_STOP_ID + " TEXT,"
@@ -91,13 +93,22 @@ public class KMBDatabase {
                 " AND rs." + Tables.KMB_ROUTE_STOPS.COLUMN_SERVICE_TYPE + " = ?" +
                 " GROUP BY rs." + Tables.KMB_ROUTE_STOPS.COLUMN_STOP_ID +
                 " ORDER BY CAST(rs." + Tables.KMB_ROUTE_STOPS.COLUMN_STOP_SEQ + " AS INTEGER)";
+
+        public static final String QUERY_GET_STOPID_FROM_ROUTEBOUND =
+                "SELECT " + Tables.KMB_ROUTE_STOPS.COLUMN_STOP_SEQ + ", " +
+                        Tables.KMB_ROUTE_STOPS.COLUMN_STOP_ID +
+                        " FROM " + Tables.KMB_ROUTE_STOPS.TABLE_NAME +
+                        " WHERE " + Tables.KMB_ROUTE_STOPS.COLUMN_ROUTE + " =?" +
+                        " AND " + Tables.KMB_ROUTE_STOPS.COLUMN_BOUND + " =?" +
+                        " ORDER BY CAST(" + Tables.KMB_ROUTE_STOPS.COLUMN_STOP_SEQ + " AS INTEGER)";
+
     }
     
     public KMBDatabase(SQLiteOpenHelper helper) {
         db = helper.getWritableDatabase();
     }
 
-    public long updateKMBRoute(String route, String bound, String serviceType, String originEn, String originTc, String originSc, String destEn, String destTc, String destSc) {
+    public synchronized long updateKMBRoute(String route, String bound, String serviceType, String originEn, String originTc, String originSc, String destEn, String destTc, String destSc) {
 
         Log.d("KMBDatabase", "Attempting to update database with: " + route + " " + bound + " " + serviceType);
 
@@ -130,7 +141,7 @@ public class KMBDatabase {
         return rowsAffected;
     }
 
-    public void updateKMBStop(String stopId, String stopNameEn, String stopNameTc, String stopNameSc, String latitude, String longitude) {
+    public synchronized void updateKMBStop(String stopId, String stopNameEn, String stopNameTc, String stopNameSc, String latitude, String longitude) {
 
         Log.d("KMBDatabaseSTOP", "Attempting to update database with: " + stopId + " " + stopNameEn + " " + stopNameTc + " " + stopNameSc + " " + latitude + " " + longitude);
 
@@ -148,7 +159,7 @@ public class KMBDatabase {
         Log.d("KMBDatabaseSTOP", "Insert content: " + stopNameEn + " " + stopNameTc + " " + stopNameSc + " " + latitude + " " + longitude);
     }
 
-    public void updateKMBRouteStops(String stopId, String route, String bound, String serviceType, String stopSeq) {
+    public synchronized void updateKMBRouteStops(String stopId, String route, String bound, String serviceType, String stopSeq) {
         ContentValues values = new ContentValues();
         values.put(KMBDatabase.Tables.KMB_ROUTE_STOPS.COLUMN_STOP_ID, stopId);
         values.put(KMBDatabase.Tables.KMB_ROUTE_STOPS.COLUMN_ROUTE, route);
@@ -171,4 +182,63 @@ public class KMBDatabase {
             Log.d("Database", "Record inserted or updated successfully");
         }
     }
+
+    public Cursor queryNearbyRoutes(double latitude, double longitude, int radiusMeters) {
+        // Calculate approximate bounding box for faster filtering
+        // 0.009 degrees is roughly 1km at equator
+        double latDelta = radiusMeters * 0.000009;
+        double lonDelta = radiusMeters * 0.000009;
+        
+        double minLat = latitude - latDelta;
+        double maxLat = latitude + latDelta;
+        double minLon = longitude - lonDelta;
+        double maxLon = longitude + lonDelta;
+        
+        // Simplified SQL query that:
+        // 1. Filters stops roughly within the bounding box
+        // 2. Joins with route information
+        // 3. Uses a simpler distance calculation (squared Euclidean) that doesn't require trig functions
+        String query =
+                "SELECT DISTINCT " +
+                        "r." + Tables.KMB_ROUTES.COLUMN_ROUTE + ", " +
+                        "r." + Tables.KMB_ROUTES.COLUMN_BOUND + ", " +
+                        "r." + Tables.KMB_ROUTES.COLUMN_SERVICE_TYPE + ", " +
+                        "r." + Tables.KMB_ROUTES.COLUMN_ORIGIN_EN + ", " +
+                        "r." + Tables.KMB_ROUTES.COLUMN_DEST_EN + ", " +
+                        "s." + Tables.KMB_STOPS.COLUMN_STOP_NAME_EN + ", " +
+                        "s." + Tables.KMB_STOPS.COLUMN_STOP_ID + ", " +
+                        "s." + Tables.KMB_STOPS.COLUMN_LATITUDE + ", " +
+                        "s." + Tables.KMB_STOPS.COLUMN_LONGITUDE + ", " +
+                        // Simple squared distance for sorting (not accurate for long distances but works for nearby sorting)
+                        "((CAST(s." + Tables.KMB_STOPS.COLUMN_LATITUDE + " AS REAL) - ?) * (CAST(s." + Tables.KMB_STOPS.COLUMN_LATITUDE + " AS REAL) - ?) + " +
+                        "(CAST(s." + Tables.KMB_STOPS.COLUMN_LONGITUDE + " AS REAL) - ?) * (CAST(s." + Tables.KMB_STOPS.COLUMN_LONGITUDE + " AS REAL) - ?)) AS distance " +
+                        "FROM " + Tables.KMB_STOPS.TABLE_NAME + " s " +
+                        "JOIN " + Tables.KMB_ROUTE_STOPS.TABLE_NAME + " rs " +
+                        "ON s." + Tables.KMB_STOPS.COLUMN_STOP_ID + " = rs." + Tables.KMB_ROUTE_STOPS.COLUMN_STOP_ID + " " +
+                        "JOIN " + Tables.KMB_ROUTES.TABLE_NAME + " r " +
+                        "ON rs." + Tables.KMB_ROUTE_STOPS.COLUMN_ROUTE + " = r." + Tables.KMB_ROUTES.COLUMN_ROUTE + " " +
+                        "AND rs." + Tables.KMB_ROUTE_STOPS.COLUMN_BOUND + " = r." + Tables.KMB_ROUTES.COLUMN_BOUND + " " +
+                        "AND rs." + Tables.KMB_ROUTE_STOPS.COLUMN_SERVICE_TYPE + " = r." + Tables.KMB_ROUTES.COLUMN_SERVICE_TYPE + " " +
+                        "WHERE CAST(s." + Tables.KMB_STOPS.COLUMN_LATITUDE + " AS REAL) BETWEEN ? AND ? " +
+                        "AND CAST(s." + Tables.KMB_STOPS.COLUMN_LONGITUDE + " AS REAL) BETWEEN ? AND ? " +
+                        "GROUP BY r." + Tables.KMB_ROUTES.COLUMN_ROUTE + " " +
+                        "ORDER BY distance";
+
+        // Execute the query with the provided parameters
+        Log.d("KMBDatabase", "Querying for stops within " + radiusMeters + "m of " + latitude + ", " + longitude);
+        
+        // Note: We've removed the HAVING clause that used the radius because we're using
+        // a bounding box approach. The additional filtering can be done in Java code if needed.
+        return db.rawQuery(query, new String[]{
+            String.valueOf(latitude),    // For distance calculation 
+            String.valueOf(latitude),    // For distance calculation
+            String.valueOf(longitude),   // For distance calculation
+            String.valueOf(longitude),   // For distance calculation
+            String.valueOf(minLat),      // Bounding box min latitude
+            String.valueOf(maxLat),      // Bounding box max latitude
+            String.valueOf(minLon),      // Bounding box min longitude
+            String.valueOf(maxLon)       // Bounding box max longitude
+        });
+    }
+
 }

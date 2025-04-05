@@ -3,6 +3,9 @@
     <style name="Base.Theme._9RushToBus" parent="Theme.Material3.Light.NoActionBar">
         <!-- Customize your dark theme here. -->
         <item name="fontFamily">@font/font_general_sans</item>
+        <item name="android:windowTranslucentStatus">true</item>
+        <item name="android:windowDrawsSystemBarBackgrounds">true</item>
+        <item name="android:statusBarColor">@android:color/transparent</item>
     </style>
 
     <style name="Theme._9RushToBus" parent="Base.Theme._9RushToBus" />
