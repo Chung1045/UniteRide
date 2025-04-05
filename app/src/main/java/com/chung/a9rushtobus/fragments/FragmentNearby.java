@@ -1,8 +1,5 @@
 package com.chung.a9rushtobus.fragments;
 
-import static android.content.Context.UI_MODE_SERVICE;
-import static androidx.core.content.ContextCompat.getSystemService;
-
 import android.app.UiModeManager;
 import android.content.Context;
 import android.content.pm.PackageManager;
@@ -25,7 +22,6 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.chung.a9rushtobus.R;
 import com.chung.a9rushtobus.UserPreferences;
-import com.chung.a9rushtobus.adapters.NearbyStationsAdapter;
 import com.chung.a9rushtobus.database.DatabaseHelper;
 import com.chung.a9rushtobus.database.KMBDatabase;
 import com.google.android.gms.location.FusedLocationProviderClient;
@@ -298,8 +294,6 @@ public class FragmentNearby extends Fragment implements OnMapReadyCallback {
             // Update UI with the found routes
             if (!nearbyRoutes.isEmpty()) {
                 // Update the RecyclerView with our results
-                NearbyStationsAdapter adapter = new NearbyStationsAdapter(nearbyRoutes);
-                nearbyStationsRecyclerView.setAdapter(adapter);
                 
                 // Show bottom sheet with results
                 bottomSheetBehavior.setState(BottomSheetBehavior.STATE_HALF_EXPANDED);

@@ -48,6 +48,9 @@ start your journey now!</string>
 
     <string name="detail_view_normal_route_name">Normal Route</string>
     <string name="detail_view_eta_arriving_name">Arriving</string>
+    <string name="detail_view_eta_track_bus_name">Track Bus</string>
+    <string name="detail_view_save_route_stop_name">Save stop</string>
+    <string name="detail_view_unsave_route_stop_name">Un-save stop</string>
 
     <string name="settings_category_langOption_name">Language</string>
     <string name="settings_category_themeOption_name">Theme</string>
@@ -84,7 +87,20 @@ start your journey now!</string>
     <string name="bus_eta_msg_loadingETA_name">Loading ETA...</string>
     <string name="bus_eta_msg_noBus_name">No available bus at the moment</string>
     <string name="bus_eta_minute_text_name">min</string>
+    
+    <string name="bus_bound_inbound" translatable="false">Inbound</string>
+    <string name="bus_bound_outbound" translatable="false">Outbound</string>
+    <string name="saved_stop_removed" translatable="false">Removed %1$s from saved stops</string>
 
+    <string name="permission_network_name">Network</string>
+    <string name="permission_network_desc">For fetching bus route information from government API</string>
+    <string name="permission_location_name">Location(Optional)</string>
+    <string name="permission_location_desc">For Displaying nearby bus route base on the current location coordinates, showing current location on the map</string>
+    <string name="permission_notification_name">Notification (Optional)</string>
+    <string name="permission_notification_desc">For displaying ETA for the bus route</string>
+    <string name="permission_disclaimer_name_desc">
+    The application does not collect or transmit your location or any other personal data for online processing.\n\nAll location data is processed only on your device.
+    </string>
 
     <string-array name="options_application_theme">
         <item name="light_theme">Light</item>

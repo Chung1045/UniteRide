@@ -32,6 +32,7 @@
     <string name="bus_company_gmb_name">小巴</string>
 
     <string name="bus_eta_minute_text_name">分钟</string>
+    <string name="notif_tracking_started">开始追踪巴士： %1$s</string>
     <string name="bus_eta_msg_loadingETA_name">正在加载巴士到站数据</string>
 
     <string name="region_nt_name">新界</string>
@@ -49,6 +50,8 @@
     <string name="frag_search_specialRoute_name">特別班</string>
     <string name="detail_view_normal_route_name">正常路線</string>
     <string name="detail_view_eta_arriving_name">即將到站</string>
+    <string name="detail_view_unsave_route_stop_name">取消收藏巴士站</string>
+    <string name="detail_view_eta_track_bus_name">追踪巴士</string>
     <string name="settings_category_langOption_name">语言</string>
     <string name="settings_category_themeOption_name">主题</string>
     <string name="settings_category_accessibilityOption_name">无障碍</string>
@@ -73,7 +76,7 @@
     <string name="settings_features_RTHKOption_name">显示香港电台交通新闻</string>
     <string name="settings_features_RTHKOption_desc">新闻仅提供繁体中文版本</string>
     
-    <string name="err_msg_noInternet_name">无网络连接</string>
+    <string name="err_msg_noInternet_name">" 没有网络连线"</string>
     <string name="err_msg_noInternet_desc">无法加载。请检查您的网络连接并重试。</string>
     
     <string name="notif_trackBus_name">正在追踪 </string>
@@ -88,4 +91,15 @@
     <string-array name="settings_category">
         <item name="category_language">语言</item>
     </string-array>
+    <string name="notif_channel_description">追踪巴士到达时间</string>
+    <string name="notif_stop_tracking">" 停止追踪"</string>
+    <string name="detail_view_save_route_stop_name">收藏巴士站</string>
+    <string name="notif_channel_name">巴士追踪</string>
+    <string name="permission_network_name">" 网络"</string>
+    <string name="permission_network_desc">以便从政府开放数据平台取得巴士服务供应商实时资料</string>
+    <string name="permission_location_name">位置</string>
+    <string name="permission_location_desc">根据当前位置坐标显示附近的公交路线，在地图上显示当前位置</string>
+    <string name="permission_notification_name">通知</string>
+    <string name="permission_notification_desc">" 用于显示公交路线的预计到达时间"</string>
+    <string name="permission_disclaimer_name_desc">应用程式不会收集或传输您的位置或任何其他个人资料以进行线上处理。所有位置资料仅在您的装置上处理。\n\n在向政府开放数据平台发送 API 请求时，应用程式不会传送任何个人资料。\n\n使用 Android 平台定位服务时，您的位置资料可能会传送至 Google 处理，详情请参阅 Google 的隐私权政策。</string>
 </resources>

@@ -14,6 +14,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     public KMBDatabase kmbDatabase = new KMBDatabase(this);
     public CTBDatabase ctbDatabase = new CTBDatabase(this);
     public GMBDatabase gmbDatabase = new GMBDatabase(this);
+    public SavedRoutesManager savedRoutesManager = new SavedRoutesManager(this);
 
     // Table creation constants
 

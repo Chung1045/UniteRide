@@ -83,26 +83,26 @@ public class FragmentSearch extends Fragment {
         recyclerView.setAdapter(adapter);
 
         listenerInit();
-        
+
         // Only load data if it hasn't been loaded yet
         if (!isDataLoaded) {
             // Show progress bar while loading data
             progressBar.setVisibility(View.VISIBLE);
-            
+
             // Load data in background thread
             executorService.execute(() -> {
                 // Load data in chunks to improve responsiveness
                 loadKMBRoutes();
                 updateUI();
-                
+
                 loadCTBRoutes();
                 updateUI();
-                
+
                 loadGMBRoutes();
-                
+
                 // Sort all routes at once at the end
                 sortAllRoutes();
-                
+
                 // Final UI update
                 updateUI();
                 isDataLoaded = true;

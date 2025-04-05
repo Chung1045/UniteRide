@@ -22,6 +22,8 @@ import androidx.lifecycle.DefaultLifecycleObserver;
 import androidx.lifecycle.LifecycleOwner;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.chung.a9rushtobus.database.DatabaseHelper;
+import com.chung.a9rushtobus.database.DatabaseHelper;
 import com.chung.a9rushtobus.service.BackgroundService;
 import com.chung.a9rushtobus.service.DataFetcher;
 import com.chung.a9rushtobus.R;
@@ -48,6 +50,7 @@ public class BusRouteStopItemAdapter extends RecyclerView.Adapter<BusRouteStopIt
     private final Handler refetchHandler;
     private final Runnable updateRunnable;
     private boolean isUpdating = false;
+    private DatabaseHelper databaseHelper;
 
     public BusRouteStopItemAdapter(Context context, List<BusRouteStopItem> items, Utils utils) {
         this.context = context;
@@ -57,6 +60,7 @@ public class BusRouteStopItemAdapter extends RecyclerView.Adapter<BusRouteStopIt
         this.updateHandler = new Handler(Looper.getMainLooper());
         this.refetchHandler = new Handler(Looper.getMainLooper());
         this.updateRunnable = this::refreshAllEtaData;
+        this.databaseHelper = new DatabaseHelper(context);
     }
 
     @NonNull
@@ -102,6 +106,58 @@ public class BusRouteStopItemAdapter extends RecyclerView.Adapter<BusRouteStopIt
             Toast.makeText(context, 
                 context.getString(R.string.notif_tracking_started, item.getStopName()), 
                 Toast.LENGTH_SHORT).show();
+        });
+        
+        // Check if the stop is already saved and update the button accordingly
+        boolean isSaved = databaseHelper.savedRoutesManager.isRouteStopSaved(item);
+        updateSaveButton(holder.saveStopButton, isSaved);
+        
+        // Set up save stop button
+        holder.saveStopButton.setOnClickListener(v -> {
+            boolean currentlySaved = databaseHelper.savedRoutesManager.isRouteStopSaved(item);
+            
+            if (currentlySaved) {
+                // Remove from saved routes
+                boolean removed = databaseHelper.savedRoutesManager.removeRouteStop(item);
+                if (removed) {
+                    Toast.makeText(context, 
+                        context.getString(R.string.saved_stop_removed, item.getStopName()), 
+                        Toast.LENGTH_SHORT).show();
+                    updateSaveButton(holder.saveStopButton, false);
+                }
+            } else {
+                // Save the route stop
+                boolean saved = databaseHelper.savedRoutesManager.saveRouteStop(item);
+                if (saved) {
+                    Toast.makeText(context, "Saved stop: " + item.getStopName(), Toast.LENGTH_SHORT).show();
+                    updateSaveButton(holder.saveStopButton, true);
+                }
+            }
+        });
+
+        updateSaveButton(holder.saveStopButton, isSaved);
+        
+        // Set up save stop button
+        holder.saveStopButton.setOnClickListener(v -> {
+            boolean currentlySaved = databaseHelper.savedRoutesManager.isRouteStopSaved(item);
+            
+            if (currentlySaved) {
+                // Remove from saved routes
+                boolean removed = databaseHelper.savedRoutesManager.removeRouteStop(item);
+                if (removed) {
+                    Toast.makeText(context, 
+                        context.getString(R.string.saved_stop_removed, item.getStopName()), 
+                        Toast.LENGTH_SHORT).show();
+                    updateSaveButton(holder.saveStopButton, false);
+                }
+            } else {
+                // Save the route stop
+                boolean saved = databaseHelper.savedRoutesManager.saveRouteStop(item);
+                if (saved) {
+                    Toast.makeText(context, "Saved stop: " + item.getStopName(), Toast.LENGTH_SHORT).show();
+                    updateSaveButton(holder.saveStopButton, true);
+                }
+            }
         });
 
         if (holder.firstETA != null && !Objects.equals(item.getCompany(), "gmb")) {
@@ -426,6 +482,22 @@ public class BusRouteStopItemAdapter extends RecyclerView.Adapter<BusRouteStopIt
             Log.e(TAG, "Error updating UI for position " + position + ": " + e.getMessage());
         }
     }
+    
+    /**
+     * Updates the save button appearance based on whether the stop is saved or not
+     */
+    private void updateSaveButton(Button saveButton, boolean isSaved) {
+        if (isSaved) {
+            // Stop is saved - update button to indicate it can be removed
+            saveButton.setText(R.string.detail_view_unsave_route_stop_name);
+            saveButton.setCompoundDrawablesWithIntrinsicBounds(R.drawable.baseline_bookmark_24, 0, 0, 0);
+        } else {
+            // Stop is not saved - update button to indicate it can be saved
+            saveButton.setText(R.string.detail_view_save_route_stop_name);
+            saveButton.setCompoundDrawablesWithIntrinsicBounds(R.drawable.baseline_bookmark_border_24, 0, 0, 0);
+        }
+    }
+
 
     public static class ViewHolder extends RecyclerView.ViewHolder {
         TextView stopName;

@@ -194,11 +194,10 @@ public class KMBDatabase {
         double minLon = longitude - lonDelta;
         double maxLon = longitude + lonDelta;
         
-        // SQL query that:
-        // 1. First filters stops roughly within the bounding box
-        // 2. Calculates actual distance using the Haversine formula
-        // 3. Joins with route information
-        // 4. Returns routes that have stops within the specified radius
+        // Simplified SQL query that:
+        // 1. Filters stops roughly within the bounding box
+        // 2. Joins with route information
+        // 3. Uses a simpler distance calculation (squared Euclidean) that doesn't require trig functions
         String query =
                 "SELECT DISTINCT " +
                         "r." + Tables.KMB_ROUTES.COLUMN_ROUTE + ", " +
@@ -210,10 +209,9 @@ public class KMBDatabase {
                         "s." + Tables.KMB_STOPS.COLUMN_STOP_ID + ", " +
                         "s." + Tables.KMB_STOPS.COLUMN_LATITUDE + ", " +
                         "s." + Tables.KMB_STOPS.COLUMN_LONGITUDE + ", " +
-                        // Calculate distance in meters using approximate Haversine formula
-                        "(6371000 * acos(cos(radians(?)) * cos(radians(CAST(s." + Tables.KMB_STOPS.COLUMN_LATITUDE + " AS REAL))) * " +
-                        "cos(radians(CAST(s." + Tables.KMB_STOPS.COLUMN_LONGITUDE + " AS REAL)) - radians(?)) + " +
-                        "sin(radians(?)) * sin(radians(CAST(s." + Tables.KMB_STOPS.COLUMN_LATITUDE + " AS REAL))))) AS distance " +
+                        // Simple squared distance for sorting (not accurate for long distances but works for nearby sorting)
+                        "((CAST(s." + Tables.KMB_STOPS.COLUMN_LATITUDE + " AS REAL) - ?) * (CAST(s." + Tables.KMB_STOPS.COLUMN_LATITUDE + " AS REAL) - ?) + " +
+                        "(CAST(s." + Tables.KMB_STOPS.COLUMN_LONGITUDE + " AS REAL) - ?) * (CAST(s." + Tables.KMB_STOPS.COLUMN_LONGITUDE + " AS REAL) - ?)) AS distance " +
                         "FROM " + Tables.KMB_STOPS.TABLE_NAME + " s " +
                         "JOIN " + Tables.KMB_ROUTE_STOPS.TABLE_NAME + " rs " +
                         "ON s." + Tables.KMB_STOPS.COLUMN_STOP_ID + " = rs." + Tables.KMB_ROUTE_STOPS.COLUMN_STOP_ID + " " +
@@ -224,21 +222,22 @@ public class KMBDatabase {
                         "WHERE CAST(s." + Tables.KMB_STOPS.COLUMN_LATITUDE + " AS REAL) BETWEEN ? AND ? " +
                         "AND CAST(s." + Tables.KMB_STOPS.COLUMN_LONGITUDE + " AS REAL) BETWEEN ? AND ? " +
                         "GROUP BY r." + Tables.KMB_ROUTES.COLUMN_ROUTE + " " +
-                        "HAVING distance <= ? " +
                         "ORDER BY distance";
 
         // Execute the query with the provided parameters
         Log.d("KMBDatabase", "Querying for stops within " + radiusMeters + "m of " + latitude + ", " + longitude);
         
+        // Note: We've removed the HAVING clause that used the radius because we're using
+        // a bounding box approach. The additional filtering can be done in Java code if needed.
         return db.rawQuery(query, new String[]{
-            String.valueOf(latitude),    // For Haversine calculation
-            String.valueOf(longitude),   // For Haversine calculation
-            String.valueOf(latitude),    // For Haversine calculation
+            String.valueOf(latitude),    // For distance calculation 
+            String.valueOf(latitude),    // For distance calculation
+            String.valueOf(longitude),   // For distance calculation
+            String.valueOf(longitude),   // For distance calculation
             String.valueOf(minLat),      // Bounding box min latitude
             String.valueOf(maxLat),      // Bounding box max latitude
             String.valueOf(minLon),      // Bounding box min longitude
-            String.valueOf(maxLon),      // Bounding box max longitude
-            String.valueOf(radiusMeters) // Maximum distance in meters
+            String.valueOf(maxLon)       // Bounding box max longitude
         });
     }
 

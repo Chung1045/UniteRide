@@ -87,19 +87,17 @@ public class BackgroundService extends Service {
     }
 
     private void createNotificationChannel() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            NotificationChannel channel = new NotificationChannel(
-                    CHANNEL_ID,
-                    getString(R.string.notif_channel_name),
-                    NotificationManager.IMPORTANCE_LOW  // Use LOW importance for sticky behavior
-            );
-            channel.setDescription(getString(R.string.notif_channel_description));
-            channel.setShowBadge(false);  // Don't show badge on app icon
-            channel.enableLights(false);   // No notification light
-            channel.enableVibration(false); // No vibration
-            channel.setSound(null, null);  // No sound
-            notificationManager.createNotificationChannel(channel);
-        }
+        NotificationChannel channel = new NotificationChannel(
+                CHANNEL_ID,
+                getString(R.string.notif_channel_name),
+                NotificationManager.IMPORTANCE_LOW  // Use LOW importance for sticky behavior
+        );
+        channel.setDescription(getString(R.string.notif_channel_description));
+        channel.setShowBadge(false);  // Don't show badge on app icon
+        channel.enableLights(false);   // No notification light
+        channel.enableVibration(false); // No vibration
+        channel.setSound(null, null);  // No sound
+        notificationManager.createNotificationChannel(channel);
     }
 
     private void startTracking(String stopKey, BusRouteStopItem stopItem) {
@@ -169,11 +167,11 @@ public class BackgroundService extends Service {
             // Add stop name at the top
             etaBuilder.append(stop.getStopName()).append("\n\n");
 
-            if (etaDataArray.length() == 0) {
-                etaBuilder.append(getString(R.string.bus_eta_msg_noBus_name));
-                notificationText = etaBuilder.toString();
-            } else {
+            Context localizedContext = getLocalizedContext();
 
+            if (etaDataArray.length() == 0) {
+                etaBuilder.append(localizedContext.getString(R.string.bus_eta_msg_noBus_name));
+            } else {
                 // Process first valid ETA
                 JSONObject firstEta = null;
                 for (int i = 0; i < etaDataArray.length(); i++) {
@@ -218,8 +216,8 @@ public class BackgroundService extends Service {
 
                 }
 
-                notificationText = etaBuilder.toString();
             }
+            notificationText = etaBuilder.toString();
 
             updateNotification(stopKey, notificationText);
             
@@ -432,7 +430,7 @@ private void updateNotification(String stopKey, String content) {
                 .setOnlyAlertOnce(true)  // Only alert the first time
                 .setSilent(true)  // No sound
                 .setContentIntent(pendingIntent)
-                .addAction(R.drawable.baseline_notifications_none_24, getString(R.string.notif_stop_tracking), stopPendingIntent);
+                .addAction(R.drawable.baseline_notifications_none_24, localizedContext.getString(R.string.notif_stop_tracking), stopPendingIntent);
 
         if (content.contains("\n")) {
             builder.setStyle(new NotificationCompat.BigTextStyle().bigText(content));

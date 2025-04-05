@@ -27,7 +27,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="?attr/collapsingToolbarLayoutLargeSize"
                 app:expandedTitleTextAppearance="?attr/collapsingToolbarLayoutLargeStyle"
-                app:contentScrim="?attr/colorSurfaceVariant"
+                app:contentScrim="@color/brand_colorSurfaceSecondary"
                 app:layout_scrollFlags="scroll|exitUntilCollapsed|enterAlwaysCollapsed">
 
                 <View

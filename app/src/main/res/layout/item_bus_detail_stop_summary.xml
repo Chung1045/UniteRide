@@ -104,7 +104,7 @@
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:layout_marginEnd="8dp"
-                android:text="Track Bus"
+                android:text="@string/detail_view_eta_track_bus_name"
                 android:drawableStart="@drawable/baseline_notifications_none_24"
                 android:backgroundTint="#36586F"
                 android:textColor="@android:color/white"/>
@@ -115,7 +115,7 @@
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:layout_marginStart="8dp"
-                android:text="Save Bus Stop"
+                android:text="@string/detail_view_save_route_stop_name"
                 android:drawableStart="@drawable/baseline_bookmark_border_24"
                 android:backgroundTint="#36586F"
                 android:textColor="@android:color/white"/>
