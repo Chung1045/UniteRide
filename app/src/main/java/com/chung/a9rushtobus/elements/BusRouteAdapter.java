@@ -14,6 +14,7 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.chung.a9rushtobus.BuildConfig;
 import com.chung.a9rushtobus.BusRouteDetailViewActivity;
 import com.chung.a9rushtobus.R;
 import com.chung.a9rushtobus.UserPreferences;
@@ -43,59 +44,77 @@ public class BusRouteAdapter extends RecyclerView.Adapter<BusRouteAdapter.ViewHo
         String routeNumber = routeInfo.getRoute();
         holder.tvRouteName.setText(routeNumber);
 
+        // Cache app language to avoid repeated SharedPreferences lookups
         String appLang = UserPreferences.sharedPref.getString(UserPreferences.SETTINGS_APP_LANG, "en");
 
-        switch (appLang) {
-            case "zh-rCN":
-            case "zh-rHK":
-                holder.tvDestination.setText(String.format("往 %s", routeInfo.getDest()));
-                break;
-            default: // "en" or any other case
-                holder.tvDestination.setText(String.format("To %s", routeInfo.getDest()));
+        // Set destination text
+        if (appLang.startsWith("zh-r")) {
+            holder.tvDestination.setText(String.format("往 %s", routeInfo.getDest()));
+        } else {
+            holder.tvDestination.setText(String.format("To %s", routeInfo.getDest()));
         }
+        
+        // Set origin text
         holder.tvOrigin.setText(routeInfo.getOrig());
         
-        // Debug log for each route being displayed
-        Log.d("BusRouteAdapter", "Displaying route: " + routeNumber + 
-              ", Company: " + routeInfo.getCompany() + 
-              ", Origin: " + routeInfo.getOrig() +
-              ", Destination: " + routeInfo.getDest());
+        // Reduce logging in production builds
+        if (BuildConfig.DEBUG) {
+            Log.d("BusRouteAdapter", "Displaying route: " + routeNumber + 
+                  ", Company: " + routeInfo.getCompany());
+        }
 
-        switch (routeInfo.getCompany()) {
+        // Set company-specific information
+        String company = routeInfo.getCompany();
+        switch (company) {
             case "kmb":
                 holder.tvRouteBusCompany.setText(R.string.bus_company_kmb_name);
                 holder.tvRouteRemarks.setVisibility(View.GONE);
+                
+                // Set special indicator for non-standard KMB routes
+                if (!Objects.equals(routeInfo.getServiceType(), "1")) {
+                    holder.routeSpecialIndicator.setVisibility(View.VISIBLE);
+                } else {
+                    holder.routeSpecialIndicator.setVisibility(View.GONE);
+                }
+                
+                // Set background and text color
+                setTextColorAndBackground(holder.tvRouteName, routeNumber);
                 break;
+                
             case "ctb":
                 holder.tvRouteBusCompany.setText(R.string.bus_company_ctb_name);
                 holder.tvRouteRemarks.setVisibility(View.GONE);
+                holder.routeSpecialIndicator.setVisibility(View.GONE);
+                
+                // Set background and text color
+                setTextColorAndBackground(holder.tvRouteName, routeNumber);
                 break;
+                
             case "GMB":
                 holder.tvRouteBusCompany.setText(context.getString(R.string.bus_company_gmb_name) + " - " + routeInfo.getGmbRouteRegion(context));
-                Log.d("BusRouteAdapter", "GMB Route Description: " + routeInfo.getDescription());
-                if (routeInfo.getDescriptionEn().equals("Normal Route") || routeInfo.getDescriptionEn().equals("Normal Departure")) {
-                    holder.tvRouteRemarks.setVisibility(View.GONE);
-                } else {
+                
+                // Only show description if it's not a normal route
+                String description = routeInfo.getDescriptionEn();
+                if (description != null && !description.equals("Normal Route") && !description.equals("Normal Departure")) {
                     holder.tvRouteRemarks.setVisibility(View.VISIBLE);
                     holder.tvRouteRemarks.setText(routeInfo.getDescription());
+                } else {
+                    holder.tvRouteRemarks.setVisibility(View.GONE);
                 }
-
+                
+                holder.routeSpecialIndicator.setVisibility(View.GONE);
+                break;
+                
+            default:
+                // Handle any other company types
+                holder.tvRouteBusCompany.setText(company);
+                holder.tvRouteRemarks.setVisibility(View.GONE);
+                holder.routeSpecialIndicator.setVisibility(View.GONE);
                 break;
         }
 
-
+        // Store the route info for click handling
         holder.bind(routeInfo);
-
-        if (routeInfo.getCompany().equals("kmb") && !Objects.equals(routeInfo.getServiceType(), "1")){
-            holder.routeSpecialIndicator.setVisibility(View.VISIBLE);
-        } else {
-            holder.routeSpecialIndicator.setVisibility(View.GONE);
-        }
-
-        // Background and text color logic
-        if (routeInfo.getCompany().equals("kmb") || routeInfo.getCompany().equals("ctb")) {
-            setTextColorAndBackground(holder.tvRouteName, routeNumber);
-        }
     }
 
     private void setTextColorAndBackground(TextView textView, String routeNumber) {

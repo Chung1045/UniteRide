@@ -760,11 +760,26 @@ public class BusRouteDetailViewActivity extends AppCompatActivity implements OnM
                     LatLng stopPosition = new LatLng(lat, lng);
                     stopPositions.add(stopPosition);
 
+                    String appLang = UserPreferences.sharedPref.getString(UserPreferences.SETTINGS_APP_LANG, "en");
+                    String stopDisplayName;
+
+                    switch (appLang) {
+                        case "zh-rCN":
+                            stopDisplayName = stopNameSc;
+                            break;
+                        case "zh-rHK":
+                            stopDisplayName = stopNameTc;
+                            break;
+                        default: // "en" or any other case
+                            stopDisplayName = stopNameEn;
+                            break;
+                    }
+
                     // Create marker for later addition to map
                     float markerHue = (index == 0) ? BitmapDescriptorFactory.HUE_BLUE : BitmapDescriptorFactory.HUE_RED;
                     markers.add(new MarkerOptions()
                             .position(stopPosition)
-                            .title(stopNameEn)
+                            .title(stopDisplayName)
                             .icon(BitmapDescriptorFactory.defaultMarker(markerHue)));
                 } catch (NumberFormatException e) {
                     Log.e(TAG, "Invalid coordinates for stop " + stopId + ": " + e.getMessage());
@@ -842,7 +857,7 @@ public class BusRouteDetailViewActivity extends AppCompatActivity implements OnM
 
                                     BusRouteStopItem item = new BusRouteStopItem(
                                         routeNumber, adjustedBound, routeServiceType,
-                                        stopNameEn, stopNameTc, stopNameSc, stopId, gmbRouteID, finalGmbRouteSeq);
+                                        stopNameEn, stopNameTc, stopNameSc, stopId, gmbRouteID);
                                     freshStops.add(item);
 
                                     // Try to get location data for the stop
@@ -1328,11 +1343,26 @@ public class BusRouteDetailViewActivity extends AppCompatActivity implements OnM
                 synchronized (stopPositions) {
                     stopPositions.add(stopPosition);
 
+                    String appLang = UserPreferences.sharedPref.getString(UserPreferences.SETTINGS_APP_LANG, "en");
+                    String displayName;
+
+                    switch (appLang) {
+                        case "zh-rCN":
+                            displayName = stopData.getString("name_sc");
+                            break;
+                        case "zh-rHK":
+                            displayName = stopData.getString("name_tc");
+                            break;
+                        default: // "en" or any other case
+                            displayName = stopData.getString("name_en");
+                            break;
+                    }
+
                     // Create marker
                     float markerHue = (index == 0) ? BitmapDescriptorFactory.HUE_BLUE : BitmapDescriptorFactory.HUE_RED;
                     MarkerOptions markerOptions = new MarkerOptions()
                             .position(stopPosition)
-                            .title(stopNameEn)
+                            .title(displayName)
                             .snippet("Stop #" + sequence)
                             .icon(BitmapDescriptorFactory.defaultMarker(markerHue));
 

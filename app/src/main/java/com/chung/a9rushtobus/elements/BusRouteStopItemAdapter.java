@@ -1,6 +1,7 @@
 package com.chung.a9rushtobus.elements;
 
 import android.content.Context;
+import android.content.Intent;
 import android.os.Handler;
 import android.os.Looper;
 import android.transition.TransitionManager;
@@ -9,15 +10,19 @@ import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.constraintlayout.widget.ConstraintLayout;
+import androidx.core.content.ContextCompat;
 import androidx.lifecycle.DefaultLifecycleObserver;
 import androidx.lifecycle.LifecycleOwner;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.chung.a9rushtobus.BackgroundService;
 import com.chung.a9rushtobus.DataFetcher;
 import com.chung.a9rushtobus.R;
 import com.chung.a9rushtobus.UserPreferences;
@@ -30,6 +35,7 @@ import org.json.JSONObject;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 public class BusRouteStopItemAdapter extends RecyclerView.Adapter<BusRouteStopItemAdapter.ViewHolder> implements DefaultLifecycleObserver {
 
@@ -88,6 +94,26 @@ public class BusRouteStopItemAdapter extends RecyclerView.Adapter<BusRouteStopIt
             TransitionManager.beginDelayedTransition((ViewGroup) holder.detailLayout.getParent());
             holder.detailLayout.setVisibility(item.isExpanded() ? View.VISIBLE : View.GONE);
         });
+
+        // Set up track bus button
+        holder.trackBusButton.setOnClickListener(v -> {
+            Intent serviceIntent = new Intent(context, BackgroundService.class);
+            serviceIntent.putExtra("stop_item", item);
+            context.startService(serviceIntent);
+            Toast.makeText(context, 
+                context.getString(R.string.notif_tracking_started, item.getStopName()), 
+                Toast.LENGTH_SHORT).show();
+        });
+
+        if (holder.firstETA != null && !Objects.equals(item.getCompany(), "gmb")) {
+            holder.firstETA.setText(item.getClosestETA());
+            if (item.hasRemarks()) {
+                holder.firstETA.setTextColor(ContextCompat.getColor(context, R.color.brand_colorOnError));
+            } else {
+                holder.firstETA.setTextColor(holder.firstETA.getTextColors().getDefaultColor());
+            }
+        }
+
     }
 
     private void displayEtaData(ViewHolder holder, List<String> etaDataFull, String etaData) {
@@ -243,6 +269,7 @@ public class BusRouteStopItemAdapter extends RecyclerView.Adapter<BusRouteStopIt
                 Log.d("ETARefresh", "No ETA data received for position " + position);
                 newEtaData.add(context.getString(R.string.bus_eta_msg_noBus_name));
                 item.setClosestETA(null);
+                updateClosestEta(item, "N/A", position, "");
             } else {
                 boolean needsRefetch = false;
 
@@ -269,10 +296,11 @@ public class BusRouteStopItemAdapter extends RecyclerView.Adapter<BusRouteStopIt
                     String displayText = etaMinutes.equals("N/A") ?
                             context.getString(R.string.bus_eta_msg_noBus_name) : etaTime + " " + etaMinutes + " " + context.getString(R.string.bus_eta_minute_text_name);
 
+                    String rmk_text = null;
+
                     if (item.getCompany().equals("kmb") || item.getCompany().equals("ctb")) {
                         if (etaData.getString("rmk_en") != null || etaData.getString("rmk_en").isEmpty()) {
                             String appLang = UserPreferences.sharedPref.getString(UserPreferences.SETTINGS_APP_LANG, "en");
-                            String rmk_text;
 
                             switch (appLang) {
                                 case "zh-rCN":
@@ -291,7 +319,6 @@ public class BusRouteStopItemAdapter extends RecyclerView.Adapter<BusRouteStopIt
                     } else if (item.getCompany().equals("gmb")) {
                         if (etaData.getString("remarks_en") != null || !etaData.getString("remarks_en").isEmpty()) {
                             String appLang = UserPreferences.sharedPref.getString(UserPreferences.SETTINGS_APP_LANG, "en");
-                            String rmk_text;
 
                             switch (appLang) {
                                 case "zh-rCN":
@@ -314,7 +341,7 @@ public class BusRouteStopItemAdapter extends RecyclerView.Adapter<BusRouteStopIt
                     Log.d("ETARefresh", "Display text: " + displayText);
 
                     if (i == 0 && !etaMinutes.equals("N/A")) {
-                        updateClosestEta(item, etaMinutes, position);
+                        updateClosestEta(item, etaMinutes, position, rmk_text);
                         if (Integer.parseInt(etaMinutes) < 0) {
                             needsRefetch = true;
                             displayText = etaTime + " " + "---";
@@ -347,9 +374,10 @@ public class BusRouteStopItemAdapter extends RecyclerView.Adapter<BusRouteStopIt
         updateUi(position);
     }
 
-    private void updateClosestEta(BusRouteStopItem item, String etaMinutes, int position) {
-        if (etaMinutes.equals("N/A")) {
-            item.setClosestETA("!");
+    private void updateClosestEta(BusRouteStopItem item, String etaMinutes, int position, String rmk_text) {
+        Log.e(TAG, "ETA for position " + position + ": " + etaMinutes);
+        if (etaMinutes.equals("N/A") || etaMinutes.isEmpty()) {
+            item.setClosestETA("---");
         } else if (etaMinutes.equals("0")) {
             item.setClosestETA(context.getString(R.string.detail_view_eta_arriving_name));
         } else if (Integer.parseInt(etaMinutes) < 0) {
@@ -358,6 +386,8 @@ public class BusRouteStopItemAdapter extends RecyclerView.Adapter<BusRouteStopIt
         } else {
             item.setClosestETA(etaMinutes + " " + context.getString(R.string.bus_eta_minute_text_name));
         }
+
+        item.setHasRemarks(!rmk_text.isEmpty());
     }
 
     private void scheduleRefetch(BusRouteStopItem item, int position) {
@@ -404,6 +434,7 @@ public class BusRouteStopItemAdapter extends RecyclerView.Adapter<BusRouteStopIt
         TextView firstETA;
         ConstraintLayout mainLayout, detailLayout;
         LinearLayout etaLayout;
+        Button trackBusButton;
 
         public ViewHolder(@NonNull View itemView) {
             super(itemView);
@@ -413,6 +444,7 @@ public class BusRouteStopItemAdapter extends RecyclerView.Adapter<BusRouteStopIt
             stopSeq = itemView.findViewById(R.id.item_stop_summary_stop_seq);
             firstETA = itemView.findViewById(R.id.item_stop_summary_stop_first_eta);
             etaLayout = itemView.findViewById(R.id.eta_container);
+            trackBusButton = itemView.findViewById(R.id.track_bus_button);
         }
     }
 }

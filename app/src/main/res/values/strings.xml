@@ -48,7 +48,7 @@ start your journey now!</string>
 
     <string name="detail_view_normal_route_name">Normal Route</string>
     <string name="detail_view_eta_arriving_name">Arriving</string>
-    
+
     <string name="settings_category_langOption_name">Language</string>
     <string name="settings_category_themeOption_name">Theme</string>
     <string name="settings_category_accessibilityOption_name">Accessibility</string>
@@ -76,7 +76,11 @@ start your journey now!</string>
     <string name="err_msg_noInternet_name">No internet</string>
     <string name="err_msg_noInternet_desc">Unable to load. Check your Internet connection and try again.</string>
 
-    <string name="notif_trackBus_name">Tracking for Bus </string>
+    <string name="notif_trackBus_name">Tracking for </string>
+    <string name="notif_channel_name">Bus Tracking</string>
+    <string name="notif_channel_description">Track bus arrival times</string>
+    <string name="notif_stop_tracking">Stop Tracking</string>
+    <string name="notif_tracking_started">Started tracking bus at %1$s</string>
     <string name="bus_eta_msg_loadingETA_name">Loading ETA...</string>
     <string name="bus_eta_msg_noBus_name">No available bus at the moment</string>
     <string name="bus_eta_minute_text_name">min</string>

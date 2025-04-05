@@ -43,6 +43,7 @@ public class MainActivity extends AppCompatActivity {
             localeHelper = new LocaleHelper();
             String localeCode = UserPreferences.sharedPref.getString(UserPreferences.SETTINGS_APP_LANG, "en");
             localeHelper.setAppLocale(this, localeCode);
+            recreate();
         }
 
         // Continue with existing logic
@@ -51,6 +52,17 @@ public class MainActivity extends AppCompatActivity {
 
         SplashScreen splashScreen = SplashScreen.installSplashScreen(this);
         splashScreen.setKeepOnScreenCondition(() -> !isDataReady);
+
+        splashScreen.setOnExitAnimationListener(splashScreenView -> {
+            // This code will be executed after the splash screen is dismissed.
+            boolean isFirstTimeLaunch = UserPreferences.sharedPref.getBoolean(UserPreferences.ONBOARDING_COMPLETE, true);
+
+            if (isFirstTimeLaunch) {
+                startActivity(new Intent(this, OnboardingActivity.class));
+                finish();
+            }
+            splashScreenView.remove();
+        });
 
         new Thread(() -> {
             try {
@@ -81,25 +93,79 @@ public class MainActivity extends AppCompatActivity {
                 ContextCompat.getColorStateList(this, R.color.brand_colorPrimary)
         );
 
+        // Create fragments once and reuse them
+        final FragmentSaved savedFragment = new FragmentSaved();
+        final FragmentNearby nearbyFragment = new FragmentNearby();
+        final FragmentSearch searchFragment = new FragmentSearch();
+        final FragmentTrafficNews trafficNewsFragment = new FragmentTrafficNews();
+        final FragmentSettings settingsFragment = new FragmentSettings();
+        
+        // Add the initial fragment
+        getSupportFragmentManager().beginTransaction()
+                .add(R.id.fragmentView_main, savedFragment)
+                .add(R.id.fragmentView_main, nearbyFragment)
+                .add(R.id.fragmentView_main, searchFragment)
+                .add(R.id.fragmentView_main, trafficNewsFragment)
+                .add(R.id.fragmentView_main, settingsFragment)
+                .hide(savedFragment)
+                .hide(nearbyFragment)
+                .hide(searchFragment)
+                .hide(trafficNewsFragment)
+                .hide(settingsFragment)
+                .show(nearbyFragment) // Show the default fragment
+                .commit();
+        
         bottomNav.setOnItemSelectedListener(item -> {
             int menuItemId = item.getItemId();
             bottomNav.setItemActiveIndicatorColor(
                     ContextCompat.getColorStateList(this, R.color.brand_colorPrimary)
             );
+            
+            // Use show/hide instead of replace for better performance
             if (menuItemId == R.id.menu_item_main_saved) {
-                getSupportFragmentManager().beginTransaction().replace(R.id.fragmentView_main, new FragmentSaved()).commit();
+                getSupportFragmentManager().beginTransaction()
+                        .hide(nearbyFragment)
+                        .hide(searchFragment)
+                        .hide(trafficNewsFragment)
+                        .hide(settingsFragment)
+                        .show(savedFragment)
+                        .commit();
                 return true;
             } else if (menuItemId == R.id.menu_item_main_nearby) {
-                getSupportFragmentManager().beginTransaction().replace(R.id.fragmentView_main, new FragmentNearby()).commit();
+                getSupportFragmentManager().beginTransaction()
+                        .hide(savedFragment)
+                        .hide(searchFragment)
+                        .hide(trafficNewsFragment)
+                        .hide(settingsFragment)
+                        .show(nearbyFragment)
+                        .commit();
                 return true;
             } else if (menuItemId == R.id.menu_item_main_search) {
-                getSupportFragmentManager().beginTransaction().replace(R.id.fragmentView_main, new FragmentSearch()).commit();
+                getSupportFragmentManager().beginTransaction()
+                        .hide(savedFragment)
+                        .hide(nearbyFragment)
+                        .hide(trafficNewsFragment)
+                        .hide(settingsFragment)
+                        .show(searchFragment)
+                        .commit();
                 return true;
             } else if (menuItemId == R.id.menu_item_main_news) {
-                getSupportFragmentManager().beginTransaction().replace(R.id.fragmentView_main, new FragmentTrafficNews()).commit();
+                getSupportFragmentManager().beginTransaction()
+                        .hide(savedFragment)
+                        .hide(nearbyFragment)
+                        .hide(searchFragment)
+                        .hide(settingsFragment)
+                        .show(trafficNewsFragment)
+                        .commit();
                 return true;
             } else if (menuItemId == R.id.menu_item_main_settings) {
-                getSupportFragmentManager().beginTransaction().replace(R.id.fragmentView_main, new FragmentSettings()).commit();
+                getSupportFragmentManager().beginTransaction()
+                        .hide(savedFragment)
+                        .hide(nearbyFragment)
+                        .hide(searchFragment)
+                        .hide(trafficNewsFragment)
+                        .show(settingsFragment)
+                        .commit();
                 return true;
             } else {
                 return false;

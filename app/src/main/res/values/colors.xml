@@ -12,6 +12,7 @@
     <color name="brand_colorSurfaceSecondary">#E7F5F7</color>
     <color name="brand_colorOnSurface">#ECF5F8</color>
     <color name="brand_colorOnSurfaceSecondary">#E1E9EB</color>
+    <color name="brand_colorOnError">#E65555</color>
     <color name="primarySecond_light">#0C212C</color>
     <color name="mainColors_sys_ref">#2A3235</color>
     <color name="onboarding_appBar">#FFFFFF</color>

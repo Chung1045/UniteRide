@@ -40,7 +40,7 @@
     <string name="settings_features_RTHKOption_name">顯示香港電台交通消息</string>
     <string name="settings_features_RTHKOption_desc">只提供繁體中文版本</string>
     <string name="err_msg_noInternet_desc">無法載入資料，請檢查網絡連線</string>
-    <string name="notif_trackBus_name">正在追蹤巴士</string>
+    <string name="notif_trackBus_name">正在追蹤 </string>
     <string name="err_msg_noInternet_name">網已斷</string>
     <string name="onboarding_1_5_title">歡迎使用 UniteRide</string>
     <string name="onboarding_2_5_title">" 選擇您的語言"</string>

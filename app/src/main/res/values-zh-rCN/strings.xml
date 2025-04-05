@@ -76,8 +76,9 @@
     <string name="err_msg_noInternet_name">无网络连接</string>
     <string name="err_msg_noInternet_desc">无法加载。请检查您的网络连接并重试。</string>
     
-    <string name="notif_trackBus_name">正在追踪巴士 </string>
+    <string name="notif_trackBus_name">正在追踪 </string>
     <string name="bus_eta_msg_noBus_name">当前没有可用的巴士</string>
+    
 
     <string-array name="options_application_theme">
         <item name="light_theme">浅色</item>

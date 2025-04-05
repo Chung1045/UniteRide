@@ -1,22 +1,22 @@
 package com.chung.a9rushtobus.elements;
 
-import android.util.Log;
-
+import android.os.Parcel;
+import android.os.Parcelable;
 import com.chung.a9rushtobus.UserPreferences;
-
 import java.util.ArrayList;
 import java.util.List;
 
-public class BusRouteStopItem {
+public class BusRouteStopItem implements Parcelable {
     private String route, bound, serviceType, stopEn, stopTc, stopSc, stopID, company, closestETA;
     private String gmbRouteID, gmbRouteSeq;
     private int stopEta1;
     private int stopEta2;
     private int stopEta3;
     private boolean isExpanded = false;
+    private boolean hasRemarks = false;
     private List<String> etaData = new ArrayList<>();
 
-    public BusRouteStopItem (String route, String bound, String serviceType,
+    public BusRouteStopItem(String route, String bound, String serviceType,
                             String stopEn, String stopTc, String stopSc, String stopID, String company) {
         this.route = route;
         this.bound = bound;
@@ -29,7 +29,7 @@ public class BusRouteStopItem {
     }
 
     // Constructor for GMB routes that need specific routeID and routeSeq
-    public BusRouteStopItem (String route, String bound, String serviceType,
+    public BusRouteStopItem(String route, String bound, String serviceType,
                              String stopEn, String stopTc, String stopSc, String stopID, 
                              String gmbRouteID, String gmbRouteSeq) {
         this.route = route;
@@ -41,8 +41,78 @@ public class BusRouteStopItem {
         this.stopID = stopID;
         this.gmbRouteID = gmbRouteID;
         this.gmbRouteSeq = gmbRouteSeq;
-        this.company = "gmb"; // Set the company to "gmb" explicitly
+        this.company = "gmb";
     }
+
+    // Simplified constructor for GMB routes
+    public BusRouteStopItem(String route, String serviceType, String stopID, String gmbRouteID, String gmbRouteSeq) {
+        this.route = route;
+        this.serviceType = serviceType;
+        this.stopID = stopID;
+        this.gmbRouteID = gmbRouteID;
+        this.gmbRouteSeq = gmbRouteSeq;
+        this.company = "gmb";
+    }
+
+    // Parcelable constructor
+    protected BusRouteStopItem(Parcel in) {
+        route = in.readString();
+        bound = in.readString();
+        serviceType = in.readString();
+        stopEn = in.readString();
+        stopTc = in.readString();
+        stopSc = in.readString();
+        stopID = in.readString();
+        company = in.readString();
+        closestETA = in.readString();
+        gmbRouteID = in.readString();
+        gmbRouteSeq = in.readString();
+        stopEta1 = in.readInt();
+        stopEta2 = in.readInt();
+        stopEta3 = in.readInt();
+        isExpanded = in.readByte() != 0;
+        hasRemarks = in.readByte() != 0;
+        etaData = new ArrayList<>();
+        in.readStringList(etaData);
+    }
+
+    @Override
+    public void writeToParcel(Parcel dest, int flags) {
+        dest.writeString(route);
+        dest.writeString(bound);
+        dest.writeString(serviceType);
+        dest.writeString(stopEn);
+        dest.writeString(stopTc);
+        dest.writeString(stopSc);
+        dest.writeString(stopID);
+        dest.writeString(company);
+        dest.writeString(closestETA);
+        dest.writeString(gmbRouteID);
+        dest.writeString(gmbRouteSeq);
+        dest.writeInt(stopEta1);
+        dest.writeInt(stopEta2);
+        dest.writeInt(stopEta3);
+        dest.writeByte((byte) (isExpanded ? 1 : 0));
+        dest.writeByte((byte) (hasRemarks ? 1 : 0));
+        dest.writeStringList(etaData);
+    }
+
+    @Override
+    public int describeContents() {
+        return 0;
+    }
+
+    public static final Creator<BusRouteStopItem> CREATOR = new Creator<BusRouteStopItem>() {
+        @Override
+        public BusRouteStopItem createFromParcel(Parcel in) {
+            return new BusRouteStopItem(in);
+        }
+
+        @Override
+        public BusRouteStopItem[] newArray(int size) {
+            return new BusRouteStopItem[size];
+        }
+    };
 
     public String getRoute() {
         return route;
@@ -152,14 +222,16 @@ public class BusRouteStopItem {
     public void setGmbRouteSeq(String gmbRouteSeq) {
         this.gmbRouteSeq = gmbRouteSeq;
     }
-    
-    // Simplified constructor for GMB routes
-    public BusRouteStopItem(String route, String serviceType, String stopID, String gmbRouteID, String gmbRouteSeq) {
-        this.route = route;
-        this.serviceType = serviceType;
-        this.stopID = stopID;
-        this.gmbRouteID = gmbRouteID;
-        this.gmbRouteSeq = gmbRouteSeq;
-        this.company = "gmb"; // Set the company to "gmb" explicitly
+
+    public void setHasRemarks(boolean hasRemarks) {
+        this.hasRemarks = hasRemarks;
+    }
+
+    public boolean hasRemarks() {
+        return hasRemarks;
+    }
+
+    public String getStopSeq() {
+        return gmbRouteSeq; // For GMB routes, this is the same as gmbRouteSeq
     }
 }
