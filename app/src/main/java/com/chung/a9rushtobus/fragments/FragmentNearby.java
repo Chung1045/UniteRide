@@ -56,7 +56,7 @@ public class FragmentNearby extends Fragment implements OnMapReadyCallback {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         // Initialize the database
-        DatabaseHelper databaseHelper = new DatabaseHelper(requireContext());
+        DatabaseHelper databaseHelper = DatabaseHelper.getInstance(requireContext());
         kmbDatabase = databaseHelper.kmbDatabase;
         
         // Initialize location permission launcher
@@ -265,7 +265,7 @@ public class FragmentNearby extends Fragment implements OnMapReadyCallback {
         
         if (kmbDatabase == null) {
             Log.e("FragmentNearby", "KMBDatabase is null. Initializing now.");
-            DatabaseHelper databaseHelper = new DatabaseHelper(requireContext());
+            DatabaseHelper databaseHelper = DatabaseHelper.getInstance(requireContext());
             kmbDatabase = databaseHelper.kmbDatabase;
         }
         

@@ -36,7 +36,7 @@ public class FragmentSaved extends Fragment {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        databaseHelper = new DatabaseHelper(requireContext());
+        databaseHelper = DatabaseHelper.getInstance(requireContext());
         utils = new Utils(getActivity(), getView(), getContext());
     }
 

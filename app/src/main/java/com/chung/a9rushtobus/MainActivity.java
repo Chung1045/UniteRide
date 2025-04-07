@@ -50,9 +50,8 @@ public class MainActivity extends AppCompatActivity {
             recreate();
         }
 
-        // Continue with existing logic
-        dbHelper = new DatabaseHelper(this);
-        dbHelper.onCreate(dbHelper.getWritableDatabase());
+        // Continue with existing logic - use singleton pattern
+        dbHelper = DatabaseHelper.getInstance(this);
 
         SplashScreen splashScreen = SplashScreen.installSplashScreen(this);
         splashScreen.setKeepOnScreenCondition(() -> !isDataReady);
@@ -183,18 +182,6 @@ public class MainActivity extends AppCompatActivity {
         };
 
         UserPreferences.sharedPref.registerOnSharedPreferenceChangeListener(preferenceChangeListener);
-    }
-
-    private void verifyRawResource() {
-        try {
-            InputStream testStream = getResources().openRawResource(R.raw.kmb_stops);
-            long fileSize = testStream.available();
-            Log.d("MainActivity", "Found kmb_stops.db in raw resources, size: " + fileSize + " bytes");
-            testStream.close();
-        } catch (Exception e) {
-            Log.e("MainActivity", "Error accessing raw resource: " + e.getMessage());
-            e.printStackTrace();
-        }
     }
 
     private void initTheme() {

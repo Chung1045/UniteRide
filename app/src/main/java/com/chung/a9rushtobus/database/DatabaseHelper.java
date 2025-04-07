@@ -17,14 +17,24 @@ import java.io.InputStream;
 import java.io.OutputStream;
 
 public class DatabaseHelper extends SQLiteOpenHelper {
+    private static final String TAG = "DatabaseHelper";
+    
     // Database version and name
     public static final int DATABASE_VERSION = 1;
     public static final String DATABASE_NAME = "MyAppDatabase.db";
     private Context context;
-    public KMBDatabase kmbDatabase = new KMBDatabase(this);
-    public CTBDatabase ctbDatabase = new CTBDatabase(this);
-    public GMBDatabase gmbDatabase = new GMBDatabase(this);
-    public SavedRoutesManager savedRoutesManager = new SavedRoutesManager(this);
+    
+    // Singleton instance
+    private static DatabaseHelper instance;
+    
+    // Database helper classes
+    public KMBDatabase kmbDatabase;
+    public CTBDatabase ctbDatabase;
+    public GMBDatabase gmbDatabase;
+    public SavedRoutesManager savedRoutesManager;
+    
+    // Flag to track if database has been initialized
+    private boolean databaseInitialized = false;
 
     // Table creation constants
     private static final String SQL_CREATE_RTHK_NEWS_TABLE = "CREATE TABLE IF NOT EXISTS " +
@@ -58,10 +68,123 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         }
     }
 
-    // Constructor
-    public DatabaseHelper(Context context) {
+    /**
+     * Get the singleton instance of DatabaseHelper
+     */
+    public static synchronized DatabaseHelper getInstance(Context context) {
+        if (instance == null) {
+            instance = new DatabaseHelper(context.getApplicationContext());
+        }
+        return instance;
+    }
+    
+    // Private constructor - use getInstance() instead
+    private DatabaseHelper(Context context) {
         super(context, DATABASE_NAME, null, DATABASE_VERSION);
-        this.context = context;
+        this.context = context.getApplicationContext(); // Use application context to avoid memory leaks
+        
+        Log.d(TAG, "Initializing DatabaseHelper");
+        
+        // Initialize the database
+        if (!databaseInitialized) {
+            initializeDatabase();
+            databaseInitialized = true;
+        }
+    }
+    
+    /**
+     * Initialize the database by copying from assets if needed
+     */
+    private void initializeDatabase() {
+        // Check if database already exists
+        File dbFile = context.getDatabasePath(DATABASE_NAME);
+        
+        if (!dbFile.exists()) {
+            Log.d(TAG, "Database does not exist, copying from assets");
+            
+            // Make sure the database directory exists
+            dbFile.getParentFile().mkdirs();
+            
+            try {
+                // Copy database from assets
+                copyDatabaseFromAssets();
+                
+                // Initialize database helpers
+                kmbDatabase = new KMBDatabase(this);
+                ctbDatabase = new CTBDatabase(this);
+                gmbDatabase = new GMBDatabase(this);
+                savedRoutesManager = new SavedRoutesManager(this);
+                
+                Log.d(TAG, "Database initialization complete");
+            } catch (IOException e) {
+                Log.e(TAG, "Error copying database from assets", e);
+                
+                // If copying fails, create empty database and initialize helpers
+                SQLiteDatabase db = getWritableDatabase();
+                db.close();
+                
+                kmbDatabase = new KMBDatabase(this);
+                ctbDatabase = new CTBDatabase(this);
+                gmbDatabase = new GMBDatabase(this);
+                savedRoutesManager = new SavedRoutesManager(this);
+            }
+        } else {
+            Log.d(TAG, "Database already exists, using existing database");
+            
+            // Initialize database helpers with existing database
+            kmbDatabase = new KMBDatabase(this);
+            ctbDatabase = new CTBDatabase(this);
+            gmbDatabase = new GMBDatabase(this);
+            savedRoutesManager = new SavedRoutesManager(this);
+        }
+    }
+    
+    /**
+     * Copies the database from assets to the application database directory
+     */
+    private void copyDatabaseFromAssets() throws IOException {
+        Log.d(TAG, "Copying database from assets");
+        
+        // Source path in assets folder
+        String assetPath = "defined-database/default-database.db";
+        
+        try {
+            // Open the asset file
+            InputStream input = context.getAssets().open(assetPath);
+            
+            // Create the output file
+            File outputFile = context.getDatabasePath(DATABASE_NAME);
+            String outFileName = outputFile.getPath();
+            
+            // Create the output stream
+            OutputStream output = new FileOutputStream(outFileName);
+            
+            // Copy the file
+            byte[] buffer = new byte[8192];
+            int length;
+            long totalBytes = 0;
+            
+            while ((length = input.read(buffer)) > 0) {
+                output.write(buffer, 0, length);
+                totalBytes += length;
+            }
+            
+            Log.d(TAG, "Copied " + totalBytes + " bytes from assets");
+            
+            // Flush and close the streams
+            output.flush();
+            output.close();
+            input.close();
+            
+            // Make sure the database file has correct permissions
+            outputFile.setReadable(true);
+            outputFile.setWritable(true);
+            
+            Log.d(TAG, "Database successfully copied from assets");
+        } catch (IOException e) {
+            Log.e(TAG, "Error copying database from assets", e);
+            throw e;
+        }
     }
 
     public void removeAllValues() {
@@ -111,18 +234,26 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     // Create tables
     @Override
     public void onCreate(SQLiteDatabase db) {
-        db.execSQL(KMBDatabase.SQL_CREATE_KMB_ROUTES_TABLE);
-        db.execSQL(KMBDatabase.SQL_CREATE_KMB_ROUTE_STOPS_TABLE);
-        db.execSQL(KMBDatabase.SQL_CREATE_KMB_STOPS_TABLE);
-        db.execSQL(CTBDatabase.SQL_CREATE_CTB_ROUTES_TABLE);
-        db.execSQL(CTBDatabase.SQL_CREATE_CTB_ROUTE_STOPS_TABLE);
-        db.execSQL(CTBDatabase.SQL_CREATE_CTB_STOPS_TABLE);
-        db.execSQL(GMBDatabase.SQL_CREATE_GMB_ROUTES_TABLES);
-        db.execSQL(GMBDatabase.SQL_CREATE_GMB_ROUTES_INFO_TABLE);
-        db.execSQL(GMBDatabase.SQL_CREATE_GMB_ROUTE_STOPS_TABLE);
-        db.execSQL(GMBDatabase.SQL_CREATE_GMB_STOP_LOCATIONS_TABLE);
-        db.execSQL(SQL_CREATE_RTHK_NEWS_TABLE);
-        db.execSQL(SQL_CREATE_USER_SAVED_TABLE);
+        Log.d(TAG, "onCreate called - creating tables if needed");
+        
+        try {
+            // Create tables using "IF NOT EXISTS" to avoid errors if tables already exist
+            db.execSQL(KMBDatabase.SQL_CREATE_KMB_ROUTES_TABLE);
+            db.execSQL(KMBDatabase.SQL_CREATE_KMB_ROUTE_STOPS_TABLE);
+            db.execSQL(KMBDatabase.SQL_CREATE_KMB_STOPS_TABLE);
+            db.execSQL(CTBDatabase.SQL_CREATE_CTB_ROUTES_TABLE);
+            db.execSQL(CTBDatabase.SQL_CREATE_CTB_ROUTE_STOPS_TABLE);
+            db.execSQL(CTBDatabase.SQL_CREATE_CTB_STOPS_TABLE);
+            db.execSQL(GMBDatabase.SQL_CREATE_GMB_ROUTES_TABLES);
+            db.execSQL(GMBDatabase.SQL_CREATE_GMB_ROUTES_INFO_TABLE);
+            db.execSQL(GMBDatabase.SQL_CREATE_GMB_ROUTE_STOPS_TABLE);
+            db.execSQL(GMBDatabase.SQL_CREATE_GMB_STOP_LOCATIONS_TABLE);
+            db.execSQL(SQL_CREATE_RTHK_NEWS_TABLE);
+            db.execSQL(SQL_CREATE_USER_SAVED_TABLE);
+            Log.d(TAG, "All tables created successfully");
+        } catch (Exception e) {
+            Log.e(TAG, "Error creating tables", e);
+        }
     }
 
     // Handle database upgrades

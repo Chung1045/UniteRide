@@ -52,7 +52,7 @@ public class SavedBusStopAdapter extends RecyclerView.Adapter<SavedBusStopAdapte
         this.items = items;
         this.utils = utils;
         this.dataFetcher = new DataFetcher(context);
-        this.databaseHelper = new DatabaseHelper(context);
+        this.databaseHelper = DatabaseHelper.getInstance(context);
     }
 
     @NonNull

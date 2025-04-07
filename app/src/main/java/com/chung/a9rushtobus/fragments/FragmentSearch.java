@@ -73,7 +73,7 @@ public class FragmentSearch extends Fragment {
         super.onViewCreated(view, savedInstanceState);
 
         dataFetcher = new DataFetcher(getContext());
-        databaseHelper = new DatabaseHelper(requireContext());
+        databaseHelper = DatabaseHelper.getInstance(requireContext());
         RecyclerView recyclerView = view.findViewById(R.id.recyclerView);
         progressBar = view.findViewById(R.id.progressBar);
         searchEditText = view.findViewById(R.id.search_edit_text);

@@ -1,12 +1,25 @@
 package com.chung.a9rushtobus.database;
 
 import android.content.ContentValues;
+import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
+import android.database.sqlite.SQLiteException;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.util.Log;
 
+import com.chung.a9rushtobus.R;
 import com.chung.a9rushtobus.UserPreferences;
+
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public class KMBDatabase {
     
@@ -279,6 +292,129 @@ public class KMBDatabase {
             String.valueOf(minLon),      // Bounding box min longitude
             String.valueOf(maxLon)       // Bounding box max longitude
         });
+    }
+    
+    public void importKMBStops(Context context) {
+        File tempFile = null;
+        FileOutputStream out = null;
+        InputStream inputStream = null;
+        SQLiteDatabase sourceDb = null;
+
+        try {
+            Log.d("KMBDatabase", "Starting database import process");
+            
+            // First ensure our tables exist
+            db.execSQL(SQL_CREATE_KMB_ROUTES_TABLE);
+            db.execSQL(SQL_CREATE_KMB_STOPS_TABLE);
+            db.execSQL(SQL_CREATE_KMB_ROUTE_STOPS_TABLE);
+            
+            // Open the asset file
+            inputStream = context.getAssets().open("defined-database/kmb_stops.db");
+            Log.d("KMBDatabase", "Successfully opened asset file");
+
+            // Create a temporary file
+            tempFile = File.createTempFile("temp_kmb_stops", ".db", context.getCacheDir());
+            tempFile.setReadable(true, false);
+            tempFile.setWritable(true, false);
+            Log.d("KMBDatabase", "Created temp file at: " + tempFile.getAbsolutePath());
+            
+            // Copy the database file
+            out = new FileOutputStream(tempFile);
+            byte[] buffer = new byte[8192];
+            int length;
+            long totalBytes = 0;
+            
+            while ((length = inputStream.read(buffer)) > 0) {
+                out.write(buffer, 0, length);
+                totalBytes += length;
+            }
+            
+            out.flush();
+            out.close();
+            inputStream.close();
+            Log.d("KMBDatabase", "Copied " + totalBytes + " bytes to temp file");
+
+            // Open source database directly
+            sourceDb = SQLiteDatabase.openDatabase(tempFile.getAbsolutePath(), null, SQLiteDatabase.OPEN_READONLY);
+            
+            // Get tables from source
+            List<String> sourceTables = new ArrayList<>();
+            try (Cursor c = sourceDb.rawQuery("SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%'", null)) {
+                while (c.moveToNext()) {
+                    sourceTables.add(c.getString(0));
+                }
+            }
+            
+            Log.d("KMBDatabase", "Source tables found: " + sourceTables);
+
+            // Copy data table by table
+            db.beginTransaction();
+            try {
+                for (String sourceTable : sourceTables) {
+                    String destTable;
+                    switch (sourceTable) {
+                        case "kmb_routes":
+                            destTable = Tables.KMB_ROUTES.TABLE_NAME;
+                            break;
+                        case "kmb_stops":
+                            destTable = Tables.KMB_STOPS.TABLE_NAME;
+                            break;
+                        case "kmb_route_stops":
+                            destTable = Tables.KMB_ROUTE_STOPS.TABLE_NAME;
+                            break;
+                        default:
+                            continue;
+                    }
+
+                    // Get all data from source table
+                    try (Cursor cursor = sourceDb.rawQuery("SELECT * FROM " + sourceTable, null)) {
+                        if (cursor.moveToFirst()) {
+                            String[] columnNames = cursor.getColumnNames();
+                            
+                            do {
+                                ContentValues values = new ContentValues();
+                                for (String column : columnNames) {
+                                    int columnIndex = cursor.getColumnIndex(column);
+                                    if (!cursor.isNull(columnIndex)) {
+                                        values.put(column, cursor.getString(columnIndex));
+                                    }
+                                }
+                                db.insertWithOnConflict(destTable, null, values, SQLiteDatabase.CONFLICT_REPLACE);
+                            } while (cursor.moveToNext());
+                            
+                            Log.d("KMBDatabase", "Copied " + cursor.getCount() + " rows from " + sourceTable + " to " + destTable);
+                        }
+                    }
+                }
+                
+                db.setTransactionSuccessful();
+                Log.d("KMBDatabase", "Database import completed successfully");
+            } finally {
+                db.endTransaction();
+            }
+
+        } catch (IOException e) {
+            Log.e("KMBDatabase", "IO Error during import", e);
+            e.printStackTrace();
+        } catch (SQLiteException e) {
+            Log.e("KMBDatabase", "SQLite Error during import", e);
+            e.printStackTrace();
+        } finally {
+            // Clean up resources
+            try {
+                if (out != null) out.close();
+                if (inputStream != null) inputStream.close();
+                if (sourceDb != null) sourceDb.close();
+            } catch (IOException e) {
+                Log.e("KMBDatabase", "Error closing streams", e);
+            }
+            
+            // Delete temp file
+            if (tempFile != null && tempFile.exists()) {
+                boolean deleted = tempFile.delete();
+                Log.d("KMBDatabase", "Temp file deleted: " + deleted);
+            }
+        }
     }
 
 }

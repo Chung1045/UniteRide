@@ -47,7 +47,7 @@ public class FragmentTrafficNews extends Fragment {
         mainHandler = new Handler(Looper.getMainLooper());
         trafficEntries = new ArrayList<>();
         adapter = new RTHKTrafficAdapter(trafficEntries);
-        databaseHelper = new DatabaseHelper(getContext());
+        databaseHelper = DatabaseHelper.getInstance(getContext());
         return inflater.inflate(R.layout.fragment_traffic_news, container, false);
     }
 

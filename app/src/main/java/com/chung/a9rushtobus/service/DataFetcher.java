@@ -59,7 +59,7 @@ public class DataFetcher {
     private Context context;
 
     public DataFetcher(Context context) {
-        databaseHelper = new DatabaseHelper(context);
+        databaseHelper = DatabaseHelper.getInstance(context);
         this.context = context;
 
         okhttp3.Dispatcher dispatcher = new okhttp3.Dispatcher();
@@ -153,6 +153,7 @@ public class DataFetcher {
             }
         });
     }
+
 
 
     // Handle failures by restoring the database
@@ -1156,7 +1157,7 @@ public class DataFetcher {
                 dst.close();
 
                 // Reopen the database
-                databaseHelper = new DatabaseHelper(context);
+                databaseHelper = DatabaseHelper.getInstance(context);
 
                 Log.d("DataFetcher", "Database restored successfully from " + mostRecentBackup.getAbsolutePath());
                 success = true;
