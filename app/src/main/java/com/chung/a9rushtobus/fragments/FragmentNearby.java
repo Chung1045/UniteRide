@@ -12,6 +12,7 @@ import android.view.ViewGroup;
 import android.widget.TextView;
 
 import androidx.activity.result.ActivityResultLauncher;
+import com.google.android.material.button.MaterialButton;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.constraintlayout.widget.ConstraintLayout;
@@ -48,6 +49,8 @@ public class FragmentNearby extends Fragment implements OnMapReadyCallback {
     private RecyclerView nearbyStationsRecyclerView;
     private LatLng currentLocation;
     private KMBDatabase kmbDatabase;
+    private ActivityResultLauncher<String[]> locationPermissionRequest;
+    private MaterialButton btnLocationPermission;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -55,6 +58,28 @@ public class FragmentNearby extends Fragment implements OnMapReadyCallback {
         // Initialize the database
         DatabaseHelper databaseHelper = new DatabaseHelper(requireContext());
         kmbDatabase = databaseHelper.kmbDatabase;
+        
+        // Initialize location permission launcher
+        locationPermissionRequest = registerForActivityResult(new ActivityResultContracts
+                .RequestMultiplePermissions(), result -> {
+            Boolean fineLocationGranted = result.getOrDefault(
+                    android.Manifest.permission.ACCESS_FINE_LOCATION, false);
+            Boolean coarseLocationGranted = result.getOrDefault(
+                    android.Manifest.permission.ACCESS_COARSE_LOCATION, false);
+
+            if (fineLocationGranted != null && fineLocationGranted) {
+                btnLocationPermission.setVisibility(View.GONE);
+                getLastLocation();
+            } else if (coarseLocationGranted != null && coarseLocationGranted) {
+                // Only approximate location access granted
+                btnLocationPermission.setVisibility(View.GONE);
+                getLastLocation(); // Still try to use coarse location
+            } else {
+                // No location access granted
+                btnLocationPermission.setVisibility(View.VISIBLE);
+                locationInfo.setText("Location permission denied");
+            }
+        });
     }
 
     @Override
@@ -65,6 +90,7 @@ public class FragmentNearby extends Fragment implements OnMapReadyCallback {
         // Initialize UI components
         locationInfo = view.findViewById(R.id.locationInfo);
         nearbyStationsRecyclerView = view.findViewById(R.id.nearbyStationsRecyclerView);
+        btnLocationPermission = view.findViewById(R.id.btnLocationPermission);
 
         // Setup RecyclerView
         setupRecyclerView();
@@ -82,8 +108,22 @@ public class FragmentNearby extends Fragment implements OnMapReadyCallback {
         // Setup bottom sheet
         setupBottomSheet(view);
 
-        // Request location permissions
-        requestPermissions();
+        // Setup location permission button
+        btnLocationPermission.setOnClickListener(v -> requestPermissions());
+
+        // Check if we already have permission
+        if (ActivityCompat.checkSelfPermission(requireContext(),
+                android.Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED ||
+            ActivityCompat.checkSelfPermission(requireContext(),
+                android.Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+            // If we already have permission, hide the button
+            btnLocationPermission.setVisibility(View.GONE);
+            getLastLocation();
+        } else {
+            // Show the button if we don't have permission
+            btnLocationPermission.setVisibility(View.VISIBLE);
+            locationInfo.setText("Location access required");
+        }
 
         return view;
     }
@@ -149,10 +189,14 @@ public class FragmentNearby extends Fragment implements OnMapReadyCallback {
                 mMap.setMapStyle(MapStyleOptions.loadRawResourceStyle(getContext(), R.raw.maps_night_theme));
             }
 
-            getLastLocation();
-
+            if (ActivityCompat.checkSelfPermission(requireContext(),
+                    android.Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED ||
+                ActivityCompat.checkSelfPermission(requireContext(),
+                    android.Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+                getLastLocation();
+            }
         } catch (SecurityException e) {
-            requestPermissions();
+            Log.e("FragmentNearby", "Security exception: " + e.getMessage());
         }
 
         if (currentLocation != null) {
@@ -184,26 +228,6 @@ public class FragmentNearby extends Fragment implements OnMapReadyCallback {
     }
 
     private void requestPermissions() {
-        ActivityResultLauncher<String[]> locationPermissionRequest =
-                registerForActivityResult(new ActivityResultContracts
-                        .RequestMultiplePermissions(), result -> {
-
-                    Boolean fineLocationGranted = result.getOrDefault(
-                            android.Manifest.permission.ACCESS_FINE_LOCATION, false);
-                    Boolean coarseLocationGranted = result.getOrDefault(
-                            android.Manifest.permission.ACCESS_COARSE_LOCATION, false);
-
-                    if (fineLocationGranted != null && fineLocationGranted) {
-                        getLastLocation();
-                    } else if (coarseLocationGranted != null && coarseLocationGranted) {
-                        // Only approximate location access granted
-                        getLastLocation(); // Still try to use coarse location
-                    } else {
-                        // No location access granted
-                        locationInfo.setText("Location permission denied");
-                    }
-                });
-
         locationPermissionRequest.launch(new String[] {
                 android.Manifest.permission.ACCESS_FINE_LOCATION,
                 android.Manifest.permission.ACCESS_COARSE_LOCATION

@@ -89,6 +89,7 @@ public class SavedBusStopAdapter extends RecyclerView.Adapter<SavedBusStopAdapte
     @Override
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
         BusRouteStopItem item = items.get(position);
+        String destination = null;
 
         // Set basic bus route information
         holder.routeName.setText(item.getRoute());
@@ -111,6 +112,53 @@ public class SavedBusStopAdapter extends RecyclerView.Adapter<SavedBusStopAdapte
         holder.stopName.setText(item.getStopName());
         holder.stopName.setVisibility(View.VISIBLE);
 
+        // Get and set destination based on company
+        try {
+            switch (item.getCompany()) {
+                case "kmb":
+                    if (item.getRoute() != null && item.getBound() != null && item.getServiceType() != null) {
+                        destination = databaseHelper.kmbDatabase.getRouteDestination(
+                            item.getRoute(), 
+                            item.getBound(), 
+                            item.getServiceType()
+                        );
+                    }
+                    break;
+                case "ctb":
+                    if (item.getRoute() != null) {
+                        destination = databaseHelper.ctbDatabase.getRouteDestination(
+                                item.getRoute(),
+                                item.getBound()
+                        );
+                    }
+                    break;
+                case "gmb":
+                    if (item.getGmbRouteID() != null && item.getGmbRouteSeq() != null) {
+                        destination = databaseHelper.gmbDatabase.getRouteDestination(
+                            item.getGmbRouteID(),
+                            item.getGmbRouteSeq()
+                        );
+                    }
+                    break;
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "Error getting destination for route " + item.getRoute() + ": " + e.getMessage());
+        }
+        
+        if (destination != null && !destination.trim().isEmpty()) {
+            String appLang = UserPreferences.sharedPref.getString(UserPreferences.SETTINGS_APP_LANG, "en");
+            switch (appLang){
+                case "zh-rCN":
+                    case "zh-rHK":
+                        holder.destination.setText("往 " + destination.trim().toUpperCase());
+                        break;
+                default:
+                    holder.destination.setText("TO " + destination.trim().toUpperCase());
+
+            }
+        } else {
+            holder.destination.setText("");
+        }
         holder.destination.setSelected(true);
 
         // Handle ETAs
@@ -151,6 +199,7 @@ public class SavedBusStopAdapter extends RecyclerView.Adapter<SavedBusStopAdapte
 
         // Make route and stop clickable to see details
         holder.infoHolder.setOnClickListener(v -> {
+            String destinationValue = null;
             Intent intent = new Intent(context, BusRouteDetailViewActivity.class);
             intent.putExtra("route", item.getRoute());
             intent.putExtra("destination", item.getStopID()); //todo, need to get destination

@@ -1,9 +1,12 @@
 package com.chung.a9rushtobus.database;
 
 import android.content.ContentValues;
+import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.util.Log;
+
+import com.chung.a9rushtobus.UserPreferences;
 
 import java.util.Objects;
 
@@ -153,11 +156,6 @@ public class CTBDatabase {
             values.put(Tables.CTB_ROUTE_STOPS.COLUMN_BOUND, bound);
             values.put(Tables.CTB_ROUTE_STOPS.COLUMN_STOP_SEQ, stopSeq);
 
-            if (Objects.equals(route, "N182")) {
-                Log.e("DatabaseCTB", "N182 is being inserted with bound " + bound);
-                Log.d("DatabaseCTB", "Stop Seq: " + stopSeq + " Stop ID: " + stopId);
-            }
-
             db.insert(Tables.CTB_ROUTE_STOPS.TABLE_NAME, null, values);
 
             db.setTransactionSuccessful();
@@ -166,6 +164,46 @@ public class CTBDatabase {
         }
     }
 
+
+    public String getRouteDestination(String route, String bound) {
+        String query = "SELECT " + Tables.CTB_ROUTES.COLUMN_DEST_EN + ", " +
+                        Tables.CTB_ROUTES.COLUMN_DEST_TC + ", " +
+                        Tables.CTB_ROUTES.COLUMN_DEST_SC + ", " +
+                        Tables.CTB_ROUTES.COLUMN_ORIGIN_EN + ", " +
+                        Tables.CTB_ROUTES.COLUMN_ORIGIN_TC + ", " +
+                        Tables.CTB_ROUTES.COLUMN_ORIGIN_SC +
+                      " FROM " + Tables.CTB_ROUTES.TABLE_NAME + 
+                      " WHERE " + Tables.CTB_ROUTES.COLUMN_ROUTE + "=?";
+
+        try (Cursor cursor = db.rawQuery(query, new String[]{route})) {
+            if (cursor.moveToFirst()) {
+                Log.d("Database", "Route: " + route + " Bound: " + bound);
+                Log.d("Database", "Cursor count: " + cursor.getCount());
+                String appLang = UserPreferences.sharedPref.getString(UserPreferences.SETTINGS_APP_LANG, "en");
+
+                if (Objects.equals(bound, "I")){
+                    switch (appLang) {
+                        case "zh-rCN":
+                            return cursor.getString(2);
+                        case "zh-rHK":
+                            return cursor.getString(1);
+                        default:
+                            return cursor.getString(0);
+                    }
+                } else {
+                    switch (appLang) {
+                        case "zh-rCN":
+                            return cursor.getString(5);
+                        case "zh-rHK":
+                            return cursor.getString(4);
+                        default:
+                            return cursor.getString(3);
+                    }
+                }
+            }
+        }
+        return null;
+    }
 
     public synchronized void updateCTBStops(String stopId, String nameEn, String nameTc, String nameSc, String latitude, String longitude) {
         db.beginTransaction();

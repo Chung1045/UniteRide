@@ -1,6 +1,7 @@
 package com.chung.a9rushtobus.database;
 
 import android.content.ContentValues;
+import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.util.Log;
@@ -70,6 +71,20 @@ public class GMBDatabase {
     public static String SQL_DELETE_GMB_ROUTES_INFO_TABLE = "DROP TABLE IF EXISTS " + Tables.GMB_ROUTES_INFO.TABLE_NAME;
     public static String SQL_DELETE_GMB_ROUTE_STOPS_TABLE = "DROP TABLE IF EXISTS " + Tables.GMB_ROUTE_STOPS.TABLE_NAME;
     public static String SQL_DELETE_GMB_STOP_LOCATIONS_TABLE = "DROP TABLE IF EXISTS " + Tables.GMB_STOP_LOCATIONS.TABLE_NAME;
+
+    public String getRouteDestination(String routeId, String routeSeq) {
+        String query = "SELECT " + Tables.GMB_ROUTES_INFO.COLUMN_ROUTE_DEST_EN + 
+                      " FROM " + Tables.GMB_ROUTES_INFO.TABLE_NAME + 
+                      " WHERE " + Tables.GMB_ROUTES_INFO.COLUMN_ROUTE_ID + "=? AND " +
+                      Tables.GMB_ROUTES_INFO.COLUMN_ROUTE_SEQ + "=?";
+
+        try (Cursor cursor = db.rawQuery(query, new String[]{routeId, routeSeq})) {
+            if (cursor.moveToFirst()) {
+                return cursor.getString(0);
+            }
+        }
+        return null;
+    }
 
     public GMBDatabase(SQLiteOpenHelper helper) {
         this.db = helper.getWritableDatabase();

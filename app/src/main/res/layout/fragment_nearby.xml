@@ -59,8 +59,18 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:padding="16dp"
-            android:text="Fetching your location..."
+            android:text="Location access required"
             app:layout_constraintTop_toBottomOf="@id/sheetTitle"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnLocationPermission"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Allow Location Access"
+            android:layout_marginTop="8dp"
+            app:layout_constraintTop_toBottomOf="@id/locationInfo"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent" />
 

@@ -43,11 +43,6 @@ public class SavedRoutesManager {
         return result != -1;
     }
 
-    /**
-     * Check if a bus route stop is already saved
-     * @param busRouteStopItem The bus route stop to check
-     * @return True if already saved, false otherwise
-     */
     public boolean isRouteStopSaved(BusRouteStopItem busRouteStopItem) {
         SQLiteDatabase db = dbHelper.getReadableDatabase();
         String query = "SELECT * FROM " + DatabaseHelper.Tables.USER_SAVED.TABLE_NAME +
@@ -67,11 +62,6 @@ public class SavedRoutesManager {
         return isSaved;
     }
 
-    /**
-     * Remove a saved bus route stop
-     * @param busRouteStopItem The bus route stop to remove
-     * @return True if removal was successful, false otherwise
-     */
     public boolean removeRouteStop(BusRouteStopItem busRouteStopItem) {
         SQLiteDatabase db = dbHelper.getWritableDatabase();
         String whereClause = DatabaseHelper.Tables.USER_SAVED.COLUMN_ROUTE_ID + " = ? AND " +
@@ -88,16 +78,14 @@ public class SavedRoutesManager {
         return result > 0;
     }
 
-    /**
-     * Get all saved bus route stops
-     * @return List of saved BusRouteStopItem objects
-     */
     public List<BusRouteStopItem> getSavedRouteStops() {
         List<BusRouteStopItem> savedStops = new ArrayList<>();
         SQLiteDatabase db = dbHelper.getReadableDatabase();
         
         String query = "SELECT * FROM " + DatabaseHelper.Tables.USER_SAVED.TABLE_NAME;
         Cursor cursor = db.rawQuery(query, null);
+        
+        Log.d(TAG, "getSavedRouteStops: Found " + cursor.getCount() + " saved stops");
         
         if (cursor.moveToFirst()) {
             do {
@@ -111,6 +99,7 @@ public class SavedRoutesManager {
                 BusRouteStopItem item;
                 if (companyId.equals("gmb")) {
                     // For GMB routes
+                    Log.d(TAG, "Processing GMB stop - routeId: " + routeId + ", stopId: " + stopId);
                     item = fetchGMBStopDetails(routeId, serviceType, stopId);
                 } else {
                     // For KMB and CTB routes
@@ -181,34 +170,65 @@ public class SavedRoutesManager {
     // Helper method to fetch GMB stop details
     private BusRouteStopItem fetchGMBStopDetails(String routeId, String serviceType, String stopId) {
         SQLiteDatabase db = dbHelper.getReadableDatabase();
-        
-        // For GMB routes, we need to retrieve route sequence
-        String gmbRouteSeqQuery = "SELECT route_sequence FROM gmb_route_stops WHERE route_id = ? AND stop_id = ?";
-        String[] gmbSelectionArgs = {routeId, stopId};
-        Cursor gmbCursor = db.rawQuery(gmbRouteSeqQuery, gmbSelectionArgs);
+        Log.d(TAG, "fetchGMBStopDetails - Fetching details for routeId: " + routeId + ", stopId: " + stopId);
         
         BusRouteStopItem item = null;
-        if (gmbCursor.moveToFirst()) {
-            String gmbRouteSeq = gmbCursor.getString(0);
-            
-            // Now get stop names from the stop locations table
-            // Using direct table and column names to avoid potential issues
-            String stopsQuery = "SELECT name_en, name_tc, name_sc FROM gmb_stop_locations WHERE stop_id = ?";
-            String[] stopsSelectionArgs = {stopId};
+        
+        try {
+            // Get stop details from route_stops table
+            String stopsQuery = "SELECT " + 
+                              GMBDatabase.Tables.GMB_ROUTE_STOPS.STOP_NAME_EN + ", " +
+                              GMBDatabase.Tables.GMB_ROUTE_STOPS.STOP_NAME_TC + ", " +
+                              GMBDatabase.Tables.GMB_ROUTE_STOPS.STOP_NAME_SC + ", " +
+                              GMBDatabase.Tables.GMB_ROUTE_STOPS.COLUMN_STOP_SEQ + ", " +
+                              GMBDatabase.Tables.GMB_ROUTE_STOPS.COLUMN_ROUTE_SEQ +
+                              " FROM " + GMBDatabase.Tables.GMB_ROUTE_STOPS.TABLE_NAME + 
+                              " WHERE " + GMBDatabase.Tables.GMB_ROUTE_STOPS.COLUMN_ROUTE_ID + " = ? AND " +
+                              GMBDatabase.Tables.GMB_ROUTE_STOPS.COLUMN_STOP_ID + " = ?";
+            String[] stopsSelectionArgs = {routeId, stopId};
             Cursor stopsCursor = db.rawQuery(stopsQuery, stopsSelectionArgs);
             
-            if (stopsCursor.moveToFirst()) {
+            if (stopsCursor != null && stopsCursor.moveToFirst()) {
                 String nameEn = stopsCursor.getString(0);
                 String nameTc = stopsCursor.getString(1);
                 String nameSc = stopsCursor.getString(2);
                 
-                item = new BusRouteStopItem(routeId, "0", serviceType, nameEn, nameTc, nameSc, stopId, routeId, gmbRouteSeq);
+                Log.d(TAG, "Found GMB stop names - EN: " + nameEn + ", TC: " + nameTc);
+                
+                // Get stop sequence
+                String gmbStopSeqQuery = "SELECT " + GMBDatabase.Tables.GMB_ROUTE_STOPS.COLUMN_STOP_SEQ + 
+                                       " FROM " + GMBDatabase.Tables.GMB_ROUTE_STOPS.TABLE_NAME + 
+                                       " WHERE " + GMBDatabase.Tables.GMB_ROUTE_STOPS.COLUMN_ROUTE_ID + " = ? AND " +
+                                       GMBDatabase.Tables.GMB_ROUTE_STOPS.COLUMN_STOP_ID + " = ?";
+                String[] gmbSelectionArgs = {routeId, stopId};
+                Cursor gmbCursor = db.rawQuery(gmbStopSeqQuery, gmbSelectionArgs);
+                
+                String stopSeq = "0";
+                if (gmbCursor != null && gmbCursor.moveToFirst()) {
+                    stopSeq = gmbCursor.getString(0);
+                    Log.d(TAG, "Found GMB stop sequence: " + stopSeq);
+                } else {
+                    Log.d(TAG, "No stop sequence found for GMB stop");
+                }
+                
+                if (gmbCursor != null) gmbCursor.close();
+                
+                String routeSeq = stopsCursor.getString(3);
+                
+                // Create item with found data
+                item = new BusRouteStopItem(routeId, routeSeq, serviceType, nameEn, nameTc, nameSc, stopId, "gmb", stopSeq);
+                Log.d(TAG, "Created GMB BusRouteStopItem: " + routeId + " - " + nameEn);
+            } else {
+                Log.e(TAG, "No stop location data found for GMB stop ID: " + stopId);
             }
             
-            stopsCursor.close();
+            if (stopsCursor != null) stopsCursor.close();
+            
+        } catch (Exception e) {
+            Log.e(TAG, "Error fetching GMB stop details: " + e.getMessage());
+            e.printStackTrace();
         }
         
-        gmbCursor.close();
         return item;
     }
 }

@@ -6,6 +6,8 @@ import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.util.Log;
 
+import com.chung.a9rushtobus.UserPreferences;
+
 public class KMBDatabase {
     
     public SQLiteDatabase db;
@@ -181,6 +183,44 @@ public class KMBDatabase {
             // Successfully inserted or updated
             Log.d("Database", "Record inserted or updated successfully");
         }
+    }
+
+    public String getRouteDestination(String route, String bound, String serviceType) {
+        // Check for null parameters
+        if (route == null || bound == null || serviceType == null) {
+            Log.d("KMBDatabase", "getRouteDestination: One or more parameters are null");
+            return null;
+        }
+
+        String query = "SELECT " + Tables.KMB_ROUTES.COLUMN_DEST_EN + ", " +
+                Tables.KMB_ROUTES.COLUMN_DEST_TC + ", " +
+                Tables.KMB_ROUTES.COLUMN_DEST_SC + " " +
+                " FROM " + Tables.KMB_ROUTES.TABLE_NAME +
+                " WHERE " + Tables.KMB_ROUTES.COLUMN_ROUTE + "=? AND " +
+                Tables.KMB_ROUTES.COLUMN_BOUND + "=? AND " +
+                Tables.KMB_ROUTES.COLUMN_SERVICE_TYPE + "=?";
+        
+        try (Cursor cursor = db.rawQuery(query, new String[]{route, bound, serviceType})) {
+            if (cursor.moveToFirst()) {
+                String destination = cursor.getString(0);
+
+                String appLang = UserPreferences.sharedPref.getString(UserPreferences.SETTINGS_APP_LANG, "en");
+                Log.d("KMBDatabase", "Found destination: " + destination + " for route: " + route);
+
+                switch (appLang) {
+                    case "zh-rCN":
+                        return cursor.getString(2);
+                    case "zh-rHK":
+                        return cursor.getString(1);
+                    default: // "en" or any other case return cursor.getString(0);
+                        return cursor.getString(0);
+                }
+
+            }
+        } catch (Exception e) {
+            Log.e("KMBDatabase", "Error querying destination for route: " + route + ", error: " + e.getMessage());
+        }
+        return null;
     }
 
     public Cursor queryNearbyRoutes(double latitude, double longitude, int radiusMeters) {

@@ -6,6 +6,8 @@ import android.os.Looper;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -65,6 +67,12 @@ public class FragmentSaved extends Fragment {
         
         // Get saved bus stops from database
         List<BusRouteStopItem> stops = databaseHelper.savedRoutesManager.getSavedRouteStops();
+        Log.d("FragmentSaved", "Loaded " + stops.size() + " saved stops");
+        
+        for (BusRouteStopItem stop : stops) {
+            Log.d("FragmentSaved", "Stop: " + stop.getRoute() + " - " + stop.getCompany());
+        }
+        
         savedBusStops.addAll(stops);
         
         // Update UI

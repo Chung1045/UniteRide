@@ -247,11 +247,21 @@ public class BackgroundService extends Service {
         Context localizedContext = getLocalizedContext();
 
         if (etaObj.has("eta")) {
+            // KMB/CTB format
             etaTime = parseTime(etaObj.optString("eta", "N/A"));
             etaMinutes = getTimeDifference(etaObj.optString("eta", "N/A"));
         } else {
-            etaTime = parseTime(etaObj.optString("timestamp", "N/A"));
-            etaMinutes = etaObj.optString("diff", "N/A");
+            // GMB format
+            String timestamp = etaObj.optString("timestamp", "N/A");
+            Log.e(TAG, "Timestamp for GMB: " + timestamp);
+            etaTime = parseTime(timestamp);
+            
+            // For GMB, calculate minutes if diff is not provided
+            if (etaObj.has("diff")) {
+                etaMinutes = etaObj.optString("diff", "N/A");
+            } else {
+                etaMinutes = getTimeDifference(timestamp);
+            }
         }
 
         if (etaMinutes.equals("N/A")) {
@@ -294,8 +304,17 @@ public class BackgroundService extends Service {
         }
 
         try {
-            SimpleDateFormat inputFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX", Locale.US);
+            SimpleDateFormat inputFormat;
+            if (timestamp.contains("T")) {
+                // KMB/CTB format: yyyy-MM-dd'T'HH:mm:ssXXX
+                inputFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX", Locale.US);
+            } else {
+                // GMB format: yyyy-MM-dd HH:mm:ss
+                inputFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.US);
+            }
             SimpleDateFormat outputFormat = new SimpleDateFormat("HH:mm", Locale.US);
+            inputFormat.setTimeZone(TimeZone.getDefault());
+            outputFormat.setTimeZone(TimeZone.getDefault());
             Date date = inputFormat.parse(timestamp);
             return date != null ? outputFormat.format(date) : "N/A";
         } catch (ParseException e) {
@@ -310,7 +329,14 @@ public class BackgroundService extends Service {
         }
 
         try {
-            SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX", Locale.US);
+            SimpleDateFormat format;
+            if (timestamp.contains("T")) {
+                // KMB/CTB format
+                format = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX", Locale.US);
+            } else {
+                // GMB format
+                format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.US);
+            }
             format.setTimeZone(TimeZone.getDefault());
 
             Date etaTime = format.parse(timestamp);

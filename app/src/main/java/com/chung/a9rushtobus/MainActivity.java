@@ -4,6 +4,7 @@ import android.app.UiModeManager;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.util.Log;
 
 import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AppCompatActivity;
@@ -23,6 +24,9 @@ import com.chung.a9rushtobus.fragments.FragmentTrafficNews;
 import com.chung.a9rushtobus.preferences.LocaleHelper;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.android.material.color.DynamicColors;
+
+import java.io.File;
+import java.io.InputStream;
 
 public class MainActivity extends AppCompatActivity {
     private BottomNavigationView bottomNav;
@@ -179,6 +183,18 @@ public class MainActivity extends AppCompatActivity {
         };
 
         UserPreferences.sharedPref.registerOnSharedPreferenceChangeListener(preferenceChangeListener);
+    }
+
+    private void verifyRawResource() {
+        try {
+            InputStream testStream = getResources().openRawResource(R.raw.kmb_stops);
+            long fileSize = testStream.available();
+            Log.d("MainActivity", "Found kmb_stops.db in raw resources, size: " + fileSize + " bytes");
+            testStream.close();
+        } catch (Exception e) {
+            Log.e("MainActivity", "Error accessing raw resource: " + e.getMessage());
+            e.printStackTrace();
+        }
     }
 
     private void initTheme() {
