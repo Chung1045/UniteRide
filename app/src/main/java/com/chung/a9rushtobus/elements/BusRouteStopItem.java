@@ -44,16 +44,6 @@ public class BusRouteStopItem implements Parcelable {
         this.company = "gmb";
     }
 
-    // Simplified constructor for GMB routes
-    public BusRouteStopItem(String route, String serviceType, String stopID, String gmbRouteID, String gmbRouteSeq) {
-        this.route = route;
-        this.serviceType = serviceType;
-        this.stopID = stopID;
-        this.gmbRouteID = gmbRouteID;
-        this.gmbRouteSeq = gmbRouteSeq;
-        this.company = "gmb";
-    }
-
     // Parcelable constructor
     protected BusRouteStopItem(Parcel in) {
         route = in.readString();

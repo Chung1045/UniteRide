@@ -5,6 +5,7 @@ import static android.provider.Settings.System.getConfiguration;
 import android.content.Context;
 import android.content.Intent;
 import android.content.res.Configuration;
+import android.graphics.Color;
 import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
@@ -198,14 +199,14 @@ public class SavedBusStopAdapter extends RecyclerView.Adapter<SavedBusStopAdapte
         }
 
         // Make route and stop clickable to see details
+        String finalDestination = destination;
         holder.infoHolder.setOnClickListener(v -> {
-            String destinationValue = null;
             Intent intent = new Intent(context, BusRouteDetailViewActivity.class);
             intent.putExtra("route", item.getRoute());
-            intent.putExtra("destination", item.getStopID()); //todo, need to get destination
+            intent.putExtra("destination", finalDestination);
             intent.putExtra("company", item.getCompany());
             intent.putExtra("bound", item.getBound());
-            intent.putExtra("service_type", item.getServiceType());
+            intent.putExtra("serviceType", item.getServiceType());
             if (item.getCompany().equals("gmb")) {
                 intent.putExtra("gmbRouteID", item.getGmbRouteID());
                 intent.putExtra("gmbRouteSeq", item.getGmbRouteSeq());
@@ -222,6 +223,22 @@ public class SavedBusStopAdapter extends RecyclerView.Adapter<SavedBusStopAdapte
             showOptionsDialog(item, position);
             return true;
         });
+    }
+
+    private void setTextColorAndBackground(TextView textView, String routeNumber) {
+        if (routeNumber.startsWith("A") || routeNumber.startsWith("E")) {
+            textView.setBackgroundColor(context.getColor(R.color.externalBusBackground));
+            textView.setTextColor(context.getColor(R.color.externalBusForeground));
+        } else if (routeNumber.startsWith("N")) {
+            textView.setBackgroundColor(Color.GRAY);
+            textView.setTextColor(Color.WHITE);
+        } else if (routeNumber.matches("^[169]\\d{2}[A-Za-z]?$")) {
+            textView.setBackgroundColor(context.getColor(R.color.crossHarbourBusBackground));
+            textView.setTextColor(context.getColor(R.color.crossHarbourBusForeground));
+        } else {
+            textView.setBackgroundColor(Color.TRANSPARENT);
+            textView.setTextColor(context.getColor(R.color.foreground));
+        }
     }
 
     private void showOptionsDialog(BusRouteStopItem item, int position) {
