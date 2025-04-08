@@ -94,6 +94,9 @@ public class SavedBusStopAdapter extends RecyclerView.Adapter<SavedBusStopAdapte
 
         // Set basic bus route information
         holder.routeName.setText(item.getRoute());
+        // Apply color styling to route number
+        setTextColorAndBackground(holder.routeName, item.getRoute());
+        
         switch (item.getCompany()) {
             case "kmb":
                 holder.busCompany.setText(R.string.bus_company_kmb_name);

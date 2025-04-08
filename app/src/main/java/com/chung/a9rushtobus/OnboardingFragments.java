@@ -217,6 +217,7 @@ public class OnboardingFragments {
                 startActivity(intent);
                 requireActivity().overridePendingTransition(0, 0); // Disable transition animation
                 requireActivity().finish();
+                UserPreferences.editor.putBoolean(UserPreferences.ONBOARDING_COMPLETE, true).apply();
             });
         }
     }

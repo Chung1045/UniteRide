@@ -58,8 +58,9 @@ public class MainActivity extends AppCompatActivity {
 
         splashScreen.setOnExitAnimationListener(splashScreenView -> {
             // This code will be executed after the splash screen is dismissed.
-            boolean isFirstTimeLaunch = UserPreferences.sharedPref.getBoolean(UserPreferences.ONBOARDING_COMPLETE, true);
+            boolean isFirstTimeLaunch = !UserPreferences.sharedPref.getBoolean(UserPreferences.ONBOARDING_COMPLETE, false);
 
+            Log.e("MainActivity", "isFirstTimeLaunch: " + isFirstTimeLaunch);
             if (isFirstTimeLaunch) {
                 startActivity(new Intent(this, OnboardingActivity.class));
                 finish();

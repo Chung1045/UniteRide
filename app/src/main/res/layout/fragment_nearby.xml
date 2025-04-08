@@ -50,7 +50,7 @@
                 android:id="@+id/sheetTitle"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Nearby Stations"
+                android:text="@string/bottomNav_nearby_tabName"
                 android:textSize="24sp"
                 android:textStyle="bold"
                 android:layout_marginTop="8dp"
@@ -61,7 +61,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:padding="16dp"
-                android:text="Location access required" />
+                android:text="@string/settings_location_required_req_name" />
 
 
                 <com.google.android.material.button.MaterialButton
@@ -69,7 +69,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_gravity="center_horizontal"
-                    android:text="Allow Location Access"
+                    android:text="@string/onboarding_4_5_access_button_content"
                     android:backgroundTint="@color/brand_colorPrimary"
                     android:foregroundTint="@color/brand_colorSurface"
                     app:layout_constraintTop_toTopOf="parent"

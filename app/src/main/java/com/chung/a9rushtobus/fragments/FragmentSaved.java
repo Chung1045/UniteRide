@@ -11,9 +11,11 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
 import android.widget.TextView;
 
 import com.chung.a9rushtobus.R;
+import com.chung.a9rushtobus.UserPreferences;
 import com.chung.a9rushtobus.Utils;
 import com.chung.a9rushtobus.database.DatabaseHelper;
 import com.chung.a9rushtobus.elements.BusRouteStopItem;
@@ -38,6 +40,15 @@ public class FragmentSaved extends Fragment {
         super.onCreate(savedInstanceState);
         databaseHelper = DatabaseHelper.getInstance(requireContext());
         utils = new Utils(getActivity(), getView(), getContext());
+        
+        // Initialize UserPreferences if not already initialized
+        if (UserPreferences.sharedPref == null) {
+            new UserPreferences(requireActivity());
+        }
+        
+        // Force onboarding complete for testing if needed
+        // UserPreferences.editor.putBoolean(UserPreferences.ONBOARDING_COMPLETE, true);
+        // UserPreferences.editor.apply();
     }
 
     @Override
@@ -65,6 +76,10 @@ public class FragmentSaved extends Fragment {
         // Clear current list
         savedBusStops.clear();
         
+        // Check if onboarding is completed
+        boolean onboardingComplete = UserPreferences.sharedPref.getBoolean(UserPreferences.ONBOARDING_COMPLETE, false);
+        Log.d("FragmentSaved", "Onboarding complete: " + onboardingComplete);
+        
         // Get saved bus stops from database
         List<BusRouteStopItem> stops = databaseHelper.savedRoutesManager.getSavedRouteStops();
         Log.d("FragmentSaved", "Loaded " + stops.size() + " saved stops");
@@ -84,16 +99,28 @@ public class FragmentSaved extends Fragment {
     }
     
     private void updateUI() {
+        Log.d("FragmentSaved", "Updating UI with " + savedBusStops.size() + " saved stops");
+        
         if (savedBusStops.isEmpty()) {
-            recyclerView.setVisibility(View.GONE);
-            emptyView.setVisibility(View.VISIBLE);
+            Log.d("FragmentSaved", "No saved stops, showing empty view");
+            if (recyclerView != null) recyclerView.setVisibility(View.GONE);
+            if (emptyView != null) emptyView.setVisibility(View.VISIBLE);
         } else {
-            recyclerView.setVisibility(View.VISIBLE);
-            emptyView.setVisibility(View.GONE);
-            adapter.notifyDataSetChanged();
+            Log.d("FragmentSaved", "Showing " + savedBusStops.size() + " saved stops");
+            if (recyclerView != null) recyclerView.setVisibility(View.VISIBLE);
+            if (emptyView != null) emptyView.setVisibility(View.GONE);
+            
+            // Make sure adapter is initialized
+            if (adapter == null) {
+                setupRecyclerView();
+            } else {
+                adapter.notifyDataSetChanged();
+            }
             
             // Start ETA updates in adapter
-            adapter.startPeriodicUpdates();
+            if (adapter != null) {
+                adapter.startPeriodicUpdates();
+            }
         }
     }
     

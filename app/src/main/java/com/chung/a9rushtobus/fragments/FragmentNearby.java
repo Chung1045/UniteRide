@@ -142,12 +142,6 @@ public class FragmentNearby extends Fragment implements OnMapReadyCallback {
         nearbyBusRouteAdapter.setOnItemClickListener(item -> {
             // Handle click on bus route item
             Toast.makeText(requireContext(), "Selected route: " + item.getRoute() + " at " + item.getStopName(), Toast.LENGTH_SHORT).show();
-            
-            // In a real app, you would navigate to a detail view for this route
-            // For example:
-            // Intent intent = new Intent(requireContext(), BusRouteDetailViewActivity.class);
-            // intent.putExtra("busRouteStopItem", item);
-            // startActivity(intent);
         });
     }
 
@@ -225,7 +219,7 @@ public class FragmentNearby extends Fragment implements OnMapReadyCallback {
     private void updateMapLocation(LatLng location) {
         if (mMap != null) {
             mMap.clear();
-            mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(location, 20f));
+            mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(location, 16f));
 
             // Here you would fetch nearby stations based on the location
             fetchNearbyStations(location);
@@ -260,21 +254,17 @@ public class FragmentNearby extends Fragment implements OnMapReadyCallback {
                             double longitude = location.getLongitude();
                             currentLocation = new LatLng(latitude, longitude);
 
-                            locationInfo.setText("Your location: " + latitude + ", " + longitude);
-
                             // Update map with location
                             updateMapLocation(currentLocation);
                             getNearbyRoutes(latitude, longitude);
-                        } else {
-                            locationInfo.setText("Location not available");
                         }
                     });
         }
     }
 
     private void getNearbyRoutes(double latitude, double longitude) {
-        // Set radius to 300 meters as per requirement
-        int radiusMeters = 600;
+        // Set radius to 600 meters as per requirement
+        int radiusMeters = 1000;
         
         if (kmbDatabase == null) {
             Log.e("FragmentNearby", "KMBDatabase is null. Initializing now.");
@@ -347,10 +337,6 @@ public class FragmentNearby extends Fragment implements OnMapReadyCallback {
                                 stopNameEn, stopNameTc, stopNameSc,
                                 stopId, "kmb"); // Using "kmb" as the company
                         
-                        // Set ETA placeholders (these would be updated with real-time data in a production app)
-                        // In a real app, you would fetch actual ETA data from an API
-                        busRouteStopItem.setStopEta1((int)(Math.random() * 10) + 1); // Random ETA between 1-10 minutes
-                        
                         // Add to our list for display
                         nearbyBusRoutes.add(busRouteStopItem);
                     }
@@ -369,19 +355,48 @@ public class FragmentNearby extends Fragment implements OnMapReadyCallback {
                 
                 // Show bottom sheet with results
                 bottomSheetBehavior.setState(BottomSheetBehavior.STATE_HALF_EXPANDED);
-                locationInfo.setText("Found " + nearbyBusRoutes.size() + " routes within 300m");
                 
                 // Make sure the RecyclerView is visible
                 nearbyStationsRecyclerView.setVisibility(View.VISIBLE);
                 btnLocationPermission.setVisibility(View.GONE);
+                
+                // Start ETA updates
+                nearbyBusRouteAdapter.startPeriodicUpdates();
             } else {
-                locationInfo.setText("No routes found within 300m");
+                locationInfo.setText(R.string.frag_nearby_noStops_name);
                 nearbyBusRouteAdapter.updateRoutes(null); // Clear the adapter
             }
         } else {
             Log.d("FragmentNearby", "No nearby routes found within " + radiusMeters + "m");
-            locationInfo.setText("No routes found within " + radiusMeters + "m");
+            locationInfo.setText(R.string.frag_nearby_noStops_name + " (" + radiusMeters + "m)");
             nearbyBusRouteAdapter.updateRoutes(null); // Clear the adapter
+        }
+    }
+    
+    @Override
+    public void onResume() {
+        super.onResume();
+        // Resume ETA updates when fragment becomes visible
+        if (nearbyBusRouteAdapter != null) {
+            nearbyBusRouteAdapter.resumeETAUpdates();
+        }
+    }
+    
+    @Override
+    public void onPause() {
+        super.onPause();
+        // Pause ETA updates when fragment is not visible
+        if (nearbyBusRouteAdapter != null) {
+            nearbyBusRouteAdapter.pauseETAUpdates();
+        }
+    }
+    
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        // Ensure ETA updates are stopped when fragment is destroyed
+        if (nearbyBusRouteAdapter != null) {
+            nearbyBusRouteAdapter.pauseETAUpdates();
         }
     }
     // We're now using BusRouteStopItem instead of a custom NearbyRouteInfo class

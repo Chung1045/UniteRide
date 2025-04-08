@@ -46,6 +46,11 @@ start your journey now!</string>
     <string name="frag_search_searchBar_hint">Search Bus Routes</string>
     <string name="frag_search_specialRoute_name">SPECIAL</string>
 
+    <string name="frag_saved_noSaved_title">Hmm.... No saved stops yet</string>
+
+    <string name="frag_nearby_noStops_name">No routes found nearby</string>
+    <string name="frag_nearby_foundStop_name">Found</string>
+
     <string name="detail_view_normal_route_name">Normal Route</string>
     <string name="detail_view_eta_arriving_name">Arriving</string>
     <string name="detail_view_eta_track_bus_name">Track Bus</string>
@@ -75,6 +80,9 @@ start your journey now!</string>
 
     <string name="settings_features_RTHKOption_name">Show RTHK Traffic News</string>
     <string name="settings_features_RTHKOption_desc">News available only in Traditional Chinese</string>
+
+    <string name="settings_location_required_req_name">Location access required</string>
+    <string name="settings_location_denied_name">Location access denied</string>
 
     <string name="err_msg_noInternet_name">No internet</string>
     <string name="err_msg_noInternet_desc">Unable to load. Check your Internet connection and try again.</string>

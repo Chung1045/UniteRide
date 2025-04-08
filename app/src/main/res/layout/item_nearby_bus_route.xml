@@ -51,7 +51,9 @@
                     android:layout_marginEnd="10dp"
                     android:text="83K"
                     android:textAlignment="center"
-                    android:textSize="24sp" />
+                    android:textSize="24sp"
+                    android:background="@drawable/background_route_name"
+                    android:textStyle="bold" />
 
             </LinearLayout>
 

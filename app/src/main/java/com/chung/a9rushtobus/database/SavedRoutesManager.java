@@ -5,6 +5,7 @@ import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.util.Log;
 
+import com.chung.a9rushtobus.UserPreferences;
 import com.chung.a9rushtobus.elements.BusRouteStopItem;
 
 import java.util.ArrayList;
@@ -18,11 +19,6 @@ public class SavedRoutesManager {
         this.dbHelper = dbHelper;
     }
 
-    /**
-     * Save a bus route stop to the user_saved table
-     * @param busRouteStopItem The bus route stop to save
-     * @return True if save was successful, false otherwise
-     */
     public boolean saveRouteStop(BusRouteStopItem busRouteStopItem) {
         // First check if this route stop is already saved
         if (isRouteStopSaved(busRouteStopItem)) {
@@ -81,6 +77,46 @@ public class SavedRoutesManager {
     public List<BusRouteStopItem> getSavedRouteStops() {
         List<BusRouteStopItem> savedStops = new ArrayList<>();
         SQLiteDatabase db = dbHelper.getReadableDatabase();
+
+        // Check if UserPreferences.sharedPref is initialized
+        if (UserPreferences.sharedPref == null) {
+            Log.e(TAG, "UserPreferences.sharedPref is null! Cannot check onboarding status.");
+            return savedStops;
+        }
+
+        boolean onboardingComplete = UserPreferences.sharedPref.getBoolean(UserPreferences.ONBOARDING_COMPLETE, false);
+        Log.d(TAG, "Onboarding complete status: " + onboardingComplete);
+
+        // For debugging purposes, temporarily bypass the onboarding check
+        // if (!onboardingComplete) {
+        //     Log.d(TAG, "Bypassing onboarding check for debugging");
+        //     onboardingComplete = true;
+        // }
+
+        if (onboardingComplete) {
+            // If the user has completed onboarding, we can fetch saved stops
+            Log.d(TAG, "User has completed onboarding, fetching saved stops");
+        } else {
+            Log.d(TAG, "User has not completed onboarding, skipping saved stops fetch");
+            return savedStops;
+        }
+        
+        // Check if the table exists
+        try {
+            String tableCheckQuery = "SELECT name FROM sqlite_master WHERE type='table' AND name='" + 
+                                    DatabaseHelper.Tables.USER_SAVED.TABLE_NAME + "'";
+            Cursor tableCheckCursor = db.rawQuery(tableCheckQuery, null);
+            boolean tableExists = tableCheckCursor.getCount() > 0;
+            tableCheckCursor.close();
+            
+            if (!tableExists) {
+                Log.e(TAG, "Table " + DatabaseHelper.Tables.USER_SAVED.TABLE_NAME + " does not exist!");
+                return savedStops;
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "Error checking if table exists: " + e.getMessage());
+            return savedStops;
+        }
         
         String query = "SELECT * FROM " + DatabaseHelper.Tables.USER_SAVED.TABLE_NAME;
         Cursor cursor = db.rawQuery(query, null);

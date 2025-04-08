@@ -73,13 +73,25 @@
                 android:layout_height="wrap_content"
                 android:layout_margin="16dp"
                 android:gravity="center"
-                android:text="Hmm.... No saved stops yet."
+                android:text="@string/frag_saved_noSaved_title"
                 android:textSize="16sp"
                 android:visibility="gone"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toTopOf="parent" />
+                
+            <Button
+                android:id="@+id/btn_debug_add_test_stop"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Debug: Add Test Stop"
+                android:visibility="gone"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="@+id/text_no_saved_stops"
+                app:layout_constraintVertical_bias="0.7" />
                 
         </androidx.constraintlayout.widget.ConstraintLayout>
 
