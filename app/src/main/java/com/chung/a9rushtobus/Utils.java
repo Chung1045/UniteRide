@@ -253,12 +253,9 @@ public class Utils {
         }
 
         public void urlIntent(String url){
-            Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
-            if (intent.resolveActivity(context.getPackageManager()) != null) {
-                context.startActivity(intent);
-            } else {
-                Log.e("URLIntent", "No browser found to open the URL.");
-            }
+            Intent intent = new Intent(Intent.ACTION_VIEW);
+            intent.setData(Uri.parse(url));
+            context.startActivity(intent);
         }
 
     }

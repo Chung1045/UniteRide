@@ -8,8 +8,10 @@ import android.view.ViewGroup;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.Fragment;
+import androidx.preference.PreferenceFragmentCompat;
 
 import com.chung.a9rushtobus.R;
 import com.chung.a9rushtobus.Utils;
@@ -64,7 +66,19 @@ public class SettingsAboutView extends Fragment {
                     .commit();
         });
 
-        prefAboutLibraries.setOnClickListener(view -> updateToolbarTitle(getString(R.string.settings_about_libOption_name)));
+        prefAboutLibraries.setOnClickListener(view -> {
+            updateToolbarTitle(getString(R.string.settings_about_libOption_name));
+            getParentFragmentManager()
+                    .beginTransaction()
+                    .setCustomAnimations(
+                            R.anim.slide_in_right,
+                            R.anim.slide_out_left,
+                            R.anim.slide_in_left,
+                            R.anim.slide_out_right
+                    ).replace(R.id.fragmentContainerView, new PrefLibrariesView())
+                    .addToBackStack(null)
+                    .commit();
+        });
 
         prefAboutGitHub.setOnClickListener(view -> utils.startUrlIntent("https://www.github.com"));
 
@@ -91,7 +105,10 @@ public class SettingsAboutView extends Fragment {
 
     }
 
-    public static class PrefLibrariesView extends Fragment {
-
+    public static class PrefLibrariesView extends PreferenceFragmentCompat {
+        @Override
+        public void onCreatePreferences(@Nullable Bundle savedInstanceState, @Nullable String rootKey) {
+            setPreferencesFromResource(R.xml.preference_about_libs, rootKey);
+        }
     }
 }
