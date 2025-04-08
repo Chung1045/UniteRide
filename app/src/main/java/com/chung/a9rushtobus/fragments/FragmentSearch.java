@@ -355,6 +355,32 @@ public class FragmentSearch extends Fragment {
     private void sortAllRoutes() {
         Log.d("FragmentSearch", "Sorting all routes...");
         try {
+            // Verify collections are initialized
+            if (busRoutes == null || allRoutes == null) {
+                Log.e("FragmentSearch", "Collections not initialized");
+                return;
+            }
+            
+            // Check if collections are empty
+            if (busRoutes.isEmpty() || allRoutes.isEmpty()) {
+                Log.w("FragmentSearch", "Collections are empty, nothing to sort");
+                return;
+            }
+            
+            Log.d("FragmentSearch", "Before sorting: busRoutes size = " + busRoutes.size() + 
+                  ", allRoutes size = " + allRoutes.size());
+            
+            // Sample the first few routes for debugging
+            if (!busRoutes.isEmpty()) {
+                int sampleSize = Math.min(5, busRoutes.size());
+                StringBuilder sampleRoutes = new StringBuilder("Sample routes before sorting: ");
+                for (int i = 0; i < sampleSize; i++) {
+                    BusRoute route = busRoutes.get(i);
+                    sampleRoutes.append(route.getRoute()).append(" (").append(route.getCompany()).append("), ");
+                }
+                Log.d("FragmentSearch", sampleRoutes.toString());
+            }
+            
             // Create a more efficient comparator
             Comparator<BusRoute> routeComparator = (route1, route2) -> {
                 if (route1 == null && route2 == null) {
@@ -386,6 +412,10 @@ public class FragmentSearch extends Fragment {
                     
                     return routeCompare;
                 } catch (Exception e) {
+                    // Log the specific comparison error
+                    Log.e("FragmentSearch", "Error comparing routes: " + 
+                          route1.getRoute() + " vs " + route2.getRoute(), e);
+                    
                     // If comparison fails, fall back to string comparison of routes
                     String r1 = route1.getRoute() != null ? route1.getRoute() : "";
                     String r2 = route2.getRoute() != null ? route2.getRoute() : "";
@@ -394,8 +424,24 @@ public class FragmentSearch extends Fragment {
             };
             
             // Sort both collections using the same comparator
+            Log.d("FragmentSearch", "Starting to sort busRoutes...");
             Collections.sort(busRoutes, routeComparator);
+            Log.d("FragmentSearch", "busRoutes sorted successfully");
+            
+            Log.d("FragmentSearch", "Starting to sort allRoutes...");
             Collections.sort(allRoutes, routeComparator);
+            Log.d("FragmentSearch", "allRoutes sorted successfully");
+            
+            // Sample the first few routes after sorting for debugging
+            if (!busRoutes.isEmpty()) {
+                int sampleSize = Math.min(5, busRoutes.size());
+                StringBuilder sampleRoutes = new StringBuilder("Sample routes after sorting: ");
+                for (int i = 0; i < sampleSize; i++) {
+                    BusRoute route = busRoutes.get(i);
+                    sampleRoutes.append(route.getRoute()).append(" (").append(route.getCompany()).append("), ");
+                }
+                Log.d("FragmentSearch", sampleRoutes.toString());
+            }
             
             // Log the count of each type of route for debugging
             int kmbCount = 0, ctbCount = 0, gmbCount = 0;
@@ -410,6 +456,7 @@ public class FragmentSearch extends Fragment {
         } catch (Exception e) {
             Log.e("FragmentSearch", "Error sorting routes", e);
             // If sorting fails, try a simpler approach
+            Log.d("FragmentSearch", "Falling back to simpler sorting method");
             sortRoutesByNumberOnly(busRoutes);
             sortRoutesByNumberOnly(allRoutes);
         }

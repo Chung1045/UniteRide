@@ -13,6 +13,8 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.activity.result.ActivityResultLauncher;
+
+import com.chung.a9rushtobus.elements.BusRoute;
 import com.google.android.material.button.MaterialButton;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
@@ -41,7 +43,11 @@ import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.material.bottomsheet.BottomSheetBehavior;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class FragmentNearby extends Fragment implements OnMapReadyCallback {
 
@@ -54,6 +60,7 @@ public class FragmentNearby extends Fragment implements OnMapReadyCallback {
     private KMBDatabase kmbDatabase;
     private ActivityResultLauncher<String[]> locationPermissionRequest;
     private MaterialButton btnLocationPermission;
+    private NearbyBusRouteAdapter nearbyBusRouteAdapter;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -131,7 +138,103 @@ public class FragmentNearby extends Fragment implements OnMapReadyCallback {
         return view;
     }
 
-    private NearbyBusRouteAdapter nearbyBusRouteAdapter;
+    private void sortSavedBusStops(List<BusRouteStopItem> nearbyBusStops) {
+        try {
+            // Create a comparator for BusRouteStopItem similar to the one for BusRoute
+            Collections.sort(nearbyBusStops, (stop1, stop2) -> {
+                if (stop1 == null && stop2 == null) {
+                    return 0;
+                } else if (stop1 == null) {
+                    return -1;
+                } else if (stop2 == null) {
+                    return 1;
+                }
+
+                try {
+                    // First compare by route number using a similar approach to BusRoute.compareRouteNumber
+                    String routeStr1 = stop1.getRoute() != null ? stop1.getRoute().trim().toUpperCase() : "";
+                    String routeStr2 = stop2.getRoute() != null ? stop2.getRoute().trim().toUpperCase() : "";
+
+                    // Pattern to match numeric prefix and alphabetic suffix
+                    Pattern pattern = Pattern.compile("^(\\d+)([A-Z]*)");
+                    Matcher matcher1 = pattern.matcher(routeStr1);
+                    Matcher matcher2 = pattern.matcher(routeStr2);
+
+                    boolean hasNumericPrefix1 = matcher1.find();
+                    boolean hasNumericPrefix2 = matcher2.find();
+
+                    // Case 1: Both have numeric prefixes (most common case)
+                    if (hasNumericPrefix1 && hasNumericPrefix2) {
+                        // Compare the numeric parts first
+                        int num1 = Integer.parseInt(matcher1.group(1));
+                        int num2 = Integer.parseInt(matcher2.group(1));
+
+                        if (num1 != num2) {
+                            return Integer.compare(num1, num2);
+                        }
+
+                        // If numeric parts are equal, compare the alphabetic suffixes
+                        String suffix1 = matcher1.group(2);
+                        String suffix2 = matcher2.group(2);
+
+                        // If one has no suffix and the other does, the one without comes first
+                        if (suffix1.isEmpty() && !suffix2.isEmpty()) {
+                            return -1;
+                        } else if (!suffix1.isEmpty() && suffix2.isEmpty()) {
+                            return 1;
+                        }
+
+                        // Both have suffixes, compare them alphabetically
+                        int suffixCompare = suffix1.compareTo(suffix2);
+                        if (suffixCompare != 0) {
+                            return suffixCompare;
+                        }
+                    }
+                    // Case 2: Only the first has a numeric prefix
+                    else if (hasNumericPrefix1) {
+                        return -1; // Numeric prefixes come before non-numeric
+                    }
+                    // Case 3: Only the second has a numeric prefix
+                    else if (hasNumericPrefix2) {
+                        return 1; // Numeric prefixes come before non-numeric
+                    }
+                    // Case 4: Neither has a numeric prefix, compare as strings
+                    else {
+                        int routeCompare = routeStr1.compareTo(routeStr2);
+                        if (routeCompare != 0) {
+                            return routeCompare;
+                        }
+                    }
+
+                    // If route numbers are the same, compare by company as a secondary sort
+                    String company1 = stop1.getCompany() != null ? stop1.getCompany() : "";
+                    String company2 = stop2.getCompany() != null ? stop2.getCompany() : "";
+
+                    int companyCompare = company1.compareTo(company2);
+                    if (companyCompare != 0) {
+                        return companyCompare;
+                    }
+
+                    // If companies are the same, compare by bound/direction
+                    String bound1 = stop1.getBound() != null ? stop1.getBound() : "";
+                    String bound2 = stop2.getBound() != null ? stop2.getBound() : "";
+                    return bound1.compareTo(bound2);
+
+                } catch (Exception e) {
+                    String r1 = stop1.getRoute() != null ? stop1.getRoute() : "";
+                    String r2 = stop2.getRoute() != null ? stop2.getRoute() : "";
+                    return r1.compareTo(r2);
+                }
+            });
+
+        } catch (Exception e) {
+            Collections.sort(nearbyBusStops, (stop1, stop2) -> {
+                String r1 = stop1 != null && stop1.getRoute() != null ? stop1.getRoute() : "";
+                String r2 = stop2 != null && stop2.getRoute() != null ? stop2.getRoute() : "";
+                return r1.compareTo(r2);
+            });
+        }
+    }
     
     private void setupRecyclerView() {
         nearbyStationsRecyclerView.setLayoutManager(new LinearLayoutManager(requireContext()));
@@ -351,6 +454,8 @@ public class FragmentNearby extends Fragment implements OnMapReadyCallback {
             // Update UI with the found routes
             if (!nearbyBusRoutes.isEmpty()) {
                 // Update the RecyclerView with our results
+                sortSavedBusStops(nearbyBusRoutes);
+
                 nearbyBusRouteAdapter.updateRoutes(nearbyBusRoutes);
                 
                 // Show bottom sheet with results
