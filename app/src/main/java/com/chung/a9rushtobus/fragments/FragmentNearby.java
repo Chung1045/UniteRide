@@ -243,12 +243,6 @@ public class FragmentNearby extends Fragment implements OnMapReadyCallback {
         nearbyStationsRecyclerView.setLayoutManager(new LinearLayoutManager(requireContext()));
         nearbyBusRouteAdapter = new NearbyBusRouteAdapter(requireContext(), new Utils(getActivity(), getView(), getContext()));
         nearbyStationsRecyclerView.setAdapter(nearbyBusRouteAdapter);
-        
-        // Set click listener for items
-        nearbyBusRouteAdapter.setOnItemClickListener(item -> {
-            // Handle click on bus route item
-            Toast.makeText(requireContext(), "Selected route: " + item.getRoute() + " at " + item.getStopName(), Toast.LENGTH_SHORT).show();
-        });
     }
 
     private void setupBottomSheet(View view) {

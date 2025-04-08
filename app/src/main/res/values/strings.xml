@@ -51,10 +51,13 @@ start your journey now!</string>
     <string name="frag_nearby_noStops_name">No routes found nearby</string>
     <string name="frag_nearby_foundStop_name">Found</string>
 
+    <string name="frag_news_noNewNews_name">No new traffic news found</string>
+
     <string name="detail_view_normal_route_name">Normal Route</string>
     <string name="detail_view_eta_arriving_name">Arriving</string>
     <string name="detail_view_eta_track_bus_name">Track Bus</string>
     <string name="detail_view_save_route_stop_name">Save stop</string>
+    <string name="detail_view_save_route_stop_msg">Saved stop: </string>
     <string name="detail_view_unsave_route_stop_name">Un-save stop</string>
 
     <string name="settings_category_langOption_name">Language</string>
@@ -73,6 +76,10 @@ start your journey now!</string>
     <string name="settings_theme_darkOption_name">Dark Theme</string>
 
     <string name="settings_accessibility_boldOption_name">Bold Text</string>
+
+    <string name="settings_database_fetchOption_name">Update Database</string>
+
+    <string name="settings_category_database_name">Database</string>
 
     <string name="settings_about_permissionOption_name">Permissions</string>
     <string name="settings_about_libOption_name">Libraries</string>
@@ -109,6 +116,11 @@ start your journey now!</string>
     <string name="permission_disclaimer_name_desc">
     The application does not collect or transmit your location or any other personal data for online processing.\n\nAll location data is processed only on your device.
     </string>
+
+    <string name="err_unable_to_load_busStop_name">Unable to load bus stop</string>
+    <string name="err_busStop_not_found_name">No bus stops found for this route</string>
+    <string name="err_unable_to_load_gmb_desc">Unable to GMB bus stop. Check your internet and try again later</string>
+    <string name="err_database_err">Database Error: Please update the database</string>
 
     <string-array name="options_application_theme">
         <item name="light_theme">Light</item>

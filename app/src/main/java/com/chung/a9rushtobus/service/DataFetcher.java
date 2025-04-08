@@ -48,6 +48,26 @@ import okhttp3.Response;
 import okhttp3.ResponseBody;
 
 public class DataFetcher {
+    
+    /**
+     * Interface for tracking data fetching progress
+     */
+    public interface ProgressCallback {
+        /**
+         * Called when a progress update is available
+         * 
+         * @param progressText The progress text to display
+         */
+        void onProgressUpdate(String progressText);
+        
+        /**
+         * Called when the data fetching is complete
+         * 
+         * @param success Whether the operation was successful
+         * @param message A message describing the result
+         */
+        void onComplete(boolean success, String message);
+    }
     private static final String KMB_BASE_URL = "https://data.etabus.gov.hk/v1/transport/kmb/";
     private static final String CTB_BASE_URL = "https://rt.data.gov.hk/v2/transport/citybus/";
     private static final String GMB_BASE_URL = "https://data.etagmb.gov.hk/";
@@ -57,6 +77,9 @@ public class DataFetcher {
     private final OkHttpClient client;
     private DatabaseHelper databaseHelper;
     private Context context;
+    
+    // Flag to track if the current operation has been cancelled
+    private final AtomicBoolean isCancelled = new AtomicBoolean(false);
 
     public DataFetcher(Context context) {
         databaseHelper = DatabaseHelper.getInstance(context);
@@ -73,83 +96,209 @@ public class DataFetcher {
                 .writeTimeout(15, TimeUnit.SECONDS)
                 .build();
     }
-
-    public void refreshAllData() {
+    
+    public void refreshAllData(ProgressCallback progressCallback) {
+        // Reset cancellation state at the start of a new operation
+        resetCancellationState();
+        
+        if (progressCallback != null) {
+            progressCallback.onProgressUpdate("Step 1/4: Backing up database...");
+        }
+        
+        // Create a completion tracker
+        final AtomicInteger totalTasksCompleted = new AtomicInteger(0);
+        final AtomicBoolean errorOccurred = new AtomicBoolean(false);
+        final AtomicBoolean completionReported = new AtomicBoolean(false);
+        
+        // Helper method to check if all tasks have completed
+        Runnable checkCompletion = () -> {
+            // If cancelled, don't proceed with completion logic
+            if (isCancelled()) {
+                if (!completionReported.getAndSet(true)) {
+                    Log.d("DataFetcher", "Operation was cancelled, skipping completion");
+                    // No need to call onComplete as it should have been called when cancellation happened
+                }
+                return;
+            }
+            
+            int completed = totalTasksCompleted.incrementAndGet();
+            Log.d("DataFetcher", "Task completed. Total completed tasks: " + completed);
+            
+            // We expect 4 main tasks to complete (backup, KMB, CTB, GMB)
+            if (completed >= 4 && !completionReported.getAndSet(true)) {
+                // All tasks are complete; log and show a toast message on the main thread
+                if (errorOccurred.get()) {
+                    Log.e("DataFetcher", "Data fetch completed with errors");
+                    mainHandler.post(() -> {
+                        if (!isCancelled()) {  // Double-check cancellation before showing UI
+                            Toast.makeText(context, "Data fetch completed with errors", Toast.LENGTH_LONG).show();
+                            if (progressCallback != null) {
+                                progressCallback.onComplete(false, "Data fetch completed with errors");
+                            }
+                        }
+                    });
+                } else {
+                    Log.d("DataFetcher", "All data fetched successfully");
+                    mainHandler.post(() -> {
+                        if (!isCancelled()) {  // Double-check cancellation before showing UI
+                            Toast.makeText(context, "All data fetched successfully", Toast.LENGTH_LONG).show();
+                            if (progressCallback != null) {
+                                progressCallback.onComplete(true, "All data fetched successfully");
+                            }
+                        }
+                    });
+                }
+            }
+        };
+        
         backupDatabase(success -> {
+            // Check if operation was cancelled during backup
+            if (isCancelled()) {
+                Log.d("DataFetcher", "Operation cancelled during database backup");
+                return;
+            }
+            
             if (success) {
                 Log.d("DataFetcher", "Database backup successful");
                 databaseHelper.removeAllValues();
-
-                // Total number of fetch operations
-                final int totalTasks = 4;
-                final AtomicInteger tasksPending = new AtomicInteger(totalTasks);
-                final AtomicBoolean errorOccurred = new AtomicBoolean(false);
-
-//                 Helper method to check if all tasks have completed
-                Runnable checkCompletion = () -> {
-                    if (tasksPending.decrementAndGet() == 0) {
-                        // All tasks are complete; log and show a toast message on the main thread
-                        if (errorOccurred.get()) {
-                            Log.e("DataFetcher", "Data fetch completed with errors");
-                            mainHandler.post(() -> Toast.makeText(context, "Data fetch completed with errors", Toast.LENGTH_LONG).show());
-                        } else {
-                            Log.d("DataFetcher", "All data fetched successfully");
-                            mainHandler.post(() -> Toast.makeText(context, "All data fetched successfully", Toast.LENGTH_LONG).show());
-                        }
-                    }
-                };
-
+                
+                if (progressCallback != null && !isCancelled()) {
+                    progressCallback.onProgressUpdate("Database backup successful. Preparing to fetch data...");
+                }
+                
+                // Check cancellation again before starting KMB fetch
+                if (isCancelled()) {
+                    Log.d("DataFetcher", "Operation cancelled after database backup");
+                    return;
+                }
+                
+                if (progressCallback != null) {
+                    progressCallback.onProgressUpdate("Step 2/4: Fetching KMB bus routes...");
+                }
+                
                 fetchAllBusRoutes(
                         routes -> {
+                            // Check if operation was cancelled during KMB fetch
+                            if (isCancelled()) {
+                                Log.d("DataFetcher", "Operation cancelled during KMB routes fetch");
+                                return;
+                            }
+                            
                             Log.d("DataFetcher", "All bus routes fetched successfully");
+                            if (progressCallback != null) {
+                                progressCallback.onProgressUpdate("Step 2/4 completed: KMB bus routes fetched successfully");
+                            }
                             checkCompletion.run();
                         },
                         error -> {
+                            // Check if operation was cancelled during KMB fetch
+                            if (isCancelled()) {
+                                Log.d("DataFetcher", "Operation cancelled during KMB routes fetch (error)");
+                                return;
+                            }
+                            
                             if (!errorOccurred.get()) {
                                 errorOccurred.set(true);
                                 Log.e("DataFetcher", "Error fetching bus routes: " + error);
+                                if (progressCallback != null) {
+                                    progressCallback.onProgressUpdate("Error in Step 2/4: " + error);
+                                }
                                 handleDataFetchFailure();
                             }
                             checkCompletion.run();
                         }
                 );
 
-                fetchAllKMBRouteStop(
-                        message -> {
-                            Log.d("DataFetcher", "All KMB route-stop fetched successfully, now processing");
-                            checkCompletion.run();
-                        },
-                        error -> {
-                            if (!errorOccurred.get()) {
-                                errorOccurred.set(true);
-                                Log.e("DataFetcher", "Error fetching KMB route-stop: " + error);
-                                handleDataFetchFailure();
-                            }
-                            checkCompletion.run();
-                        }
-                );
-
-//                 Fetch all CTB routes (which internally triggers fetching of CTB route stops and stops)
+                // Check cancellation again before starting CTB fetch
+                if (isCancelled()) {
+                    Log.d("DataFetcher", "Operation cancelled before CTB routes fetch");
+                    return;
+                }
+                
+                if (progressCallback != null) {
+                    progressCallback.onProgressUpdate("Step 3/4: Fetching CTB routes...");
+                }
+                
+                // Fetch all CTB routes (which internally triggers fetching of CTB route stops and stops)
                 fetchAllCTBRoutes(
                         message -> {
+                            // Check if operation was cancelled during CTB fetch
+                            if (isCancelled()) {
+                                Log.d("DataFetcher", "Operation cancelled during CTB routes fetch");
+                                return;
+                            }
+                            
                             Log.d("DataFetcher", "All CTB routes fetched successfully");
+                            if (progressCallback != null) {
+                                progressCallback.onProgressUpdate("Step 3/4 completed: CTB routes fetched successfully");
+                            }
                             checkCompletion.run();
                         },
                         error -> {
+                            // Check if operation was cancelled during CTB fetch
+                            if (isCancelled()) {
+                                Log.d("DataFetcher", "Operation cancelled during CTB routes fetch (error)");
+                                return;
+                            }
+                            
                             if (!errorOccurred.get()) {
                                 errorOccurred.set(true);
                                 Log.e("DataFetcher", "Error fetching CTB routes: " + error);
-                                // Optionally, you could call handleDataFetchFailure() here as well
+                                if (progressCallback != null) {
+                                    progressCallback.onProgressUpdate("Error in Step 3/4: " + error);
+                                }
                             }
                             checkCompletion.run();
                         }
                 );
 
-                fetchAllGMBRoutes();
+                // Check cancellation again before starting GMB fetch
+                if (isCancelled()) {
+                    Log.d("DataFetcher", "Operation cancelled before GMB routes fetch");
+                    return;
+                }
+                
+                if (progressCallback != null) {
+                    progressCallback.onProgressUpdate("Step 4/4: Fetching GMB routes...");
+                }
+                
+                // Create a wrapper for the GMB routes progress callback
+                ProgressCallback gmbCallback = new ProgressCallback() {
+                    @Override
+                    public void onProgressUpdate(String progressText) {
+                        if (progressCallback != null && !isCancelled()) {
+                            progressCallback.onProgressUpdate(progressText);
+                        }
+                    }
+
+                    @Override
+                    public void onComplete(boolean success, String message) {
+                        // Check if operation was cancelled during GMB fetch
+                        if (isCancelled()) {
+                            Log.d("DataFetcher", "Operation cancelled during GMB routes fetch completion");
+                            return;
+                        }
+                        
+                        // This will be called when GMB routes fetching is complete
+                        Log.d("DataFetcher", "GMB routes fetching completed: " + message);
+                        checkCompletion.run();
+                    }
+                };
+                
+                // Pass the completion callback to GMB routes fetching
+                fetchAllGMBRoutes(gmbCallback);
+                
+                // Count the backup as a completed task
+                checkCompletion.run();
 
             } else {
                 Log.e("DataFetcher", "Database backup failed");
-                Toast.makeText(context, "Database backup failed. Please try again later.", Toast.LENGTH_SHORT).show();
+                if (!isCancelled()) {
+                    Toast.makeText(context, "Database backup failed. Please try again later.", Toast.LENGTH_SHORT).show();
+                    if (progressCallback != null) {
+                        progressCallback.onComplete(false, "Database backup failed. Please try again later.");
+                    }
+                }
             }
         });
     }
@@ -714,6 +863,19 @@ public class DataFetcher {
     }
 
     public void fetchAllGMBRoutes() {
+        fetchAllGMBRoutes(null);
+    }
+    
+    public void fetchAllGMBRoutes(ProgressCallback progressCallback) {
+        // Check if operation is already cancelled
+        if (isCancelled()) {
+            Log.d("DataFetch", "Skipping GMB routes fetch - operation already cancelled");
+            if (progressCallback != null) {
+                mainHandler.post(() -> progressCallback.onComplete(false, "Operation cancelled"));
+            }
+            return;
+        }
+        
         Log.d("DataFetch", "Attempt to fetch all GMB routes");
         String url = GMB_BASE_URL + "route/";
         Request request = new Request.Builder().url(url).build();
@@ -721,49 +883,226 @@ public class DataFetcher {
         client.newCall(request).enqueue(new Callback() {
             @Override
             public void onFailure(Call call, IOException e) {
+                // Check if operation was cancelled
+                if (isCancelled()) {
+                    Log.d("DataFetch", "GMB routes fetch failed, but operation was already cancelled");
+                    return;
+                }
+                
                 Log.e("FetchLog", "Error Fetching All GMB Route: " + e.getMessage());
                 Log.d("DataFetcher", "Error Fetching All GMB Route: " + e.getMessage());
+                
+                if (progressCallback != null) {
+                    mainHandler.post(() -> {
+                        // Check again before updating UI
+                        if (!isCancelled()) {
+                            progressCallback.onProgressUpdate("Error in Step 4/4: " + e.getMessage());
+                            // Signal completion even on failure
+                            progressCallback.onComplete(false, "Error fetching GMB routes: " + e.getMessage());
+                        }
+                    });
+                }
             }
 
             @Override
             public void onResponse(Call call, Response response) {
+                // Check if operation was cancelled
+                if (isCancelled()) {
+                    Log.d("DataFetch", "GMB routes fetch received response, but operation was already cancelled");
+                    response.close();
+                    return;
+                }
+                
                 Log.e("FetchLog", "All GMB Route Fetch Response: " + response);
                 if (!response.isSuccessful()) {
-                    mainHandler.post(() -> Log.e("DataFetchGMB", "Error Fetching All GMB Route: " + response.code()));
+                    mainHandler.post(() -> {
+                        // Check again before updating UI
+                        if (!isCancelled()) {
+                            Log.e("DataFetchGMB", "Error Fetching All GMB Route: " + response.code());
+                            if (progressCallback != null) {
+                                progressCallback.onProgressUpdate("Error in Step 4/4: HTTP error code " + response.code());
+                                // Signal completion even on error response
+                                progressCallback.onComplete(false, "Error fetching GMB routes: HTTP error " + response.code());
+                            }
+                        }
+                    });
                     Log.e("FetchLog", "Response is un-successful");
                     response.close();
                     return;
                 }
 
-                executorService.execute(() -> {
-                    try {
-                        String jsonData = response.body().string();
-                        Log.d("DataFetchGMB", "Data for all GMB routes: " + jsonData);
-                        processAllGMBRoutes(jsonData);
-                        response.close();
-                    } catch (Exception e) {
-                        Log.e("DataFetch", "Error Fetching All GMB Route: " + e.getMessage());
-                        Log.e("DataFetchGMB", "Error Fetching All GMB Route: " + e.getMessage());
-                        response.close();
+                try {
+                    // Get the response body string before closing the response
+                    String jsonData = response.body().string();
+                    response.close();
+                    
+                    // Check again before processing data
+                    if (isCancelled()) {
+                        Log.d("DataFetch", "GMB routes fetch got data, but operation was already cancelled");
+                        return;
                     }
-                });
+                    
+                    // Process the data in a separate thread
+                    executorService.execute(() -> {
+                        // Check again before processing
+                        if (isCancelled()) {
+                            Log.d("DataFetch", "GMB routes processing skipped - operation was cancelled");
+                            return;
+                        }
+                        
+                        try {
+                            Log.d("DataFetchGMB", "Data for all GMB routes: " + jsonData);
+                            
+                            if (progressCallback != null && !isCancelled()) {
+                                mainHandler.post(() -> {
+                                    if (!isCancelled()) {
+                                        progressCallback.onProgressUpdate(
+                                                "Step 4/4 in progress: Processing GMB routes data...");
+                                    }
+                                });
+                            }
+                            
+                            // Process the routes if not cancelled
+                            if (!isCancelled()) {
+                                processAllGMBRoutes(jsonData);
+                            }
+                            
+                            // Final cancellation check before completion
+                            if (progressCallback != null && !isCancelled()) {
+                                mainHandler.post(() -> {
+                                    if (!isCancelled()) {
+                                        progressCallback.onProgressUpdate("Step 4/4 completed: GMB routes fetched successfully");
+                                        // Signal successful completion
+                                        progressCallback.onComplete(true, "GMB routes fetched successfully");
+                                    }
+                                });
+                            }
+                        } catch (Exception e) {
+                            // Only report errors if not cancelled
+                            if (!isCancelled()) {
+                                Log.e("DataFetch", "Error Processing All GMB Route: " + e.getMessage());
+                                Log.e("DataFetchGMB", "Error Processing All GMB Route: " + e.getMessage());
+                                
+                                if (progressCallback != null) {
+                                    mainHandler.post(() -> {
+                                        if (!isCancelled()) {
+                                            progressCallback.onProgressUpdate("Error in Step 4/4: " + e.getMessage());
+                                            // Signal completion with error
+                                            progressCallback.onComplete(false, "Error processing GMB routes: " + e.getMessage());
+                                        }
+                                    });
+                                }
+                            }
+                        }
+                    });
+                } catch (IOException e) {
+                    // Only report errors if not cancelled
+                    if (!isCancelled()) {
+                        Log.e("DataFetch", "Error reading GMB route response: " + e.getMessage());
+                        if (progressCallback != null) {
+                            mainHandler.post(() -> {
+                                if (!isCancelled()) {
+                                    progressCallback.onProgressUpdate("Error in Step 4/4: " + e.getMessage());
+                                    // Signal completion with error
+                                    progressCallback.onComplete(false, "Error reading GMB route response: " + e.getMessage());
+                                }
+                            });
+                        }
+                    }
+                    response.close();
+                }
             }
         });
     }
 
     public void processAllGMBRoutes(String jsonData) throws JSONException {
+        // Check if operation is already cancelled
+        if (isCancelled()) {
+            Log.d("DataFetchGMB", "Skipping GMB routes processing - operation already cancelled");
+            return;
+        }
+        
         Log.d("DataFetchGMB", "Processing GMB route data");
         JSONObject jsonObject = new JSONObject(jsonData);
         JSONObject data = jsonObject.getJSONObject("data");
         JSONObject routes = data.getJSONObject("routes");
 
-        databaseHelper.gmbDatabase.updateRoutes(routes, (routeNumber, routeRegion) -> {
-            Log.d("DataFetchGMB", "GMB route data updated successfully, now fetching detail information for the route");
-            fetchGMBRouteInfo(routeNumber, routeRegion);
-        }, onError -> Log.e("DataFetchGMB", "Error processing GMB route data: " + onError));
+        // Create a counter to track when all route info fetches are complete
+        final int routeCount = routes.length();
+        final AtomicInteger routeCounter = new AtomicInteger(routeCount);
+        
+        try {
+            // Start a transaction to ensure database consistency
+            SQLiteDatabase db = databaseHelper.getWritableDatabase();
+            db.beginTransaction();
+            
+            try {
+                databaseHelper.gmbDatabase.updateRoutes(routes, (routeNumber, routeRegion) -> {
+                    // Check if operation was cancelled before fetching route info
+                    if (isCancelled()) {
+                        Log.d("DataFetchGMB", "Skipping route info fetch for " + routeNumber + " - operation cancelled");
+                        // Still decrement counter to avoid hanging
+                        int remaining = routeCounter.decrementAndGet();
+                        Log.d("DataFetchGMB", "Counter decremented due to cancellation. Remaining: " + remaining);
+                        return;
+                    }
+                    
+                    Log.d("DataFetchGMB", "GMB route data updated successfully, now fetching detail information for the route");
+                    fetchGMBRouteInfo(routeNumber, routeRegion, () -> {
+                        // Decrement counter when a route info fetch completes
+                        int remaining = routeCounter.decrementAndGet();
+                        Log.d("DataFetchGMB", "GMB route info fetch completed. Remaining: " + remaining);
+                    });
+                }, onError -> {
+                    if (!isCancelled()) {
+                        Log.e("DataFetchGMB", "Error processing GMB route data: " + onError);
+                    }
+                });
+                
+                // Mark the transaction as successful
+                db.setTransactionSuccessful();
+            } finally {
+                // End the transaction
+                db.endTransaction();
+            }
+        } catch (Exception e) {
+            // Only log errors if not cancelled
+            if (!isCancelled()) {
+                Log.e("DataFetchGMB", "Database transaction error: " + e.getMessage());
+                e.printStackTrace();
+                
+                // If there's an error with the transaction, still try to process routes individually
+                try {
+                    for (int i = 0; i < routeCount && !isCancelled(); i++) {
+                        String routeKey = routes.names().getString(i);
+                        JSONObject routeRegions = routes.getJSONObject(routeKey);
+                        
+                        for (int j = 0; j < routeRegions.length() && !isCancelled(); j++) {
+                            String regionKey = routeRegions.names().getString(j);
+                            fetchGMBRouteInfo(routeKey, regionKey, null);
+                        }
+                    }
+                } catch (Exception ex) {
+                    Log.e("DataFetchGMB", "Error in fallback route processing: " + ex.getMessage());
+                }
+            }
+        }
     }
 
     public void fetchGMBRouteInfo(String route, String region) {
+        fetchGMBRouteInfo(route, region, null);
+    }
+    
+    public void fetchGMBRouteInfo(String route, String region, Runnable onComplete) {
+        // Check if operation is already cancelled
+        if (isCancelled()) {
+            Log.d("DataFetch", "Skipping GMB route info fetch for " + route + " - operation already cancelled");
+            if (onComplete != null) {
+                mainHandler.post(onComplete);
+            }
+            return;
+        }
+        
         Log.d("DataFetch", "Attempt to fetch Route " + route + " in " + region);
         String url = GMB_BASE_URL + "route/" + region + "/" + route;
         Request request = new Request.Builder().url(url).build();
@@ -771,32 +1110,96 @@ public class DataFetcher {
         client.newCall(request).enqueue(new Callback() {
             @Override
             public void onFailure(Call call, IOException e) {
+                // Check if operation was cancelled
+                if (isCancelled()) {
+                    Log.d("DataFetch", "GMB route info fetch failed, but operation was already cancelled");
+                    if (onComplete != null) {
+                        mainHandler.post(onComplete);
+                    }
+                    return;
+                }
+                
                 Log.e("FetchLog", "Error Fetching GMB Route Info: " + e.getMessage());
                 Log.d("DataFetcher", "Error Fetching GMB Route Info: " + e.getMessage());
+                
+                // Call onComplete even on failure to ensure we don't block progress
+                if (onComplete != null) {
+                    mainHandler.post(onComplete);
+                }
             }
 
             @Override
             public void onResponse(Call call, Response response) {
+                // Check if operation was cancelled
+                if (isCancelled()) {
+                    Log.d("DataFetch", "GMB route info fetch received response, but operation was already cancelled");
+                    response.close();
+                    if (onComplete != null) {
+                        mainHandler.post(onComplete);
+                    }
+                    return;
+                }
+                
                 Log.e("FetchLog", "GMB Route Info Fetch Response: " + response);
                 if (!response.isSuccessful()) {
-                    mainHandler.post(() -> Log.e("DataFetchGMB", "Error Fetching GMB Route Info: " + response.code()));
+                    if (!isCancelled()) {
+                        mainHandler.post(() -> Log.e("DataFetchGMB", "Error Fetching GMB Route Info: " + response.code()));
+                    }
                     Log.e("FetchLog", "Response is un-successful");
                     response.close();
+                    
+                    // Call onComplete even on error to ensure we don't block progress
+                    if (onComplete != null) {
+                        mainHandler.post(onComplete);
+                    }
                     return;
                 }
 
                 executorService.execute(() -> {
+                    // Check again before processing
+                    if (isCancelled()) {
+                        Log.d("DataFetch", "GMB route info processing skipped - operation was cancelled");
+                        response.close();
+                        if (onComplete != null) {
+                            mainHandler.post(onComplete);
+                        }
+                        return;
+                    }
+                    
                     try {
                         String jsonData = response.body().string();
+                        
+                        // Check again after reading response body
+                        if (isCancelled()) {
+                            Log.d("DataFetch", "GMB route info data read, but operation was cancelled");
+                            response.close();
+                            if (onComplete != null) {
+                                mainHandler.post(onComplete);
+                            }
+                            return;
+                        }
+                        
                         Log.d("DataFetchGMB", "Data for GMB Route Info: " + jsonData);
                         databaseHelper.gmbDatabase.updateRouteInfo(jsonData, (routeID, routeSeq) -> {
                             response.close();
+                            
+                            // Call onComplete when processing is done
+                            if (onComplete != null) {
+                                mainHandler.post(onComplete);
+                            }
                         });
 
                     } catch (Exception e) {
-                        Log.e("DataFetch", "Error Fetching GMB Route Info: " + e.getMessage());
-                        Log.e("DataFetchGMB", "Error Fetching GMB Route Info: " + e.getMessage());
+                        if (!isCancelled()) {
+                            Log.e("DataFetch", "Error Fetching GMB Route Info: " + e.getMessage());
+                            Log.e("DataFetchGMB", "Error Fetching GMB Route Info: " + e.getMessage());
+                        }
                         response.close();
+                        
+                        // Call onComplete even on exception to ensure we don't block progress
+                        if (onComplete != null) {
+                            mainHandler.post(onComplete);
+                        }
                     }
                 });
             }
@@ -1012,12 +1415,69 @@ public class DataFetcher {
     }
 
     /**
+     * Cancels all ongoing operations without releasing resources.
+     * This is used when the user cancels the data fetching operation.
+     * 
+     * @return true if operations were cancelled, false if already cancelled
+     */
+    public boolean cancelOperations() {
+        if (isCancelled.getAndSet(true)) {
+            // Already cancelled
+            return false;
+        }
+        
+        Log.d("DataFetcher", "Cancelling all operations");
+        
+        // Cancel all active network requests
+        if (client != null && client.dispatcher() != null) {
+            client.dispatcher().cancelAll();
+            Log.d("DataFetcher", "Canceled all OkHttp requests");
+        }
+        
+        return true;
+    }
+    
+    /**
+     * Resets the cancellation state so the DataFetcher can be reused
+     */
+    public void resetCancellationState() {
+        isCancelled.set(false);
+        Log.d("DataFetcher", "Cancellation state reset");
+    }
+    
+    /**
+     * Checks if the current operation has been cancelled
+     * 
+     * @return true if cancelled, false otherwise
+     */
+    public boolean isCancelled() {
+        return isCancelled.get();
+    }
+
+    /**
+     * Cancels all active network requests
+     * This method is called by DataFetcherCancellation to cancel ongoing operations
+     */
+    public void cancelAllRequests() {
+        Log.d("DataFetcher", "Cancelling all active network requests");
+        
+        // Cancel all active network requests
+        if (client != null && client.dispatcher() != null) {
+            client.dispatcher().cancelAll();
+            Log.d("DataFetcher", "Canceled all OkHttp requests");
+        }
+    }
+    
+    /**
      * Shuts down all active operations and releases resources.
      * Call this method when the activity is being destroyed to prevent memory leaks and
      * background operations continuing after the activity is gone.
      */
     public void shutdown() {
         Log.d("DataFetcher", "Shutting down DataFetcher");
+        
+        // Set cancelled flag to prevent new operations
+        isCancelled.set(true);
         
         // Cancel all active network requests
         if (client != null && client.dispatcher() != null) {

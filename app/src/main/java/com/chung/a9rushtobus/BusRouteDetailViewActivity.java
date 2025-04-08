@@ -315,13 +315,6 @@ public class BusRouteDetailViewActivity extends AppCompatActivity implements OnM
         final String adjustedBound = routeBound.equalsIgnoreCase("outbound") ? "O" : "I";
         Log.d(TAG, "Using bound: " + routeBound + " (adjusted to: " + adjustedBound + ")");
 
-        // Show loading indicator
-        handler.post(() -> {
-            // Add a loading indicator if available in your layout
-            // For example: progressBar.setVisibility(View.VISIBLE);
-            Toast.makeText(BusRouteDetailViewActivity.this, "Loading bus stops...", Toast.LENGTH_SHORT).show();
-        });
-
         // Use executor service for background processing
         ExecutorService executor = Executors.newSingleThreadExecutor();
         Handler handler = new Handler(Looper.getMainLooper());
@@ -425,10 +418,6 @@ public class BusRouteDetailViewActivity extends AppCompatActivity implements OnM
                                 } catch (Exception e) {
                                     Log.e(TAG, "Error in fallback API call for count mismatch: " + e.getMessage());
 
-                                    // Show a toast with the error
-                                    handler.post(() -> Toast.makeText(BusRouteDetailViewActivity.this,
-                                        "Network error: Using local data", Toast.LENGTH_SHORT).show());
-
                                     // Use the original data as fallback - Ensure lists are clear first
                                     stops.clear();
                                     stopPositions.clear();
@@ -498,8 +487,6 @@ public class BusRouteDetailViewActivity extends AppCompatActivity implements OnM
                             return;
                         } else {
                             Log.e(TAG, "Missing GMB route ID for API fallback");
-                            handler.post(() -> Toast.makeText(BusRouteDetailViewActivity.this,
-                                "Missing route information for GMB", Toast.LENGTH_SHORT).show());
                         }
                     }
                 } catch (InterruptedException e) {
@@ -516,17 +503,14 @@ public class BusRouteDetailViewActivity extends AppCompatActivity implements OnM
 
                     if (stops.isEmpty()) {
                         Toast.makeText(BusRouteDetailViewActivity.this,
-                                "No bus stops found for this route", Toast.LENGTH_LONG).show();
+                                getString(R.string.err_busStop_not_found_name), Toast.LENGTH_LONG).show();
                         return;
                     }
 
                     // Debug info for stops and coordinates
                     Log.d(TAG, "Found " + stops.size() + " stops, " + stopPositions.size() + " have coordinates");
                     if (busCompany.equals("gmb") && stopPositions.isEmpty() && !stops.isEmpty()) {
-                        Toast.makeText(BusRouteDetailViewActivity.this,
-                                "GMB stops loaded but no location data available", Toast.LENGTH_SHORT).show();
 
-                        // Debug what's in the GMB_STOP_LOCATIONS table
                         debugGMBStopLocations(db);
                     }
 
@@ -569,10 +553,6 @@ public class BusRouteDetailViewActivity extends AppCompatActivity implements OnM
                         // If no coordinates are available for GMB stops but we have stops, try to fetch coordinates
                         if (!stops.isEmpty()) {
                             Log.d(TAG, "No GMB stop coordinates available, but have " + stops.size() + " stops");
-                            Toast.makeText(BusRouteDetailViewActivity.this,
-                                    "GMB stops found but location data is missing", Toast.LENGTH_SHORT).show();
-                            // You might want to implement a function to fetch GMB stop locations here
-                            // fetchGMBStopLocations(stops);
                         }
 
                         // Center on a default Hong Kong location
@@ -582,9 +562,6 @@ public class BusRouteDetailViewActivity extends AppCompatActivity implements OnM
                             mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(defaultHongKong, 12f));
                         }
                     }
-
-                    Toast.makeText(BusRouteDetailViewActivity.this,
-                            "Loaded " + stops.size() + " bus stops", Toast.LENGTH_SHORT).show();
                 });
 
             } catch (Exception e) {
@@ -594,7 +571,7 @@ public class BusRouteDetailViewActivity extends AppCompatActivity implements OnM
                     // progressBar.setVisibility(View.GONE);
 
                     Toast.makeText(BusRouteDetailViewActivity.this,
-                            "Failed to load bus stops: " + e.getMessage(),
+                            getString(R.string.err_unable_to_load_busStop_name) + e.getMessage(),
                             Toast.LENGTH_LONG).show();
                 });
             } finally {
@@ -801,18 +778,11 @@ public class BusRouteDetailViewActivity extends AppCompatActivity implements OnM
         if (gmbRouteID == null || gmbRouteID.isEmpty()) {
             Log.e(TAG, "GMB Route ID is null or empty in fallbackForGMB method!");
             runOnUiThread(() -> Toast.makeText(this,
-                "Error: Missing GMB route information", Toast.LENGTH_SHORT).show());
+                getString(R.string.err_database_err), Toast.LENGTH_SHORT).show());
             return;
         }
 
         try {
-
-            // Show loading toast on main thread
-            runOnUiThread(() -> Toast.makeText(
-                BusRouteDetailViewActivity.this,
-                "Loading GMB stops from API...",
-                Toast.LENGTH_SHORT).show());
-
             // Using a CountDownLatch to block until API response is processed
             final CountDownLatch latch = new CountDownLatch(1);
             final AtomicBoolean apiSuccess = new AtomicBoolean(false);
@@ -979,23 +949,15 @@ public class BusRouteDetailViewActivity extends AppCompatActivity implements OnM
                             mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(defaultHongKong, 12f));
                         }
                     }
-
-                    Toast.makeText(BusRouteDetailViewActivity.this,
-                        "Loaded " + freshStops.size() + " GMB bus stops from API",
-                        Toast.LENGTH_SHORT).show();
                 } else {
                     Log.e(TAG, "Failed to fetch GMB stops from API");
                     Toast.makeText(BusRouteDetailViewActivity.this,
-                        "Failed to load GMB bus stops", Toast.LENGTH_SHORT).show();
+                        getString(R.string.err_unable_to_load_gmb_desc), Toast.LENGTH_SHORT).show();
                 }
             });
 
         } catch (NumberFormatException e) {
             Log.e(TAG, "Invalid route ID or sequence: " + e.getMessage());
-            runOnUiThread(() -> Toast.makeText(
-                BusRouteDetailViewActivity.this,
-                "Error: Invalid GMB route information",
-                Toast.LENGTH_SHORT).show());
         }
     }
 
@@ -1170,7 +1132,6 @@ public class BusRouteDetailViewActivity extends AppCompatActivity implements OnM
                 fallbackForGMB(db, gmbRouteID, gmbRouteSeq);
             } else {
                 Log.e(TAG, "Missing GMB route ID for API fallback");
-                Toast.makeText(this, "Missing route information for GMB", Toast.LENGTH_SHORT).show();
             }
             return;
         } else {

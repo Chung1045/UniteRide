@@ -129,7 +129,7 @@ public class BusRouteStopItemAdapter extends RecyclerView.Adapter<BusRouteStopIt
                 // Save the route stop
                 boolean saved = databaseHelper.savedRoutesManager.saveRouteStop(item);
                 if (saved) {
-                    Toast.makeText(context, "Saved stop: " + item.getStopName(), Toast.LENGTH_SHORT).show();
+                    Toast.makeText(context, context.getText(R.string.detail_view_save_route_stop_msg) + item.getStopName(), Toast.LENGTH_SHORT).show();
                     updateSaveButton(holder.saveStopButton, true);
                 }
             }
@@ -154,7 +154,7 @@ public class BusRouteStopItemAdapter extends RecyclerView.Adapter<BusRouteStopIt
                 // Save the route stop
                 boolean saved = databaseHelper.savedRoutesManager.saveRouteStop(item);
                 if (saved) {
-                    Toast.makeText(context, "Saved stop: " + item.getStopName(), Toast.LENGTH_SHORT).show();
+                    Toast.makeText(context, context.getText(R.string.detail_view_save_route_stop_msg) + item.getStopName(), Toast.LENGTH_SHORT).show();
                     updateSaveButton(holder.saveStopButton, true);
                 }
             }

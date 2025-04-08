@@ -27,6 +27,14 @@
         android:layout="@layout/components_basic_preference_mid" />
 
     <Preference
+        android:key="pref_main_busDatabase"
+        android:title="@string/settings_category_database_name"
+        android:iconSpaceReserved="false"
+        android:layout_marginStart="16dp"
+        android:layout_marginEnd="16dp"
+        android:layout="@layout/components_basic_preference_mid" />
+
+    <Preference
         android:key="pref_main_about"
         android:title="@string/settings_category_aboutOption_name"
         android:iconSpaceReserved="false"
@@ -41,24 +49,5 @@
         android:layout_marginStart="16dp"
         android:layout_marginEnd="16dp"
         android:layout="@layout/components_basic_preference_bottom" />
-
-    <PreferenceCategory
-        android:title="Dev options"/>
-
-    <Preference
-        android:key="pref_dev_onboard"
-        android:title="Onboard"
-        android:layout_marginStart="16dp"
-        android:layout_marginEnd="16dp"
-        android:iconSpaceReserved="false"
-        android:layout="@layout/components_basic_preference_top"/>
-
-    <Preference
-        android:key="pref_dev_fetchData"
-        android:title="Fetch All Data"
-        android:layout_marginStart="16dp"
-        android:layout_marginEnd="16dp"
-        android:iconSpaceReserved="false"
-        android:layout="@layout/components_basic_preference_bottom"/>
 
 </PreferenceScreen>

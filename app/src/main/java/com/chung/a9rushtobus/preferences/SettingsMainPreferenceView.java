@@ -58,7 +58,7 @@ public class SettingsMainPreferenceView extends PreferenceFragmentCompat {
 
             // Find the CollapsingToolbarLayout directly
             CollapsingToolbarLayout collapsingToolbarLayout =
-                (CollapsingToolbarLayout) toolbar.getParent();
+                    (CollapsingToolbarLayout) toolbar.getParent();
             if (collapsingToolbarLayout != null) {
                 collapsingToolbarLayout.setTitle(currentTitle);
             }
@@ -91,7 +91,7 @@ public class SettingsMainPreferenceView extends PreferenceFragmentCompat {
 
                     // Find the CollapsingToolbarLayout directly
                     CollapsingToolbarLayout collapsingToolbarLayout =
-                        (CollapsingToolbarLayout) toolbar.getParent();
+                            (CollapsingToolbarLayout) toolbar.getParent();
                     if (collapsingToolbarLayout != null) {
                         collapsingToolbarLayout.setTitle(title);
                     }
@@ -154,10 +154,10 @@ public class SettingsMainPreferenceView extends PreferenceFragmentCompat {
                 if (isAdded()) {  // Check if fragment is still attached
                     getParentFragmentManager().beginTransaction()
                             .setCustomAnimations(
-                            R.anim.slide_in_right,
-                            R.anim.slide_out_left,
-                            R.anim.slide_in_left,
-                            R.anim.slide_out_right
+                                    R.anim.slide_in_right,
+                                    R.anim.slide_out_left,
+                                    R.anim.slide_in_left,
+                                    R.anim.slide_out_right
                             ).replace(R.id.fragmentContainerView, new SettingsThemePreferenceView())
                             .addToBackStack(null)
                             .commit();
@@ -248,30 +248,32 @@ public class SettingsMainPreferenceView extends PreferenceFragmentCompat {
             return true;
         });
 
-        Preference dev_OnboardPreference = findPreference("pref_dev_onboard");
-        assert dev_OnboardPreference != null;
+        Preference dataBasePreference = findPreference("pref_main_busDatabase");
+        assert dataBasePreference != null;
 
-        dev_OnboardPreference.setOnPreferenceClickListener(view -> {
-            Intent newActivity = new Intent(view.getContext(), OnboardingActivity.class);
-            startActivity(newActivity, null);
-            return false;
-        });
 
-        Preference dev_FetchData = findPreference("pref_dev_fetchData");
-        assert dev_FetchData!= null;
+        dataBasePreference.setOnPreferenceClickListener(view -> {
+            String newTitle = getString(R.string.settings_category_database_name);
 
-        dev_FetchData.setOnPreferenceClickListener(view -> {
-            new Thread(() -> {
-                try {
-                    runOnUiThread(() -> {
-                        Toast.makeText(getContext(), "Fetching data...", Toast.LENGTH_SHORT).show();
-                        dataFetcher.refreshAllData();
-                    });
-                } catch (Exception e) {
-                    runOnUiThread(() -> Toast.makeText(getContext(), "Error: " + e.getMessage(), Toast.LENGTH_SHORT).show());
+            // Update title and ensure it's applied before fragment transaction
+            updateToolbarTitle(newTitle);
+
+            // Add a small delay to ensure UI updates before fragment transaction
+            new Handler().postDelayed(() -> {
+                if (isAdded()) {  // Check if fragment is still attached
+                    getParentFragmentManager().beginTransaction().setCustomAnimations(
+                                    R.anim.slide_in_right,
+                                    R.anim.slide_out_left,
+                                    R.anim.slide_in_left,
+                                    R.anim.slide_out_right
+                            ).replace(R.id.fragmentContainerView, new SettingsDatabaseView())
+                            .addToBackStack(null)
+                            .commit();
+                    bottomNavigationView.setVisibility(View.GONE);
                 }
-            }).start();
-            return false;
+            }, 50);  // Small delay to ensure UI updates
+
+            return true;
         });
 
     }

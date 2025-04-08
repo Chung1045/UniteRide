@@ -2,13 +2,17 @@
 <androidx.preference.PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
 
     <Preference
-        android:title="okhttp" />
+        android:title="okhttp"
+        android:layout="@layout/components_basic_preference_simple"/>
     <Preference
-        android:title="JSoup" />
+        android:title="JSoup"
+        android:layout="@layout/components_basic_preference_simple"/>
     <Preference
-        android:title="Google Maps SDK for Android" />
+        android:title="Google Maps SDK for Android"
+        android:layout="@layout/components_basic_preference_simple"/>
     <Preference
-        android:title="SQLite" />
+        android:title="SQLite"
+        android:layout="@layout/components_basic_preference_simple"/>
 
 
 

@@ -48,7 +48,6 @@ public class SettingsFeaturesPreferenceView extends PreferenceFragmentCompat {
             boolean isSwitchOn = (Boolean) newValue;
             // Do something with the state, for example:
             UserPreferences.editor.putBoolean("featureShowRTHKNews", isSwitchOn).apply();
-            Toast.makeText(getContext(), "Switch is " + (isSwitchOn ? "on" : "off"), Toast.LENGTH_SHORT).show();
             // Returning true means to update the state of the preference with the new value.
             return true;
         });
