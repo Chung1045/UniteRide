@@ -259,6 +259,8 @@ public class KMBDatabase {
                         "r." + Tables.KMB_ROUTES.COLUMN_ORIGIN_EN + ", " +
                         "r." + Tables.KMB_ROUTES.COLUMN_DEST_EN + ", " +
                         "s." + Tables.KMB_STOPS.COLUMN_STOP_NAME_EN + ", " +
+                        "s." + Tables.KMB_STOPS.COLUMN_STOP_NAME_TC + ", " +
+                        "s." + Tables.KMB_STOPS.COLUMN_STOP_NAME_SC + ", " +
                         "s." + Tables.KMB_STOPS.COLUMN_STOP_ID + ", " +
                         "s." + Tables.KMB_STOPS.COLUMN_LATITUDE + ", " +
                         "s." + Tables.KMB_STOPS.COLUMN_LONGITUDE + ", " +

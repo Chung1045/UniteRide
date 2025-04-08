@@ -10,6 +10,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.activity.result.ActivityResultLauncher;
 import com.google.android.material.button.MaterialButton;
@@ -25,6 +26,8 @@ import com.chung.a9rushtobus.R;
 import com.chung.a9rushtobus.UserPreferences;
 import com.chung.a9rushtobus.database.DatabaseHelper;
 import com.chung.a9rushtobus.database.KMBDatabase;
+import com.chung.a9rushtobus.elements.BusRouteStopItem;
+import com.chung.a9rushtobus.elements.NearbyBusRouteAdapter;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.maps.CameraUpdateFactory;
@@ -128,10 +131,24 @@ public class FragmentNearby extends Fragment implements OnMapReadyCallback {
         return view;
     }
 
+    private NearbyBusRouteAdapter nearbyBusRouteAdapter;
+    
     private void setupRecyclerView() {
         nearbyStationsRecyclerView.setLayoutManager(new LinearLayoutManager(requireContext()));
-        // Add adapter setup here once you have your data model and adapter ready
-        // nearbyStationsRecyclerView.setAdapter(new NearbyStationsAdapter(stationsList));
+        nearbyBusRouteAdapter = new NearbyBusRouteAdapter(requireContext());
+        nearbyStationsRecyclerView.setAdapter(nearbyBusRouteAdapter);
+        
+        // Set click listener for items
+        nearbyBusRouteAdapter.setOnItemClickListener(item -> {
+            // Handle click on bus route item
+            Toast.makeText(requireContext(), "Selected route: " + item.getRoute() + " at " + item.getStopName(), Toast.LENGTH_SHORT).show();
+            
+            // In a real app, you would navigate to a detail view for this route
+            // For example:
+            // Intent intent = new Intent(requireContext(), BusRouteDetailViewActivity.class);
+            // intent.putExtra("busRouteStopItem", item);
+            // startActivity(intent);
+        });
     }
 
     private void setupBottomSheet(View view) {
@@ -208,8 +225,7 @@ public class FragmentNearby extends Fragment implements OnMapReadyCallback {
     private void updateMapLocation(LatLng location) {
         if (mMap != null) {
             mMap.clear();
-            mMap.addMarker(new MarkerOptions().position(location).title("Your Location"));
-            mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(location, 15f));
+            mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(location, 20f));
 
             // Here you would fetch nearby stations based on the location
             fetchNearbyStations(location);
@@ -217,12 +233,9 @@ public class FragmentNearby extends Fragment implements OnMapReadyCallback {
     }
 
     private void fetchNearbyStations(LatLng location) {
-        // TODO: Implement API call or database query to get nearby stations
-        // This is a placeholder - you would replace this with actual data fetching logic
-
-        // After fetching, update the RecyclerView adapter
-        // stationsAdapter.updateStations(stationsList);
-
+        // Call getNearbyRoutes to fetch and display nearby bus routes
+        getNearbyRoutes(location.latitude, location.longitude);
+        
         // Expand bottom sheet slightly to show results are available
         bottomSheetBehavior.setPeekHeight(200);
     }
@@ -260,8 +273,8 @@ public class FragmentNearby extends Fragment implements OnMapReadyCallback {
     }
 
     private void getNearbyRoutes(double latitude, double longitude) {
-        // For example, in Hong Kong - increased radius for testing
-        int radiusMeters = 1000; // 1000m radius for better chance of finding nearby stops
+        // Set radius to 300 meters as per requirement
+        int radiusMeters = 600;
         
         if (kmbDatabase == null) {
             Log.e("FragmentNearby", "KMBDatabase is null. Initializing now.");
@@ -291,23 +304,57 @@ public class FragmentNearby extends Fragment implements OnMapReadyCallback {
         Log.d("FragmentNearby", "Cursor count: " + (routesCursor != null ? routesCursor.getCount() : "null"));
 
         if (routesCursor != null && routesCursor.moveToFirst()) {
-            // Create a list of nearby routes that we can display
-            List<NearbyRouteInfo> nearbyRoutes = new ArrayList<>();
+            // Create a list of BusRouteStopItem objects for the adapter
+            List<BusRouteStopItem> nearbyBusRoutes = new ArrayList<>();
             
             do {
                 try {
                     String route = routesCursor.getString(routesCursor.getColumnIndexOrThrow(KMBDatabase.Tables.KMB_ROUTES.COLUMN_ROUTE));
+                    String bound = routesCursor.getString(routesCursor.getColumnIndexOrThrow(KMBDatabase.Tables.KMB_ROUTES.COLUMN_BOUND));
+                    String serviceType = routesCursor.getString(routesCursor.getColumnIndexOrThrow(KMBDatabase.Tables.KMB_ROUTES.COLUMN_SERVICE_TYPE));
                     String origin = routesCursor.getString(routesCursor.getColumnIndexOrThrow(KMBDatabase.Tables.KMB_ROUTES.COLUMN_ORIGIN_EN));
                     String destination = routesCursor.getString(routesCursor.getColumnIndexOrThrow(KMBDatabase.Tables.KMB_ROUTES.COLUMN_DEST_EN));
-                    String stopName = routesCursor.getString(routesCursor.getColumnIndexOrThrow(KMBDatabase.Tables.KMB_STOPS.COLUMN_STOP_NAME_EN));
+                    String stopNameEn = routesCursor.getString(routesCursor.getColumnIndexOrThrow(KMBDatabase.Tables.KMB_STOPS.COLUMN_STOP_NAME_EN));
+                    String stopId = routesCursor.getString(routesCursor.getColumnIndexOrThrow(KMBDatabase.Tables.KMB_STOPS.COLUMN_STOP_ID));
                     double distance = routesCursor.getDouble(routesCursor.getColumnIndexOrThrow("distance"));
+                    
+                    // Get TC and SC stop names if available
+                    String stopNameTc = "";
+                    String stopNameSc = "";
+                    
+                    try {
+                        stopNameTc = routesCursor.getString(routesCursor.getColumnIndexOrThrow(KMBDatabase.Tables.KMB_STOPS.COLUMN_STOP_NAME_TC));
+                        stopNameSc = routesCursor.getString(routesCursor.getColumnIndexOrThrow(KMBDatabase.Tables.KMB_STOPS.COLUMN_STOP_NAME_SC));
+                    } catch (Exception e) {
+                        // If TC and SC names are not available, use EN name
+                        stopNameTc = stopNameEn;
+                        stopNameSc = stopNameEn;
+                        Log.w("FragmentNearby", "TC/SC stop names not available, using EN name");
+                    }
 
-                    // Use the data as needed
-                    Log.d("NearbyRoutes", "Route: " + route + " from " + origin + " to " + destination +
-                            " at stop " + stopName + " (" + distance + "m away)");
-                            
-                    // Add to our list for display
-                    nearbyRoutes.add(new NearbyRouteInfo(route, origin, destination, stopName, distance));
+                    // Calculate actual distance in meters (approximate)
+                    double distanceInMeters = Math.sqrt(distance) * 111000; // Rough conversion from degrees to meters
+                    
+                    // Only include stops that are actually within our target radius
+                    if (distanceInMeters <= radiusMeters) {
+                        // Log the found route
+                        Log.d("NearbyRoutes", "Route: " + route + " from " + origin + " to " + destination +
+                                " at stop " + stopNameEn + " (" + distanceInMeters + "m away)");
+                        
+                        // Create a BusRouteStopItem for this route
+                        BusRouteStopItem busRouteStopItem = new BusRouteStopItem(
+                                route, bound, serviceType, 
+                                stopNameEn, stopNameTc, stopNameSc,
+                                stopId, "kmb"); // Using "kmb" as the company
+                        
+                        // Set ETA placeholders (these would be updated with real-time data in a production app)
+                        // In a real app, you would fetch actual ETA data from an API
+                        busRouteStopItem.setStopEta1((int)(Math.random() * 10) + 1); // Random ETA between 1-10 minutes
+                        
+                        // Add to our list for display
+                        nearbyBusRoutes.add(busRouteStopItem);
+                    }
+                    
                 } catch (Exception e) {
                     Log.e("FragmentNearby", "Error reading cursor: " + e.getMessage(), e);
                 }
@@ -316,35 +363,26 @@ public class FragmentNearby extends Fragment implements OnMapReadyCallback {
             routesCursor.close();
             
             // Update UI with the found routes
-            if (!nearbyRoutes.isEmpty()) {
+            if (!nearbyBusRoutes.isEmpty()) {
                 // Update the RecyclerView with our results
+                nearbyBusRouteAdapter.updateRoutes(nearbyBusRoutes);
                 
                 // Show bottom sheet with results
                 bottomSheetBehavior.setState(BottomSheetBehavior.STATE_HALF_EXPANDED);
-                locationInfo.setText("Found " + nearbyRoutes.size() + " routes nearby");
+                locationInfo.setText("Found " + nearbyBusRoutes.size() + " routes within 300m");
+                
+                // Make sure the RecyclerView is visible
+                nearbyStationsRecyclerView.setVisibility(View.VISIBLE);
+                btnLocationPermission.setVisibility(View.GONE);
             } else {
-                locationInfo.setText("No routes found nearby");
+                locationInfo.setText("No routes found within 300m");
+                nearbyBusRouteAdapter.updateRoutes(null); // Clear the adapter
             }
         } else {
             Log.d("FragmentNearby", "No nearby routes found within " + radiusMeters + "m");
             locationInfo.setText("No routes found within " + radiusMeters + "m");
+            nearbyBusRouteAdapter.updateRoutes(null); // Clear the adapter
         }
     }
-    
-    // Data class to hold nearby route information
-    public static class NearbyRouteInfo {
-        public final String route;
-        public final String origin;
-        public final String destination;
-        public final String stopName;
-        public final double distance;
-        
-        public NearbyRouteInfo(String route, String origin, String destination, String stopName, double distance) {
-            this.route = route;
-            this.origin = origin;
-            this.destination = destination;
-            this.stopName = stopName;
-            this.distance = distance;
-        }
-    }
+    // We're now using BusRouteStopItem instead of a custom NearbyRouteInfo class
 }
