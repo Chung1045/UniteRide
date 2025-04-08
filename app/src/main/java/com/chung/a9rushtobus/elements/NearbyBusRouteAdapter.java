@@ -61,57 +61,14 @@ public class NearbyBusRouteAdapter extends RecyclerView.Adapter<NearbyBusRouteAd
      * Constructor for the adapter
      * @param context The context
      */
-    public NearbyBusRouteAdapter(Context context) {
+    public NearbyBusRouteAdapter(Context context, Utils utils) {
         this.context = context;
         this.busRouteStopItems = new ArrayList<>();
         this.dataFetcher = new DataFetcher(context);
-        this.utils = null; // We'll implement our own time parsing methods
+        this.utils = utils; // We'll implement our own time parsing methods
         this.databaseHelper = DatabaseHelper.getInstance(context);
     }
-    
-    /**
-     * Parse ISO datetime string to get time in HH:mm format
-     * @param isoDateTime ISO datetime string
-     * @return Formatted time string or "N/A" if parsing fails
-     */
-    private String parseTime(String isoDateTime) {
-        try {
-            // Parse the ISO date-time string
-            java.time.ZonedDateTime zonedDateTime = java.time.ZonedDateTime.parse(isoDateTime);
-            // Convert to LocalTime in system default timezone
-            java.time.LocalTime time = zonedDateTime.withZoneSameInstant(java.time.ZoneId.systemDefault()).toLocalTime();
-            // Format time without seconds
-            java.time.format.DateTimeFormatter formatter = java.time.format.DateTimeFormatter.ofPattern("HH:mm");
-            return time.format(formatter);
-        } catch (Exception e) {
-            Log.e(TAG, "Error parsing time: " + e.getMessage());
-            return "N/A";
-        }
-    }
-    
-    /**
-     * Calculate time difference in minutes between now and given ISO datetime
-     * @param isoDateTime ISO datetime string
-     * @return Time difference in minutes as string, or "N/A" if parsing fails
-     */
-    private String getTimeDifference(String isoDateTime) {
-        try {
-            // Use ZonedDateTime to parse ISO date with timezone information
-            java.time.ZonedDateTime zonedDateTime = java.time.ZonedDateTime.parse(isoDateTime);
-            // Convert to LocalDateTime in system default timezone for comparison
-            java.time.LocalDateTime dateTime = zonedDateTime.withZoneSameInstant(java.time.ZoneId.systemDefault()).toLocalDateTime();
-            java.time.Duration duration = java.time.Duration.between(java.time.LocalDateTime.now(), dateTime);
-            return String.valueOf(duration.toMinutes());
-        } catch (Exception e) {
-            Log.e(TAG, "Error calculating time difference: " + e.getMessage());
-            return "N/A";
-        }
-    }
 
-    /**
-     * Updates the list of bus routes
-     * @param newRoutes The new list of bus routes
-     */
     public void updateRoutes(List<BusRouteStopItem> newRoutes) {
         if (newRoutes == null) {
             this.busRouteStopItems = new ArrayList<>();
@@ -126,10 +83,6 @@ public class NearbyBusRouteAdapter extends RecyclerView.Adapter<NearbyBusRouteAd
         }
     }
 
-    /**
-     * Sets the item click listener
-     * @param listener The listener to set
-     */
     public void setOnItemClickListener(OnItemClickListener listener) {
         this.onItemClickListener = listener;
     }

@@ -87,12 +87,6 @@ public class SavedRoutesManager {
         boolean onboardingComplete = UserPreferences.sharedPref.getBoolean(UserPreferences.ONBOARDING_COMPLETE, false);
         Log.d(TAG, "Onboarding complete status: " + onboardingComplete);
 
-        // For debugging purposes, temporarily bypass the onboarding check
-        // if (!onboardingComplete) {
-        //     Log.d(TAG, "Bypassing onboarding check for debugging");
-        //     onboardingComplete = true;
-        // }
-
         if (onboardingComplete) {
             // If the user has completed onboarding, we can fetch saved stops
             Log.d(TAG, "User has completed onboarding, fetching saved stops");

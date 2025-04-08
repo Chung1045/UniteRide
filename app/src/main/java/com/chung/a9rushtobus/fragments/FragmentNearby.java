@@ -14,6 +14,7 @@ import android.widget.Toast;
 
 import androidx.activity.result.ActivityResultLauncher;
 
+import com.chung.a9rushtobus.Utils;
 import com.chung.a9rushtobus.elements.BusRoute;
 import com.google.android.material.button.MaterialButton;
 import androidx.activity.result.contract.ActivityResultContracts;
@@ -128,11 +129,13 @@ public class FragmentNearby extends Fragment implements OnMapReadyCallback {
                 android.Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
             // If we already have permission, hide the button
             btnLocationPermission.setVisibility(View.GONE);
+            locationInfo.setVisibility(View.GONE);
             getLastLocation();
         } else {
             // Show the button if we don't have permission
             btnLocationPermission.setVisibility(View.VISIBLE);
-            locationInfo.setText("Location access required");
+            locationInfo.setVisibility(View.VISIBLE);
+            locationInfo.setText(R.string.settings_location_required_req_name);
         }
 
         return view;
@@ -238,7 +241,7 @@ public class FragmentNearby extends Fragment implements OnMapReadyCallback {
     
     private void setupRecyclerView() {
         nearbyStationsRecyclerView.setLayoutManager(new LinearLayoutManager(requireContext()));
-        nearbyBusRouteAdapter = new NearbyBusRouteAdapter(requireContext());
+        nearbyBusRouteAdapter = new NearbyBusRouteAdapter(requireContext(), new Utils(getActivity(), getView(), getContext()));
         nearbyStationsRecyclerView.setAdapter(nearbyBusRouteAdapter);
         
         // Set click listener for items
@@ -308,6 +311,9 @@ public class FragmentNearby extends Fragment implements OnMapReadyCallback {
                 ActivityCompat.checkSelfPermission(requireContext(),
                     android.Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
                 getLastLocation();
+            } else {
+                LatLng defaultPoint = new LatLng(22.345415, 114.192640);
+                mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(defaultPoint, 16f));
             }
         } catch (SecurityException e) {
             Log.e("FragmentNearby", "Security exception: " + e.getMessage());
@@ -334,7 +340,7 @@ public class FragmentNearby extends Fragment implements OnMapReadyCallback {
         getNearbyRoutes(location.latitude, location.longitude);
         
         // Expand bottom sheet slightly to show results are available
-        bottomSheetBehavior.setPeekHeight(200);
+        bottomSheetBehavior.setPeekHeight(250);
     }
 
     private void requestPermissions() {
