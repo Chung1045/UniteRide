@@ -3,6 +3,7 @@ package com.chung.a9rushtobus;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.res.ColorStateList;
+import android.content.res.Configuration;
 import android.Manifest;
 import android.annotation.SuppressLint;
 import android.content.Intent;
@@ -21,6 +22,8 @@ import androidx.annotation.RequiresApi;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
+
+import com.chung.a9rushtobus.preferences.LocaleHelper;
 
 public class OnboardingFragments {
     // PERMISSION CODE DEFINE
@@ -126,6 +129,10 @@ public class OnboardingFragments {
     }
 
     public static class FragmentOnBoarding2 extends BaseOnboardingFragment {
+        private String currentLanguage = "en"; // Default language is English
+        private Button languageButton;
+        private LocaleHelper localeHelper;
+
         @Override
         public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
             return inflater.inflate(R.layout.fragment_onboarding_2_5, container, false);
@@ -135,11 +142,101 @@ public class OnboardingFragments {
         public void onViewCreated(View view, Bundle savedInstanceState) {
             super.onViewCreated(view, savedInstanceState);
 
+            // Initialize UserPreferences
+            if (getActivity() != null) {
+                new UserPreferences(getActivity());
+            }
+
+            // Initialize LocaleHelper
+            localeHelper = new LocaleHelper();
+
+            // Get current language from preferences if available
+            if (UserPreferences.sharedPref != null) {
+                currentLanguage = UserPreferences.sharedPref.getString(UserPreferences.SETTINGS_APP_LANG, "en");
+            }
+
             Button nextButton = view.findViewById(R.id.onboarding_2_5_next_button);
-            Button languageButton = view.findViewById(R.id.language_button);
+            languageButton = view.findViewById(R.id.language_button);
+            
+            // Set up navigation button
             setupNavigationButton(nextButton, this);
+            
+            // Set up hover effects
             onHoverListener(nextButton, this, R.color.default_buttonColorBackgroundInverted, R.color.default_buttonColorTextInverted);
             onHoverListener(languageButton, this, R.color.default_buttonColorBackgroundInverted, R.color.default_buttonColorTextInverted);
+            
+            // Update language button text based on current language
+            updateLanguageButtonText();
+            
+            // Set up language button click listener
+            languageButton.setOnClickListener(v -> {
+                // Cycle through languages: en -> zh-rHK -> zh-rCN -> en
+                switch (currentLanguage) {
+                    case "en":
+                        currentLanguage = "zh-rHK";
+                        break;
+                    case "zh-rHK":
+                        currentLanguage = "zh-rCN";
+                        break;
+                    case "zh-rCN":
+                    default:
+                        currentLanguage = "en";
+                        break;
+                }
+                
+                // Apply the new language
+                applyLanguage();
+            });
+        }
+        
+        /**
+         * Updates the language button text based on the current language
+         */
+        private void updateLanguageButtonText() {
+            if (languageButton == null) return;
+            
+            switch (currentLanguage) {
+                case "zh-rHK":
+                    languageButton.setText(R.string.onboarding_2_5_language_default); // This will use the zh-rHK value
+                    break;
+                case "zh-rCN":
+                    languageButton.setText("简体中文");
+                    break;
+                case "en":
+                default:
+                    languageButton.setText("English");
+                    break;
+            }
+        }
+        
+        /**
+         * Applies the selected language to the app
+         */
+        private void applyLanguage() {
+            if (getActivity() == null) return;
+            
+            // Save language preference
+            UserPreferences.editor.putString(UserPreferences.SETTINGS_APP_LANG, currentLanguage).apply();
+            UserPreferences.editor.putBoolean(UserPreferences.SETTINGS_LANG_FOLLOW_SYSTEM, false).apply();
+            
+            // Apply language without recreating activity
+            Configuration config = localeHelper.setAppLocaleWithoutRecreate(getActivity(), currentLanguage);
+            
+            // Update UI elements
+            localeHelper.updateAllUIElements(getActivity());
+            
+            // Update language button text
+            updateLanguageButtonText();
+        }
+        
+        @Override
+        public void onConfigurationChanged(Configuration newConfig) {
+            super.onConfigurationChanged(newConfig);
+            
+            // Update UI when configuration changes (like when system language changes)
+            if (isAdded() && getView() != null) {
+                updateLanguageButtonText();
+            }
         }
     }
 
