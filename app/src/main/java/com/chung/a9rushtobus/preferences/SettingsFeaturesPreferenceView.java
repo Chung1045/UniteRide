@@ -35,20 +35,27 @@ public class SettingsFeaturesPreferenceView extends PreferenceFragmentCompat {
 
         switchPref = findPreference("pref_feature_rthkNews");
         assert switchPref != null;
-        switchPref.setChecked(UserPreferences.sharedPref.getBoolean("featureShowRTHKNews", false));
+        
+        // Initialize with the current value
+        boolean isRTHKEnabled = UserPreferences.sharedPref.getBoolean("featureShowRTHKNews", false);
+        switchPref.setChecked(isRTHKEnabled);
+        
+        // Make sure bold text preference is in sync with RTHK News preference
+        UserPreferences.editor.putBoolean(UserPreferences.SETTINGS_ACCESS_BOLD_TEXT, isRTHKEnabled).apply();
     }
 
     private void listenerInit() {
 
         SwitchPreferenceCompat switchPref = findPreference("pref_feature_rthkNews");
         assert switchPref != null;
-        switchPref.setChecked(false);
+        // Initialize with the current value
+        switchPref.setChecked(UserPreferences.sharedPref.getBoolean("featureShowRTHKNews", false));
         switchPref.setOnPreferenceChangeListener((preference, newValue) -> {
             // newValue is the new state of the switch
             boolean isSwitchOn = (Boolean) newValue;
-            // Do something with the state, for example:
+            
+            // Save the RTHK News preference
             UserPreferences.editor.putBoolean("featureShowRTHKNews", isSwitchOn).apply();
-            // Returning true means to update the state of the preference with the new value.
             return true;
         });
 

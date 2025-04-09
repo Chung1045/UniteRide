@@ -47,6 +47,25 @@ public class SettingsLanguagePreferenceView extends PreferenceFragmentCompat {
         layoutInit();
         listenerInit();
     }
+    
+    @Override
+    public void onConfigurationChanged(Configuration newConfig) {
+        super.onConfigurationChanged(newConfig);
+        
+        // Refresh all preferences with new language
+        if (isAdded() && getPreferenceScreen() != null) {
+            // Reload preferences from XML
+            getPreferenceScreen().removeAll();
+            setPreferencesFromResource(R.xml.preference_language, null);
+            
+            // Re-initialize preferences
+            layoutInit();
+            listenerInit();
+            
+            // Update UI elements
+            updateUIForLanguageChange(newConfig);
+        }
+    }
 
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
@@ -62,12 +81,15 @@ public class SettingsLanguagePreferenceView extends PreferenceFragmentCompat {
     private void updateToolbarTitle(String title) {
         if (getActivity() != null) {
             androidx.appcompat.widget.Toolbar toolbar = getActivity().findViewById(R.id.settingsToolBar);
-            com.google.android.material.appbar.CollapsingToolbarLayout collapsingToolbar = 
-                (com.google.android.material.appbar.CollapsingToolbarLayout) toolbar.getParent();
-
-            toolbar.setTitle(title);
-            if (collapsingToolbar != null) {
-                collapsingToolbar.setTitle(title);
+            if (toolbar != null) {
+                toolbar.setTitle(title);
+                
+                com.google.android.material.appbar.CollapsingToolbarLayout collapsingToolbar = 
+                    (com.google.android.material.appbar.CollapsingToolbarLayout) toolbar.getParent();
+                    
+                if (collapsingToolbar != null) {
+                    collapsingToolbar.setTitle(title);
+                }
             }
         }
     }
@@ -83,27 +105,71 @@ public class SettingsLanguagePreferenceView extends PreferenceFragmentCompat {
 
         followSysPref.setOnPreferenceChangeListener((preference, newValue) -> {
             boolean isChecked = (Boolean) newValue;
+            
+            // Toggle follow system setting in preferences
+            UserPreferences.editor.putBoolean(UserPreferences.SETTINGS_LANG_FOLLOW_SYSTEM, isChecked).commit();
+            
             if (isChecked) {
-                Toast.makeText(getContext(), "Follow system lang selected", Toast.LENGTH_SHORT).show();
-                localeHelper.toggleFollowSysLocale(getContext());
+                // Get system locale
+                Locale sysLocale = Resources.getSystem().getConfiguration().getLocales().get(0);
+                String localeCode = "auto";
+                
+                // Apply locale without recreating activity
+                Configuration config = localeHelper.setAppLocaleWithoutRecreate(getContext(), localeCode);
+                
+                // Update all UI elements in the app
+                if (getActivity() != null) {
+                    localeHelper.updateAllUIElements(getActivity());
+                }
+                
+                // Disable language selection options
                 chinTradPref.setEnabled(false);
                 chinSimpPref.setEnabled(false);
                 engPref.setEnabled(false);
+                
+                // Show toast with updated resources
+                Toast.makeText(getContext(), 
+                    getResources().getString(R.string.settings_language_changed), 
+                    Toast.LENGTH_SHORT).show();
             } else {
-                Toast.makeText(getContext(), "Follow system lang deselected", Toast.LENGTH_SHORT).show();
-                localeHelper.toggleFollowSysLocale(getContext());
+                // Default to English when turning off system locale
+                String localeCode = "en";
+                UserPreferences.editor.putString(UserPreferences.SETTINGS_APP_LANG, localeCode).commit();
+                
+                // Apply locale without recreating activity
+                Configuration config = localeHelper.setAppLocaleWithoutRecreate(getContext(), localeCode);
+                
+                // Update all UI elements in the app
+                if (getActivity() != null) {
+                    localeHelper.updateAllUIElements(getActivity());
+                }
+                
+                // Enable language selection options
                 chinTradPref.setEnabled(true);
                 chinSimpPref.setEnabled(true);
                 engPref.setEnabled(true);
+                
+                // Update radio button selection
+                engPref.setChecked(true);
+                chinTradPref.setChecked(false);
+                chinSimpPref.setChecked(false);
+                
+                // Show toast with updated resources
+                Toast.makeText(getContext(), 
+                    getResources().getString(R.string.settings_language_changed), 
+                    Toast.LENGTH_SHORT).show();
             }
             return true;
         });
 
         chinTradPref.setOnPreferenceChangeListener((preference, newValue) -> {
             if ((boolean) newValue) {
+                // Update radio button selection
                 chinTradPref.setChecked(true);
                 chinSimpPref.setChecked(false);
                 engPref.setChecked(false);
+                
+                // Apply locale without recreating activity
                 setAppLocale(getContext(), "zh-rHK");
             }
             return true;
@@ -111,9 +177,12 @@ public class SettingsLanguagePreferenceView extends PreferenceFragmentCompat {
 
         chinSimpPref.setOnPreferenceChangeListener((preference, newValue) -> {
             if ((boolean) newValue) {
+                // Update radio button selection
                 chinSimpPref.setChecked(true);
                 chinTradPref.setChecked(false);
                 engPref.setChecked(false);
+                
+                // Apply locale without recreating activity
                 setAppLocale(getContext(), "zh-rCN");                
             }
             return true;
@@ -121,9 +190,12 @@ public class SettingsLanguagePreferenceView extends PreferenceFragmentCompat {
 
         engPref.setOnPreferenceChangeListener((preference, newValue) -> {
             if ((boolean) newValue) {
+                // Update radio button selection
                 engPref.setChecked(true);
                 chinTradPref.setChecked(false);
                 chinSimpPref.setChecked(false);
+                
+                // Apply locale without recreating activity
                 setAppLocale(getContext(), "en");
             }
             return true;
@@ -176,36 +248,67 @@ public class SettingsLanguagePreferenceView extends PreferenceFragmentCompat {
     }
 
     public void setAppLocale(Context context, String localeCode) {
-        Resources resources = context.getResources();
-        Configuration config = resources.getConfiguration();
-        Locale locale;
+        // Save the current toolbar title
+        UserPreferences.editor.putString(CURRENT_TOOLBAR_TITLE, 
+            getString(R.string.settings_category_langOption_name)).apply();
+            
+        // Apply locale changes without recreating the activity
+        Configuration config = localeHelper.setAppLocaleWithoutRecreate(context, localeCode);
         
-        // Handle different locale codes properly
-        if (localeCode.equals("zh-rHK")) {
-            locale = Locale.TRADITIONAL_CHINESE;
-        } else if (localeCode.equals("zh-rCN")) {
-            locale = Locale.SIMPLIFIED_CHINESE;
-        } else {
-            locale = new Locale(localeCode);
+        // Update UI to reflect language changes
+        updateUIForLanguageChange(config);
+        
+        // Update all UI elements in the app
+        if (getActivity() != null) {
+            localeHelper.updateAllUIElements(getActivity());
+            
+            // Force refresh this fragment
+            if (isAdded() && getPreferenceScreen() != null) {
+                // Reload preferences from XML
+                getPreferenceScreen().removeAll();
+                setPreferencesFromResource(R.xml.preference_language, null);
+                
+                // Re-initialize preferences
+                layoutInit();
+                listenerInit();
+            }
+        }
+    }
+    
+    /**
+     * Updates UI elements to reflect language changes without activity recreation
+     */
+    private void updateUIForLanguageChange(Configuration config) {
+        if (getActivity() == null) return;
+        
+        // Get updated resources with new locale
+        Resources resources = getActivity().getResources();
+        
+        // Update preference titles and summaries
+        if (followSysPref != null) {
+            followSysPref.setTitle(resources.getString(R.string.settings_mainSwitchPref_followSys_name));
         }
         
-        Locale.setDefault(locale);
-        config.setLocale(locale);
-        
-        // Update the configuration
-        context.createConfigurationContext(config);
-        resources.updateConfiguration(config, resources.getDisplayMetrics());
-
-        // Save the selected language preference
-        UserPreferences.editor.putString(UserPreferences.SETTINGS_APP_LANG, localeCode).commit();
-
-        // Save current toolbar title before recreating
-        if (context instanceof Activity) {
-            Activity activity = (Activity) context;
-            // Save the current toolbar title
-            UserPreferences.editor.putString(CURRENT_TOOLBAR_TITLE, 
-                getString(R.string.settings_category_langOption_name)).apply();
-            activity.recreate();
+        if (chinTradPref != null) {
+            chinTradPref.setTitle("中文（繁體）");
+            chinTradPref.setSummary(resources.getString(R.string.settings_lang_chineseTradOption_name));
         }
+        
+        if (chinSimpPref != null) {
+            chinSimpPref.setTitle("中文（簡体）");
+            chinSimpPref.setSummary(resources.getString(R.string.settings_lang_chineseSimpOption_name));
+        }
+        
+        if (engPref != null) {
+            engPref.setTitle(resources.getString(R.string.settings_lang_englishOption_name));
+        }
+        
+        // Update toolbar title
+        updateToolbarTitle(resources.getString(R.string.settings_category_langOption_name));
+        
+        // Show a toast message to confirm language change
+        Toast.makeText(getContext(), 
+            resources.getString(R.string.settings_language_changed), 
+            Toast.LENGTH_SHORT).show();
     }
 }

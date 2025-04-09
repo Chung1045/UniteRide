@@ -10,6 +10,7 @@ import androidx.preference.PreferenceFragmentCompat;
 import androidx.preference.SwitchPreferenceCompat;
 
 import com.chung.a9rushtobus.R;
+import com.chung.a9rushtobus.UserPreferences;
 import com.google.android.material.appbar.MaterialToolbar;
 
 public class SettingsAccessibilityPreferenceView extends PreferenceFragmentCompat {
@@ -38,11 +39,21 @@ public class SettingsAccessibilityPreferenceView extends PreferenceFragmentCompa
         assert boldTextSwitchPref != null;
         boldTextSwitchPref.setChecked(false);
         boldTextSwitchPref.setOnPreferenceChangeListener((preference, newValue) -> {
-            // newValue is the new state of the switch
+
             boolean isSwitchOn = (Boolean) newValue;
-            // Do something with the state, for example:
-            Toast.makeText(getContext(), "Switch is " + (isSwitchOn ? "on" : "off"), Toast.LENGTH_SHORT).show();
-            // Returning true means to update the state of the preference with the new value.
+            // newValue is the new state of the switch
+            UserPreferences.editor.putBoolean(UserPreferences.SETTINGS_ACCESS_BOLD_TEXT, isSwitchOn).apply();
+
+            // Notify the user that bold text has been toggled
+            if (getActivity() != null) {
+                String message = isSwitchOn ?
+                        getString(R.string.app_name) + " will now use bold text" :
+                        getString(R.string.app_name) + " will now use normal text";
+                Toast.makeText(getActivity(), message, Toast.LENGTH_SHORT).show();
+
+                // Recreate the activity to apply the new theme
+                getActivity().recreate();
+            }
             return true;
         });
 

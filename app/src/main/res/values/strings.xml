@@ -71,6 +71,7 @@ start your journey now!</string>
     <string name="settings_lang_chineseTradOption_name">Traditional Chinese</string>
     <string name="settings_lang_chineseSimpOption_name">Simplified Chinese</string>
     <string name="settings_lang_englishOption_name">English</string>
+    <string name="settings_language_changed">Language changed successfully</string>
 
     <string name="settings_theme_lightOption_name">Light Theme</string>
     <string name="settings_theme_darkOption_name">Dark Theme</string>

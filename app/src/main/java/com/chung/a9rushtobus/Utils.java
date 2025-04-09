@@ -40,6 +40,7 @@ public class Utils {
     private DialogUtils dialogUtils;
     private IntentUtils intentUtils;
     private TimeUtils timeUtils;
+    private static TextStyleUtils textStyleUtils;
 
     public Utils(Activity a, View v, Context c){
         this.activity = a;
@@ -55,6 +56,7 @@ public class Utils {
         dialogUtils = new DialogUtils(c);
         intentUtils = new IntentUtils(c);
         timeUtils = new TimeUtils();
+        textStyleUtils = new TextStyleUtils(c);
     }
 
     // Functions
@@ -260,4 +262,23 @@ public class Utils {
 
     }
 
+    public static class TextStyleUtils {
+        private Context context;
+
+        public TextStyleUtils(Context context) {
+            this.context = context;
+        }
+
+        /**
+         * Apply bold text style to the entire application
+         * @param isBold true to enable bold text, false to use normal text
+         */
+        public static void applyBoldTextStyle(boolean isBold) {
+            // Update the shared preference
+            UserPreferences.editor.putBoolean(UserPreferences.SETTINGS_ACCESS_BOLD_TEXT, isBold).apply();
+            
+            // The actual style change will be applied when activities are recreated
+            // or when the app is restarted
+        }
+    }
 }

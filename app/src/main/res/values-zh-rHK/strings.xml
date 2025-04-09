@@ -37,6 +37,7 @@
     <string name="settings_lang_chineseTradOption_name">繁體中文</string>
     <string name="settings_lang_chineseSimpOption_name">簡體中文</string>
     <string name="settings_lang_englishOption_name">英文</string>
+    <string name="settings_language_changed">語言已成功更改</string>
     <string name="settings_theme_lightOption_name">淺色主題</string>
     <string name="settings_theme_darkOption_name">深色主題</string>
     <string name="settings_accessibility_boldOption_name">粗體文字</string>

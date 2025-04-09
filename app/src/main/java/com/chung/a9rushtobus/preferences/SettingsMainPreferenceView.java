@@ -3,6 +3,7 @@ package com.chung.a9rushtobus.preferences;
 import static org.chromium.base.ThreadUtils.runOnUiThread;
 
 import android.content.Intent;
+import android.content.res.Configuration;
 import android.os.Bundle;
 import android.os.Handler;
 import android.util.Log;
@@ -76,6 +77,25 @@ public class SettingsMainPreferenceView extends PreferenceFragmentCompat {
             String defaultTitle = getString(R.string.bottomNav_settings_tabName);
             updateToolbarTitle(defaultTitle);
             bottomNavigationView.setVisibility(View.VISIBLE);
+        }
+    }
+    
+    @Override
+    public void onConfigurationChanged(Configuration newConfig) {
+        super.onConfigurationChanged(newConfig);
+        
+        // Refresh all preferences with new language
+        if (isAdded() && getPreferenceScreen() != null) {
+            // Reload preferences from XML
+            getPreferenceScreen().removeAll();
+            setPreferencesFromResource(R.xml.preference_main, null);
+            
+            // Re-initialize listeners
+            listenerInit();
+            
+            // Update toolbar title
+            String defaultTitle = getString(R.string.bottomNav_settings_tabName);
+            updateToolbarTitle(defaultTitle);
         }
     }
 
