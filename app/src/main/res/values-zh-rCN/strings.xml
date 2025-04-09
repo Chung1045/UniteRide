@@ -50,8 +50,10 @@
     <string name="frag_search_specialRoute_name">特別班</string>
     <string name="frag_nearby_noStops_name">没有找到附近的巴士路线</string>
     <string name="frag_nearby_foundStop_name">找到</string>
+    <string name="frag_news_noNewNews_name">未有新交通消息</string>
     <string name="detail_view_normal_route_name">正常路線</string>
     <string name="detail_view_eta_arriving_name">即將到站</string>
+    <string name="detail_view_save_route_stop_msg">已收藏：</string>
     <string name="detail_view_unsave_route_stop_name">取消收藏巴士站</string>
     <string name="detail_view_eta_track_bus_name">追踪巴士</string>
     <string name="settings_category_langOption_name">语言</string>
@@ -110,4 +112,8 @@
     <string name="permission_disclaimer_name_desc">应用程式不会收集或传输您的位置或任何其他个人资料以进行线上处理。所有位置资料仅在您的装置上处理。\n\n在向政府开放数据平台发送 API 请求时，应用程式不会传送任何个人资料。\n\n使用 Android 平台定位服务时，您的位置资料可能会传送至 Google 处理，详情请参阅 Google 的隐私权政策。</string>
     <string name="frag_saved_noSaved_title">没有已收藏的巴士站</string>
     <string name="settings_location_required_req_name">需要位置权限</string>
+    <string name="err_unable_to_load_busStop_name">无法载入巴士站数据</string>
+    <string name="err_busStop_not_found_name">没有找到此路线之巴士站</string>
+    <string name="err_unable_to_load_gmb_desc">" 无法载入小巴站资料，检查网络并重新整理"</string>
+    <string name="err_database_err">数据库错误：请更新数据库</string>
 </resources>

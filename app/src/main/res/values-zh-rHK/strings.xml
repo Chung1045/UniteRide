@@ -24,8 +24,10 @@
     <string name="frag_saved_noSaved_title">沒有已收藏的巴士站</string>
     <string name="frag_nearby_noStops_name">沒有找到附近的巴士路線</string>
     <string name="frag_nearby_foundStop_name">找到</string>
+    <string name="frag_news_noNewNews_name">未有新交通消息</string>
     <string name="detail_view_normal_route_name">正常路線</string>
     <string name="detail_view_eta_arriving_name">即將到達</string>
+    <string name="detail_view_save_route_stop_msg">已收藏：</string>
     <string name="detail_view_unsave_route_stop_name">取消收藏巴士站</string>
     <string name="detail_view_eta_track_bus_name">追蹤巴士</string>
     <string name="settings_category_langOption_name">語言</string>
@@ -80,4 +82,8 @@
     <string name="permission_notification_desc">用於顯示巴士路線的預計到達時間</string>
     <string name="permission_disclaimer_name_desc">應用程式不會收集或傳輸您的位置或任何其他個人資料以進行線上處理。所有位置資料僅在您的裝置上處理。\n\n在向政府開放數據平台發送 API 請求時，應用程式不會傳送任何個人資料。\n\n使用 Android 平台定位服務時，您的位置資料可能會傳送至 Google 處理，詳情請參閱 Google 的隱私權政策。</string>
     <string name="settings_location_required_req_name">需要位置權限</string>
+    <string name="err_unable_to_load_busStop_name">無法載入巴士站資料</string>
+    <string name="err_busStop_not_found_name">沒有找到此路線之巴士站</string>
+    <string name="err_unable_to_load_gmb_desc">無法載入小巴站資料，檢查網絡並重新整理</string>
+    <string name="err_database_err">資料庫錯誤：請更新資料庫</string>
 </resources>
