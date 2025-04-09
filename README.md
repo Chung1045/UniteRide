@@ -4,12 +4,17 @@
 
 This project was undertaken as a group assignment for the Mobile Application Development course (COMP S313F) at Hong Kong Metropolitan University in 2025, build with Java.
 
+## Contributor
+[@randombytebit](https://github.com/randombytebit)
+
+[@Chung1045](https://github.com/Chung1045)
+
 ## Introduction
-UniteRide is a bus tracking application that provides real-time information about bus locations and schedules from Hong Kong Government's Open Data Platform. Designed to help users plan their journeys more efficiently by providing accurate and up-to-date information.
+UniteRide is an Android bus tracking application that provides real-time information about bus locations and schedules from Hong Kong Government's Open Data Platform. Designed to help users plan their journeys more efficiently by providing accurate and up-to-date information.
 
 UniteRide provides route information and estimated arrival time for Kowloon Motor Bus (KMB), Citybus (CTB) and Green Mini buses (GMB), unified at one place.
 
-This application was initially called "9 Rush To Bus" when in development which uses cantonese idioms to describe the action to rush towards the bus. The name was changed to "UniteRide" to better reflect the application's purpose and functionality.
+This application was initially called "9 Rush To Bus" when in development which uses cantonese idioms to describe the action to rush towards the bus. The name was changed to "UniteRide" to reflect the application's purpose and functionality better.
 
 ## Features
 - Real-time bus tracking
@@ -22,6 +27,13 @@ This application was initially called "9 Rush To Bus" when in development which 
 - Dark mode support
 - RTHK Traffic News integration (Available in Cantonese only)
 - Notification for bus tracking
+
+## Install Requirement
+OS: Android
+
+Minimum: Android 10+
+
+Target: Android 15
 
 ## Build your own
 > [!NOTE]
@@ -46,14 +58,15 @@ git clone https://github.com/Chung1045/UniteRide.git
 ```
 MAPS_API_KEY=YOUR_API_KEY
 ```
-This would be use to reference the Google Maps API key in the project.
+This would be used to reference the project's Google Maps API key.
+
 5. In your `secret.properties` file, add the following lines:
 ```
 MAPS_API_KEY=<Your-Google-Maps-API-Key>
 ```
 Replace `<Your-Google-Maps-API-Key>` with your actual Google Maps API key.
-6. Build and run the application using your IDE
 
+6. Build and run the application using your IDE
 
 ## Permissions
 - Networking
