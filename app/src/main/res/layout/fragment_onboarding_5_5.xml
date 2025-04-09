@@ -36,7 +36,7 @@
             android:fontFamily="@font/general_sans_semibold"
             android:gravity="center"
             android:text="@string/onboarding_5_5_content"
-            android:textColor="@color/brand_colorPrimary"
+            android:textColor="@color/brand_colorOnSurfaceSecondary"
             android:textSize="14sp"
             android:textStyle="bold" />
     </LinearLayout>
