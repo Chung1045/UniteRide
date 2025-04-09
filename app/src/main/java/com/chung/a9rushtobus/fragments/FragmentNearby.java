@@ -10,15 +10,10 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
-import android.widget.Toast;
 
-import androidx.activity.result.ActivityResultLauncher;
-
-import com.chung.a9rushtobus.Utils;
-import com.chung.a9rushtobus.elements.BusRoute;
-import com.google.android.material.button.MaterialButton;
-import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.core.app.ActivityCompat;
 import androidx.fragment.app.Fragment;
@@ -26,11 +21,12 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.chung.a9rushtobus.R;
-import com.chung.a9rushtobus.UserPreferences;
 import com.chung.a9rushtobus.database.DatabaseHelper;
 import com.chung.a9rushtobus.database.KMBDatabase;
 import com.chung.a9rushtobus.elements.BusRouteStopItem;
 import com.chung.a9rushtobus.elements.NearbyBusRouteAdapter;
+import com.chung.a9rushtobus.UserPreferences;
+import com.chung.a9rushtobus.Utils;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.maps.CameraUpdateFactory;
@@ -38,15 +34,20 @@ import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.UiSettings;
+import com.google.android.gms.maps.model.CircleOptions;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MapStyleOptions;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.material.bottomsheet.BottomSheetBehavior;
+import com.google.android.material.button.MaterialButton;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Comparator;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -158,6 +159,41 @@ public class FragmentNearby extends Fragment implements OnMapReadyCallback {
                     String routeStr1 = stop1.getRoute() != null ? stop1.getRoute().trim().toUpperCase() : "";
                     String routeStr2 = stop2.getRoute() != null ? stop2.getRoute().trim().toUpperCase() : "";
 
+                    // If routes are the same, compare by service type (normal routes first)
+                    if (routeStr1.equals(routeStr2)) {
+                        // For KMB, service type "1" is normal, others are special
+                        if (stop1.getCompany().equals("kmb") && stop2.getCompany().equals("kmb")) {
+                            String serviceType1 = stop1.getServiceType() != null ? stop1.getServiceType() : "";
+                            String serviceType2 = stop2.getServiceType() != null ? stop2.getServiceType() : "";
+                            
+                            // If one is normal (1) and the other is special, normal comes first
+                            if (serviceType1.equals("1") && !serviceType2.equals("1")) {
+                                return -1;
+                            } else if (!serviceType1.equals("1") && serviceType2.equals("1")) {
+                                return 1;
+                            }
+                            
+                            // If both are special or both are normal, compare by service type number
+                            int serviceTypeCompare = serviceType1.compareTo(serviceType2);
+                            if (serviceTypeCompare != 0) {
+                                return serviceTypeCompare;
+                            }
+                        }
+                        
+                        // If service types are the same or not KMB, compare by bound/direction
+                        String bound1 = stop1.getBound() != null ? stop1.getBound() : "";
+                        String bound2 = stop2.getBound() != null ? stop2.getBound() : "";
+                        int boundCompare = bound1.compareTo(bound2);
+                        if (boundCompare != 0) {
+                            return boundCompare;
+                        }
+                        
+                        // If bounds are the same, compare by stop ID to group by stops
+                        String stopId1 = stop1.getStopID() != null ? stop1.getStopID() : "";
+                        String stopId2 = stop2.getStopID() != null ? stop2.getStopID() : "";
+                        return stopId1.compareTo(stopId2);
+                    }
+
                     // Pattern to match numeric prefix and alphabetic suffix
                     Pattern pattern = Pattern.compile("^(\\d+)([A-Z]*)");
                     Matcher matcher1 = pattern.matcher(routeStr1);
@@ -231,6 +267,7 @@ public class FragmentNearby extends Fragment implements OnMapReadyCallback {
             });
 
         } catch (Exception e) {
+            Log.e("FragmentNearby", "Error sorting bus stops: " + e.getMessage(), e);
             Collections.sort(nearbyBusStops, (stop1, stop2) -> {
                 String r1 = stop1 != null && stop1.getRoute() != null ? stop1.getRoute() : "";
                 String r2 = stop2 != null && stop2.getRoute() != null ? stop2.getRoute() : "";
@@ -276,7 +313,13 @@ public class FragmentNearby extends Fragment implements OnMapReadyCallback {
         mMap = googleMap;
 
         try {
-            mMap.setMyLocationEnabled(true);
+            // Enable the "My Location" layer if permission is granted
+            if (ActivityCompat.checkSelfPermission(requireContext(),
+                    android.Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED ||
+                ActivityCompat.checkSelfPermission(requireContext(),
+                    android.Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+                mMap.setMyLocationEnabled(true);
+            }
 
             UiSettings uiSettings = mMap.getUiSettings();
 
@@ -308,25 +351,61 @@ public class FragmentNearby extends Fragment implements OnMapReadyCallback {
             } else {
                 LatLng defaultPoint = new LatLng(22.345415, 114.192640);
                 mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(defaultPoint, 16f));
+                // Even for default location, we can show the search radius
+                addRadiusCircle(defaultPoint, SEARCH_RADIUS_METERS);
             }
         } catch (SecurityException e) {
             Log.e("FragmentNearby", "Security exception: " + e.getMessage());
         }
 
+        // If we already have a location (from a previous state), update the map
         if (currentLocation != null) {
             updateMapLocation(currentLocation);
         }
     }
 
 
+    // Define the search radius as a class constant
+    private static final int SEARCH_RADIUS_METERS = 1000;
+    
     private void updateMapLocation(LatLng location) {
         if (mMap != null) {
+            // Clear the map to remove any existing markers and shapes
             mMap.clear();
+            
+            // Add a circle to show the search radius
+            addRadiusCircle(location, SEARCH_RADIUS_METERS);
+            
+            // Move the camera to the new location with appropriate zoom level
             mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(location, 16f));
 
-            // Here you would fetch nearby stations based on the location
+            // Fetch nearby stations based on the location
             fetchNearbyStations(location);
+            
+            // Log that we've updated the map location
+            Log.d("FragmentNearby", "Map updated to location: " + location.latitude + ", " + location.longitude);
+        } else {
+            Log.e("FragmentNearby", "Map is null, couldn't update location");
         }
+    }
+    
+    private void addRadiusCircle(LatLng center, int radiusMeters) {
+        if (mMap == null) return;
+        
+        // Create a circle with a border
+        CircleOptions circleOptions = new CircleOptions()
+                .center(center)
+                .radius(radiusMeters) // in meters
+                .strokeWidth(4) // border width - thicker for better visibility
+                .strokeColor(getResources().getColor(R.color.colorPrimary, null)) // border color
+                .fillColor(getResources().getColor(R.color.colorPrimaryTransparent, null)) // fill color with transparency
+                .clickable(false) // make it non-clickable
+                .visible(true);   // ensure it's visible
+        
+        mMap.addCircle(circleOptions);
+        
+        // Log that we've added the circle
+        Log.d("FragmentNearby", "Added search radius circle: " + radiusMeters + "m at " + center.latitude + ", " + center.longitude);
     }
 
     private void fetchNearbyStations(LatLng location) {
@@ -335,6 +414,63 @@ public class FragmentNearby extends Fragment implements OnMapReadyCallback {
         
         // Expand bottom sheet slightly to show results are available
         bottomSheetBehavior.setPeekHeight(250);
+    }
+    
+    // Add markers to the map for the bus stops
+    private void addStopMarkersToMap(List<BusRouteStopItem> busStops) {
+        if (mMap == null || busStops == null || busStops.isEmpty()) {
+            return;
+        }
+        
+        // Clear existing markers
+        mMap.clear();
+        
+        // Re-add the radius circle after clearing the map
+        if (currentLocation != null) {
+            addRadiusCircle(currentLocation, SEARCH_RADIUS_METERS);
+        }
+        
+        // Keep track of stops we've already added to avoid duplicates
+        Set<String> addedStopIds = new HashSet<>();
+        
+        for (BusRouteStopItem stop : busStops) {
+            // Only add each physical stop once (even if it serves multiple routes)
+            if (!addedStopIds.contains(stop.getStopID())) {
+                // Get stop coordinates from the database
+                String query = "SELECT " +
+                        KMBDatabase.Tables.KMB_STOPS.COLUMN_LATITUDE + ", " +
+                        KMBDatabase.Tables.KMB_STOPS.COLUMN_LONGITUDE + " " +
+                        "FROM " + KMBDatabase.Tables.KMB_STOPS.TABLE_NAME + " " +
+                        "WHERE " + KMBDatabase.Tables.KMB_STOPS.COLUMN_STOP_ID + " = ?";
+                
+                Cursor cursor = kmbDatabase.db.rawQuery(query, new String[]{stop.getStopID()});
+                
+                if (cursor != null && cursor.moveToFirst()) {
+                    try {
+                        double stopLat = cursor.getDouble(cursor.getColumnIndexOrThrow(KMBDatabase.Tables.KMB_STOPS.COLUMN_LATITUDE));
+                        double stopLng = cursor.getDouble(cursor.getColumnIndexOrThrow(KMBDatabase.Tables.KMB_STOPS.COLUMN_LONGITUDE));
+                        
+                        // Create a marker for this stop
+                        LatLng stopLocation = new LatLng(stopLat, stopLng);
+                        MarkerOptions markerOptions = new MarkerOptions()
+                                .position(stopLocation)
+                                .title(stop.getStopName())
+                                .snippet("Stop ID: " + stop.getStopID());
+                        
+                        mMap.addMarker(markerOptions);
+                        
+                        // Add to our set of added stops
+                        addedStopIds.add(stop.getStopID());
+                    } catch (Exception e) {
+                        Log.e("FragmentNearby", "Error adding marker: " + e.getMessage(), e);
+                    }
+                }
+                
+                if (cursor != null) {
+                    cursor.close();
+                }
+            }
+        }
     }
 
     private void requestPermissions() {
@@ -357,17 +493,34 @@ public class FragmentNearby extends Fragment implements OnMapReadyCallback {
                             double longitude = location.getLongitude();
                             currentLocation = new LatLng(latitude, longitude);
 
-                            // Update map with location
+                            // Update map with location - this will also add the radius circle
                             updateMapLocation(currentLocation);
+                            
+                            // Get nearby routes
                             getNearbyRoutes(latitude, longitude);
+                            
+                            // Log that we've updated the location
+                            Log.d("FragmentNearby", "Updated location to: " + latitude + ", " + longitude);
+                        } else {
+                            Log.d("FragmentNearby", "Location is null, couldn't update map");
                         }
                     });
+        } else {
+            Log.d("FragmentNearby", "No location permission granted");
         }
     }
 
     private void getNearbyRoutes(double latitude, double longitude) {
-        // Set radius to 600 meters as per requirement
-        int radiusMeters = 1000;
+        // Use the class constant for radius
+        int radiusMeters = SEARCH_RADIUS_METERS;
+        
+        // Make sure the radius circle is visible on the map
+        if (mMap != null) {
+            LatLng location = new LatLng(latitude, longitude);
+            // We don't need to clear the map here as it will be cleared in addStopMarkersToMap
+            // Just ensure the current location is updated
+            currentLocation = location;
+        }
         
         if (kmbDatabase == null) {
             Log.e("FragmentNearby", "KMBDatabase is null. Initializing now.");
@@ -391,88 +544,139 @@ public class FragmentNearby extends Fragment implements OnMapReadyCallback {
             return;
         }
         
-        Cursor routesCursor = kmbDatabase.queryNearbyRoutes(latitude, longitude, radiusMeters);
-
-        Log.d("FragmentNearby", "Querying nearby routes with latitude: " + latitude + ", longitude: " + longitude);
-        Log.d("FragmentNearby", "Cursor count: " + (routesCursor != null ? routesCursor.getCount() : "null"));
-
+        // Calculate approximate bounding box for faster filtering
+        double latDelta = radiusMeters * 0.000009;
+        double lonDelta = radiusMeters * 0.000009;
+        
+        double minLat = latitude - latDelta;
+        double maxLat = latitude + latDelta;
+        double minLon = longitude - lonDelta;
+        double maxLon = longitude + lonDelta;
+        
+        // Create a list of BusRouteStopItem objects for the adapter
+        List<BusRouteStopItem> nearbyBusRoutes = new ArrayList<>();
+        
+        // Use a more efficient approach with a single query to get all nearby stops with their routes
+        String nearbyRoutesQuery = "SELECT " +
+                "s." + KMBDatabase.Tables.KMB_STOPS.COLUMN_STOP_ID + ", " +
+                "s." + KMBDatabase.Tables.KMB_STOPS.COLUMN_STOP_NAME_EN + ", " +
+                "s." + KMBDatabase.Tables.KMB_STOPS.COLUMN_STOP_NAME_TC + ", " +
+                "s." + KMBDatabase.Tables.KMB_STOPS.COLUMN_STOP_NAME_SC + ", " +
+                "r." + KMBDatabase.Tables.KMB_ROUTES.COLUMN_ROUTE + ", " +
+                "r." + KMBDatabase.Tables.KMB_ROUTES.COLUMN_BOUND + ", " +
+                "r." + KMBDatabase.Tables.KMB_ROUTES.COLUMN_SERVICE_TYPE + ", " +
+                "r." + KMBDatabase.Tables.KMB_ROUTES.COLUMN_ORIGIN_EN + ", " +
+                "r." + KMBDatabase.Tables.KMB_ROUTES.COLUMN_DEST_EN + ", " +
+                // Simple squared distance for sorting
+                "((CAST(s." + KMBDatabase.Tables.KMB_STOPS.COLUMN_LATITUDE + " AS REAL) - ?) * " +
+                "(CAST(s." + KMBDatabase.Tables.KMB_STOPS.COLUMN_LATITUDE + " AS REAL) - ?) + " +
+                "(CAST(s." + KMBDatabase.Tables.KMB_STOPS.COLUMN_LONGITUDE + " AS REAL) - ?) * " +
+                "(CAST(s." + KMBDatabase.Tables.KMB_STOPS.COLUMN_LONGITUDE + " AS REAL) - ?)) AS distance " +
+                "FROM " + KMBDatabase.Tables.KMB_STOPS.TABLE_NAME + " s " +
+                "JOIN " + KMBDatabase.Tables.KMB_ROUTE_STOPS.TABLE_NAME + " rs " +
+                "ON s." + KMBDatabase.Tables.KMB_STOPS.COLUMN_STOP_ID + " = rs." + KMBDatabase.Tables.KMB_ROUTE_STOPS.COLUMN_STOP_ID + " " +
+                "JOIN " + KMBDatabase.Tables.KMB_ROUTES.TABLE_NAME + " r " +
+                "ON rs." + KMBDatabase.Tables.KMB_ROUTE_STOPS.COLUMN_ROUTE + " = r." + KMBDatabase.Tables.KMB_ROUTES.COLUMN_ROUTE + " " +
+                "AND rs." + KMBDatabase.Tables.KMB_ROUTE_STOPS.COLUMN_BOUND + " = r." + KMBDatabase.Tables.KMB_ROUTES.COLUMN_BOUND + " " +
+                "AND rs." + KMBDatabase.Tables.KMB_ROUTE_STOPS.COLUMN_SERVICE_TYPE + " = r." + KMBDatabase.Tables.KMB_ROUTES.COLUMN_SERVICE_TYPE + " " +
+                "WHERE CAST(s." + KMBDatabase.Tables.KMB_STOPS.COLUMN_LATITUDE + " AS REAL) BETWEEN ? AND ? " +
+                "AND CAST(s." + KMBDatabase.Tables.KMB_STOPS.COLUMN_LONGITUDE + " AS REAL) BETWEEN ? AND ? " +
+                "ORDER BY r." + KMBDatabase.Tables.KMB_ROUTES.COLUMN_ROUTE + ", " +
+                "r." + KMBDatabase.Tables.KMB_ROUTES.COLUMN_SERVICE_TYPE + ", " +
+                "r." + KMBDatabase.Tables.KMB_ROUTES.COLUMN_BOUND + ", " +
+                "distance";
+        
+        Cursor routesCursor = kmbDatabase.db.rawQuery(nearbyRoutesQuery, new String[]{
+            String.valueOf(latitude),    // For distance calculation 
+            String.valueOf(latitude),    // For distance calculation
+            String.valueOf(longitude),   // For distance calculation
+            String.valueOf(longitude),   // For distance calculation
+            String.valueOf(minLat),      // Bounding box min latitude
+            String.valueOf(maxLat),      // Bounding box max latitude
+            String.valueOf(minLon),      // Bounding box min longitude
+            String.valueOf(maxLon)       // Bounding box max longitude
+        });
+        
+        // Use a map to keep track of the closest stop for each unique route
+        Map<String, BusRouteStopItem> closestStopForRoute = new HashMap<>();
+        
         if (routesCursor != null && routesCursor.moveToFirst()) {
-            // Create a list of BusRouteStopItem objects for the adapter
-            List<BusRouteStopItem> nearbyBusRoutes = new ArrayList<>();
-            
             do {
                 try {
                     String route = routesCursor.getString(routesCursor.getColumnIndexOrThrow(KMBDatabase.Tables.KMB_ROUTES.COLUMN_ROUTE));
                     String bound = routesCursor.getString(routesCursor.getColumnIndexOrThrow(KMBDatabase.Tables.KMB_ROUTES.COLUMN_BOUND));
                     String serviceType = routesCursor.getString(routesCursor.getColumnIndexOrThrow(KMBDatabase.Tables.KMB_ROUTES.COLUMN_SERVICE_TYPE));
+                    String stopId = routesCursor.getString(routesCursor.getColumnIndexOrThrow(KMBDatabase.Tables.KMB_STOPS.COLUMN_STOP_ID));
+                    String stopNameEn = routesCursor.getString(routesCursor.getColumnIndexOrThrow(KMBDatabase.Tables.KMB_STOPS.COLUMN_STOP_NAME_EN));
+                    String stopNameTc = routesCursor.getString(routesCursor.getColumnIndexOrThrow(KMBDatabase.Tables.KMB_STOPS.COLUMN_STOP_NAME_TC));
+                    String stopNameSc = routesCursor.getString(routesCursor.getColumnIndexOrThrow(KMBDatabase.Tables.KMB_STOPS.COLUMN_STOP_NAME_SC));
                     String origin = routesCursor.getString(routesCursor.getColumnIndexOrThrow(KMBDatabase.Tables.KMB_ROUTES.COLUMN_ORIGIN_EN));
                     String destination = routesCursor.getString(routesCursor.getColumnIndexOrThrow(KMBDatabase.Tables.KMB_ROUTES.COLUMN_DEST_EN));
-                    String stopNameEn = routesCursor.getString(routesCursor.getColumnIndexOrThrow(KMBDatabase.Tables.KMB_STOPS.COLUMN_STOP_NAME_EN));
-                    String stopId = routesCursor.getString(routesCursor.getColumnIndexOrThrow(KMBDatabase.Tables.KMB_STOPS.COLUMN_STOP_ID));
                     double distance = routesCursor.getDouble(routesCursor.getColumnIndexOrThrow("distance"));
                     
-                    // Get TC and SC stop names if available
-                    String stopNameTc = "";
-                    String stopNameSc = "";
-                    
-                    try {
-                        stopNameTc = routesCursor.getString(routesCursor.getColumnIndexOrThrow(KMBDatabase.Tables.KMB_STOPS.COLUMN_STOP_NAME_TC));
-                        stopNameSc = routesCursor.getString(routesCursor.getColumnIndexOrThrow(KMBDatabase.Tables.KMB_STOPS.COLUMN_STOP_NAME_SC));
-                    } catch (Exception e) {
-                        // If TC and SC names are not available, use EN name
-                        stopNameTc = stopNameEn;
-                        stopNameSc = stopNameEn;
-                        Log.w("FragmentNearby", "TC/SC stop names not available, using EN name");
-                    }
-
                     // Calculate actual distance in meters (approximate)
                     double distanceInMeters = Math.sqrt(distance) * 111000; // Rough conversion from degrees to meters
                     
                     // Only include stops that are actually within our target radius
                     if (distanceInMeters <= radiusMeters) {
-                        // Log the found route
-                        Log.d("NearbyRoutes", "Route: " + route + " from " + origin + " to " + destination +
-                                " at stop " + stopNameEn + " (" + distanceInMeters + "m away)");
+                        // Create a unique key for this route (route number + bound + service type)
+                        String routeKey = route + "_" + bound + "_" + serviceType;
                         
-                        // Create a BusRouteStopItem for this route
-                        BusRouteStopItem busRouteStopItem = new BusRouteStopItem(
-                                route, bound, serviceType, 
-                                stopNameEn, stopNameTc, stopNameSc,
-                                stopId, "kmb"); // Using "kmb" as the company
-                        
-                        // Add to our list for display
-                        nearbyBusRoutes.add(busRouteStopItem);
+                        // Check if we already have this route in our map
+                        if (!closestStopForRoute.containsKey(routeKey)) {
+                            // This is the first (and therefore closest) stop we've found for this route
+                            BusRouteStopItem busRouteStopItem = new BusRouteStopItem(
+                                    route, bound, serviceType, 
+                                    stopNameEn, stopNameTc, stopNameSc,
+                                    stopId, "kmb"); // Using "kmb" as the company
+                            
+                            // Add to our map
+                            closestStopForRoute.put(routeKey, busRouteStopItem);
+                            
+                            // Log the found route
+                            Log.d("NearbyRoutes", "Route: " + route + " (Service Type: " + serviceType + ") from " + origin + 
+                                    " to " + destination + " at stop " + stopNameEn + " (" + distanceInMeters + "m away)");
+                        }
+                        // We don't need an else case because the query is ordered by distance,
+                        // so the first occurrence of each route is already the closest
                     }
-                    
                 } catch (Exception e) {
-                    Log.e("FragmentNearby", "Error reading cursor: " + e.getMessage(), e);
+                    Log.e("FragmentNearby", "Error processing route: " + e.getMessage(), e);
                 }
             } while (routesCursor.moveToNext());
-
-            routesCursor.close();
             
-            // Update UI with the found routes
-            if (!nearbyBusRoutes.isEmpty()) {
-                // Update the RecyclerView with our results
-                sortSavedBusStops(nearbyBusRoutes);
+            routesCursor.close();
+        }
+        
+        // Convert the map values to a list
+        nearbyBusRoutes.addAll(closestStopForRoute.values());
+        
+        // Update UI with the found routes
+        if (!nearbyBusRoutes.isEmpty()) {
+            // Update the RecyclerView with our results
+            sortSavedBusStops(nearbyBusRoutes);
 
-                nearbyBusRouteAdapter.updateRoutes(nearbyBusRoutes);
-                
-                // Show bottom sheet with results
-                bottomSheetBehavior.setState(BottomSheetBehavior.STATE_HALF_EXPANDED);
-                
-                // Make sure the RecyclerView is visible
-                nearbyStationsRecyclerView.setVisibility(View.VISIBLE);
-                btnLocationPermission.setVisibility(View.GONE);
-                
-                // Start ETA updates
-                nearbyBusRouteAdapter.startPeriodicUpdates();
-            } else {
-                locationInfo.setText(R.string.frag_nearby_noStops_name);
-                nearbyBusRouteAdapter.updateRoutes(null); // Clear the adapter
-            }
+            nearbyBusRouteAdapter.updateRoutes(nearbyBusRoutes);
+            
+            // Show bottom sheet with results
+            bottomSheetBehavior.setState(BottomSheetBehavior.STATE_HALF_EXPANDED);
+            
+            // Make sure the RecyclerView is visible
+            nearbyStationsRecyclerView.setVisibility(View.VISIBLE);
+            btnLocationPermission.setVisibility(View.GONE);
+            locationInfo.setVisibility(View.GONE);
+            
+            // Start ETA updates
+            nearbyBusRouteAdapter.startPeriodicUpdates();
+            
+            // Add markers to the map for the stops
+            addStopMarkersToMap(nearbyBusRoutes);
+            
+            // Log the total number of routes found
+            Log.d("FragmentNearby", "Found " + nearbyBusRoutes.size() + " routes at nearby stops within " + radiusMeters + "m");
         } else {
-            Log.d("FragmentNearby", "No nearby routes found within " + radiusMeters + "m");
+            Log.d("FragmentNearby", "No routes found at nearby stops within " + radiusMeters + "m");
+            locationInfo.setVisibility(View.VISIBLE);
             locationInfo.setText(R.string.frag_nearby_noStops_name + " (" + radiusMeters + "m)");
             nearbyBusRouteAdapter.updateRoutes(null); // Clear the adapter
         }

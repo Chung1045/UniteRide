@@ -30,4 +30,8 @@
 <!--    unchanged color declaration-->
     <color name="default_accessButtonColorBackground">#E6F46A</color>
     <color name="default_accessButtonColorText">#0C212C</color>
+    
+<!--    map colors-->
+    <color name="colorPrimary">#2C6073</color>
+    <color name="colorPrimaryTransparent">#202C6073</color> <!-- 20% opacity version of colorPrimary -->
 </resources>
