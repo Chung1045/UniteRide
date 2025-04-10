@@ -14,7 +14,6 @@
         android:inputType="text"
         android:layout_margin="15dp"
         android:background="@drawable/background_rounded_edittext"
-        android:textColor="@color/systemOnSurface"
         android:hint="@string/frag_search_searchBar_hint"
         android:textSize="16sp"
         android:padding="14dp"

@@ -22,4 +22,6 @@
     <color name="default_buttonColorText">#FFFFFF</color>
     <color name="default_buttonColorBackgroundInverted">#FFFFFF</color>
     <color name="default_buttonColorTextInverted">#0C212C</color>
+
+    <color name="foreground">#FFFFFF</color>
 </resources>

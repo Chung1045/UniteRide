@@ -53,7 +53,7 @@ public class MainActivity extends AppCompatActivity {
             refreshAllMainFragments();
         }
     }
-    
+
     /**
      * Forces a refresh of all main fragments to update their UI with the new language
      */
@@ -84,10 +84,7 @@ public class MainActivity extends AppCompatActivity {
             }
         }
     }
-    
-    /**
-     * Updates the UI of the saved fragment
-     */
+
     private void updateSavedFragmentUI(androidx.fragment.app.Fragment fragment) {
         View view = fragment.getView();
         if (view == null) return;
@@ -104,10 +101,7 @@ public class MainActivity extends AppCompatActivity {
             toolbar.setTitle(getString(R.string.bottomNav_saved_tabName));
         }
     }
-    
-    /**
-     * Updates the UI of the nearby fragment
-     */
+
     private void updateNearbyFragmentUI(androidx.fragment.app.Fragment fragment) {
         View view = fragment.getView();
         if (view == null) return;
@@ -131,10 +125,7 @@ public class MainActivity extends AppCompatActivity {
             btnLocationPermission.setText(R.string.onboarding_4_5_access_button_content);
         }
     }
-    
-    /**
-     * Updates the UI of the search fragment
-     */
+
     private void updateSearchFragmentUI(androidx.fragment.app.Fragment fragment) {
         View view = fragment.getView();
         if (view == null) return;
@@ -163,32 +154,39 @@ public class MainActivity extends AppCompatActivity {
 
         // Continue with existing logic - use singleton pattern
         dbHelper = DatabaseHelper.getInstance(this);
+        boolean isFirstTimeLaunch = !UserPreferences.sharedPref.getBoolean(UserPreferences.ONBOARDING_COMPLETE, false);
 
-        SplashScreen splashScreen = SplashScreen.installSplashScreen(this);
-        splashScreen.setKeepOnScreenCondition(() -> !isDataReady);
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) {
+            SplashScreen splashScreen = SplashScreen.installSplashScreen(this);
+            splashScreen.setKeepOnScreenCondition(() -> !isDataReady);
 
-        splashScreen.setOnExitAnimationListener(splashScreenView -> {
-            // This code will be executed after the splash screen is dismissed.
-            boolean isFirstTimeLaunch = !UserPreferences.sharedPref.getBoolean(UserPreferences.ONBOARDING_COMPLETE, false);
+            splashScreen.setOnExitAnimationListener(splashScreenView -> {
+                // This code will be executed after the splash screen is dismissed.
 
-            Log.e("MainActivity", "isFirstTimeLaunch: " + isFirstTimeLaunch);
+                Log.e("MainActivity", "isFirstTimeLaunch: " + isFirstTimeLaunch);
+                if (isFirstTimeLaunch) {
+                    startActivity(new Intent(this, OnboardingActivity.class));
+                    finish();
+                }
+                splashScreenView.remove();
+            });
+
+            new Thread(() -> {
+                try {
+                    // Simulate background work like database loading
+                    Thread.sleep(2000);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+                isDataReady = true;
+                runOnUiThread(() -> splashScreen.setKeepOnScreenCondition(() -> false));
+            }).start();
+        } else {
             if (isFirstTimeLaunch) {
                 startActivity(new Intent(this, OnboardingActivity.class));
                 finish();
             }
-            splashScreenView.remove();
-        });
-
-        new Thread(() -> {
-            try {
-                // Simulate background work like database loading
-                Thread.sleep(2000);
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-            isDataReady = true;
-            runOnUiThread(() -> splashScreen.setKeepOnScreenCondition(() -> false));
-        }).start();
+        }
         setContentView(R.layout.activity_main);
 
         bottomNav = findViewById(R.id.bottomNav_main);

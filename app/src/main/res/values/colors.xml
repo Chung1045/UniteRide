@@ -13,7 +13,7 @@
     <color name="brand_colorSurfaceSecondary">#E7F5F7</color>
     <color name="brand_colorOnSurfaceSecondaryInvert">#E1E9EB</color>
 
-<!--    onboarding colors declaration-->
+    <!--    onboarding colors declaration-->
     <color name="onboarding_topHeading">#0C212C</color>
     <color name="brand_colorOnSurface">#ECF5F8</color>
     <color name="brand_colorOnSurfaceSecondary">#2A3235</color>
@@ -27,11 +27,16 @@
     <color name="default_buttonColorBackgroundInverted">#2C6073</color>
     <color name="default_buttonColorTextInverted">#FFFFFF</color>
 
-<!--    unchanged color declaration-->
+    <!--    unchanged color declaration-->
     <color name="default_accessButtonColorBackground">#E6F46A</color>
     <color name="default_accessButtonColorText">#0C212C</color>
-    
-<!--    map colors-->
+
+    <!--    map colors-->
     <color name="colorPrimary">#2C6073</color>
     <color name="colorPrimaryTransparent">#202C6073</color> <!-- 20% opacity version of colorPrimary -->
+
+    <color name="foreground">#000000</color>
+    <color name="systemSurface">#EDEDED</color>
+    <color name="systemOnSurface">#FFFFFF</color>
+
 </resources>
