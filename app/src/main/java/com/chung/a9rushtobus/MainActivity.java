@@ -139,6 +139,11 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        // Install splash screen before calling super.onCreate()
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) {
+            SplashScreen splashScreen = SplashScreen.installSplashScreen(this);
+            splashScreen.setKeepOnScreenCondition(() -> !isDataReady);
+        }
         
         super.onCreate(savedInstanceState);
 
@@ -157,20 +162,6 @@ public class MainActivity extends AppCompatActivity {
         boolean isFirstTimeLaunch = !UserPreferences.sharedPref.getBoolean(UserPreferences.ONBOARDING_COMPLETE, false);
 
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) {
-            SplashScreen splashScreen = SplashScreen.installSplashScreen(this);
-            splashScreen.setKeepOnScreenCondition(() -> !isDataReady);
-
-            splashScreen.setOnExitAnimationListener(splashScreenView -> {
-                // This code will be executed after the splash screen is dismissed.
-
-                Log.e("MainActivity", "isFirstTimeLaunch: " + isFirstTimeLaunch);
-                if (isFirstTimeLaunch) {
-                    startActivity(new Intent(this, OnboardingActivity.class));
-                    finish();
-                }
-                splashScreenView.remove();
-            });
-
             new Thread(() -> {
                 try {
                     // Simulate background work like database loading
@@ -179,7 +170,13 @@ public class MainActivity extends AppCompatActivity {
                     e.printStackTrace();
                 }
                 isDataReady = true;
-                runOnUiThread(() -> splashScreen.setKeepOnScreenCondition(() -> false));
+                
+                runOnUiThread(() -> {
+                    if (isFirstTimeLaunch) {
+                        startActivity(new Intent(this, OnboardingActivity.class));
+                        finish();
+                    }
+                });
             }).start();
         } else {
             if (isFirstTimeLaunch) {
