@@ -71,6 +71,7 @@ dependencies {
     implementation(libs.cronet.embedded)
     implementation(libs.play.services.location)
     implementation(libs.play.services.maps)
+    implementation("androidx.core:core-splashscreen:1.0.1")
     androidTestImplementation(libs.ext.junit)
     androidTestImplementation(libs.espresso.core)
 }
