@@ -31,7 +31,7 @@ This application was initially called "9 Rush To Bus" when in development which 
 ## Install Requirement
 OS: Android
 
-Minimum: Android 10+
+Minimum: Android 12+
 
 Target: Android 15
 
