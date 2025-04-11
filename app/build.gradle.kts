@@ -24,7 +24,7 @@ android {
         minSdk = 31
         targetSdk = 35
         versionCode = 1
-        versionName = "1.0.2"
+        versionName = "1.0.3"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         buildConfigField("int", "REFRESH_INTERVAL", "60") // refresh interval in seconds
         val apiKey = secretsProperties.getProperty("MAPS_API_KEY", "")
