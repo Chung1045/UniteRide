@@ -154,11 +154,18 @@ public class MainActivity extends AppCompatActivity {
         // Initialize user preferences
         userPreferences = new UserPreferences(this);
 
+        // Always initialize locale helper and apply language settings
+        // regardless of savedInstanceState to preserve language during theme changes
+        localeHelper = new LocaleHelper();
+        String localeCode = UserPreferences.sharedPref.getString(UserPreferences.SETTINGS_APP_LANG, "en");
+        
+        // Only apply locale and recreate if this is the first creation (not a recreation due to theme change)
         if (savedInstanceState == null) {
-            localeHelper = new LocaleHelper();
-            String localeCode = UserPreferences.sharedPref.getString(UserPreferences.SETTINGS_APP_LANG, "en");
             localeHelper.setAppLocale(this, localeCode);
             recreate();
+        } else {
+            // For recreations (like theme changes), just apply the locale without recreating again
+            localeHelper.setAppLocaleWithoutRecreate(this, localeCode);
         }
 
         // Continue with existing logic - use singleton pattern

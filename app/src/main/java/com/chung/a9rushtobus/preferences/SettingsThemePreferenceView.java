@@ -55,41 +55,72 @@ public class SettingsThemePreferenceView extends PreferenceFragmentCompat {
 
         switchPref.setOnPreferenceChangeListener((preference, newValue) -> {
             boolean isChecked = (Boolean) newValue;
+            
+            // Save current language settings before changing theme
+            String currentLocale = UserPreferences.sharedPref.getString(UserPreferences.SETTINGS_APP_LANG, "en");
+            boolean langFollowSystem = UserPreferences.sharedPref.getBoolean(UserPreferences.SETTINGS_LANG_FOLLOW_SYSTEM, false);
+            
             if (isChecked) {
                 Toast.makeText(getContext(), "Follow system theme selected", Toast.LENGTH_SHORT).show();
                 UserPreferences.editor.putBoolean(UserPreferences.SETTINGS_THEME_FOLLOW_SYSTEM, true).commit();
-                AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM);
                 lightThemePref.setEnabled(false);
                 darkThemePref.setEnabled(false);
+                
+                // Apply theme change
+                AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM);
             } else {
                 Toast.makeText(getContext(), "Follow system theme deselected", Toast.LENGTH_SHORT).show();
                 UserPreferences.editor.putBoolean(UserPreferences.SETTINGS_THEME_FOLLOW_SYSTEM, false).commit();
                 lightThemePref.setEnabled(true);
                 darkThemePref.setEnabled(true);
 
+                // Apply appropriate theme based on selection
                 if (lightThemePref.isChecked()) {
                     AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO);
                 } else {
                     AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES);
                 }
             }
+            
+            // Ensure language settings are preserved after theme change
+            UserPreferences.editor.putString(UserPreferences.SETTINGS_APP_LANG, currentLocale).commit();
+            UserPreferences.editor.putBoolean(UserPreferences.SETTINGS_LANG_FOLLOW_SYSTEM, langFollowSystem).commit();
+            
             return true;
         });
 
         lightThemePref.setOnPreferenceClickListener(preference -> {
+            // Save current language settings before changing theme
+            String currentLocale = UserPreferences.sharedPref.getString(UserPreferences.SETTINGS_APP_LANG, "en");
+            boolean langFollowSystem = UserPreferences.sharedPref.getBoolean(UserPreferences.SETTINGS_LANG_FOLLOW_SYSTEM, false);
+            
             lightThemePref.setChecked(true);
             darkThemePref.setChecked(false);
             UserPreferences.editor.putBoolean(UserPreferences.SETTINGS_THEME_LIGHT, true).commit();
             UserPreferences.editor.putBoolean(UserPreferences.SETTINGS_THEME_DARK, false).commit();
+            
+            // Ensure language settings are preserved after theme change
+            UserPreferences.editor.putString(UserPreferences.SETTINGS_APP_LANG, currentLocale).commit();
+            UserPreferences.editor.putBoolean(UserPreferences.SETTINGS_LANG_FOLLOW_SYSTEM, langFollowSystem).commit();
+            
             AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO);
             return true;
         });
 
         darkThemePref.setOnPreferenceClickListener(preference -> {
+            // Save current language settings before changing theme
+            String currentLocale = UserPreferences.sharedPref.getString(UserPreferences.SETTINGS_APP_LANG, "en");
+            boolean langFollowSystem = UserPreferences.sharedPref.getBoolean(UserPreferences.SETTINGS_LANG_FOLLOW_SYSTEM, false);
+            
             darkThemePref.setChecked(true);
             lightThemePref.setChecked(false);
             UserPreferences.editor.putBoolean(UserPreferences.SETTINGS_THEME_DARK, true).commit();
             UserPreferences.editor.putBoolean(UserPreferences.SETTINGS_THEME_LIGHT, false).commit();
+            
+            // Ensure language settings are preserved after theme change
+            UserPreferences.editor.putString(UserPreferences.SETTINGS_APP_LANG, currentLocale).commit();
+            UserPreferences.editor.putBoolean(UserPreferences.SETTINGS_LANG_FOLLOW_SYSTEM, langFollowSystem).commit();
+            
             AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES);
             return true;
         });
