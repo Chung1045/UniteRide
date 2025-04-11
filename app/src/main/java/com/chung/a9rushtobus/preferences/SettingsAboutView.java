@@ -251,7 +251,7 @@ public class SettingsAboutView extends Fragment {
             });
         });
 
-        prefAboutGitHub.setOnClickListener(view -> utils.startUrlIntent("https://www.github.com"));
+        prefAboutGitHub.setOnClickListener(view -> utils.startUrlIntent("https://github.com/Chung1045/UniteRide"));
     }
 
     private FragmentManager.OnBackStackChangedListener backStackChangedListener;
